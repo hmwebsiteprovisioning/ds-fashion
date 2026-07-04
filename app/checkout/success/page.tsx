@@ -239,7 +239,7 @@ function CheckoutSuccessContent() {
               <CheckCircle size={32} style={{ color: theme.colors.primary }} />
             </div>
             <h1 
-              className="text-3xl sm:text-4xl font-bold mb-2 transition-colors duration-300"
+              className="font-serif-display text-3xl sm:text-4xl mb-2 transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
               {language === 'bg' ? 'Поръчката е приета успешно!' : 'Order Placed Successfully!'}
@@ -616,9 +616,9 @@ function CheckoutSuccessContent() {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => router.push('/')}
-              className="flex-1 py-3 px-6 rounded-lg font-medium transition-colors duration-300"
+              className="flex-1 py-3 px-6 rounded-sm font-medium transition-colors duration-300"
               style={{
-                backgroundColor: theme.colors.primary,
+                backgroundColor: theme.colors.buttonPrimary,
                 color: '#fff'
               }}
             >

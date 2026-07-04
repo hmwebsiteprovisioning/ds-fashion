@@ -210,7 +210,7 @@ export default function ProductView({ product }: ProductViewProps) {
             {/* Expandable Product Description Section (order 8 on mobile) */}
             {product.description && (
               <div 
-                className="mt-8 md:mt-8 border rounded-lg overflow-hidden order-8 md:order-none"
+                className="mt-8 md:mt-8 border rounded-sm overflow-hidden order-8 md:order-none"
                 style={{ borderColor: theme.colors.border }}
               >
                 <button
@@ -219,10 +219,10 @@ export default function ProductView({ product }: ProductViewProps) {
                   style={{ backgroundColor: theme.colors.surface }}
                 >
                   <h2 
-                    className="text-lg font-semibold"
+                    className="text-base font-serif-display"
                     style={{ color: theme.colors.text }}
                   >
-                    {t.productDescriptionHeading}
+                    {language === 'bg' ? 'Характеристики' : 'Characteristics'}
                   </h2>
                   {isDescriptionExpanded ? (
                     <ChevronUp size={20} style={{ color: theme.colors.text }} />

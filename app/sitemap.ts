@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-const SITE_URL = 'https://modabox.eu';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ds-fashion.eu';
 
 async function getPublishedProductIds(): Promise<string[]> {
   try {

@@ -248,24 +248,24 @@ const CartDrawer: React.FC = () => {
             </div>
 
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={clearCart}
-                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80"
+              <Link
+                href="/cart"
+                onClick={closeCart}
+                className="flex-1 px-4 py-3 rounded-sm font-medium text-center transition-opacity hover:opacity-80 border"
                 style={{
-                  border: `1px solid ${theme.colors.border}`,
+                  borderColor: theme.colors.border,
                   color: theme.colors.text,
                   backgroundColor: theme.colors.surface,
                 }}
               >
-                {t.clearCart}
-              </button>
+                {language === 'bg' ? 'Виж количката' : 'View cart'}
+              </Link>
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="flex-1 px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-90"
+                className="flex-1 px-4 py-3 rounded-sm font-medium transition-opacity hover:opacity-90"
                 style={{
-                  backgroundColor: theme.colors.primary,
+                  backgroundColor: theme.colors.buttonPrimary,
                   color: '#ffffff',
                 }}
               >
@@ -276,11 +276,9 @@ const CartDrawer: React.FC = () => {
             <button
               type="button"
               onClick={closeCart}
-              className="w-full px-4 py-3 rounded-xl font-medium transition-opacity hover:opacity-80"
+              className="w-full px-4 py-3 rounded-sm font-medium transition-opacity hover:opacity-80 text-sm"
               style={{
-                border: `1px solid ${theme.colors.text}`,
-                color: theme.colors.text,
-                backgroundColor: theme.colors.surface,
+                color: theme.colors.textSecondary,
               }}
             >
               {t.continueShopping}

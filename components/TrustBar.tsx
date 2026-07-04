@@ -1,73 +1,27 @@
 'use client';
 
-import { Headphones, Lock, RotateCcw, Truck } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTheme } from '@/context/ThemeContext';
+import { Truck, Shield, RotateCcw, Headphones } from 'lucide-react';
+
+const ITEMS = [
+  { icon: Truck, title: 'БЕЗПЛАТНА ДОСТАВКА', sub: 'над 100 лв.' },
+  { icon: Shield, title: 'СИГУРНО ПЛАЩАНЕ', sub: '100% защита' },
+  { icon: RotateCcw, title: 'ЛЕСНО ВРЪЩАНЕ', sub: 'до 14 дни' },
+  { icon: Headphones, title: 'ПОДДРЪЖКА НА КЛИЕНТИ', sub: '0899 123 456' },
+];
 
 export default function TrustBar() {
-  const { language } = useLanguage();
-  const { theme } = useTheme();
-
-  const trustItems = [
-    {
-      icon: Truck,
-      title: language === 'bg' ? 'Бърза доставка' : 'Fast delivery',
-      subtitle: language === 'bg' ? '1-2 работни дни' : '1-2 business days',
-    },
-    {
-      icon: RotateCcw,
-      title: language === 'bg' ? 'Лесно връщане' : 'Easy returns',
-      subtitle: language === 'bg' ? '14 дни право на връщане' : '14-day return policy',
-    },
-    {
-      icon: Lock,
-      title: language === 'bg' ? 'Сигурно плащане' : 'Secure payment',
-      subtitle: language === 'bg' ? '100% защитени плащания' : '100% protected payments',
-    },
-    {
-      icon: Headphones,
-      title: language === 'bg' ? 'Клиентска грижа' : 'Customer care',
-      subtitle: language === 'bg' ? 'На разположение' : 'Always available',
-    },
-  ];
-
   return (
-    <section
-      className="border-y"
-      style={{
-        backgroundColor: theme.colors.secondary,
-        borderColor: theme.colors.border,
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-5">
-        <div className="grid grid-cols-4 gap-2 sm:gap-6">
-          {trustItems.map(item => (
-            <div key={item.title} className="flex flex-col items-center text-center gap-1.5 sm:gap-2">
-              <item.icon
-                size={18}
-                className="sm:hidden"
-                style={{ color: theme.colors.text }}
-                strokeWidth={1.5}
-              />
-              <item.icon
-                size={22}
-                className="hidden sm:block"
-                style={{ color: theme.colors.text }}
-                strokeWidth={1.5}
-              />
+    <section className="border-y border-[#e8e0d5] bg-white">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-7">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {ITEMS.map(item => (
+            <div key={item.title} className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#f5f0eb]">
+                <item.icon size={18} className="text-[#c49a3c]" strokeWidth={1.5} />
+              </div>
               <div>
-                <p
-                  className="text-[10px] sm:text-sm font-medium leading-tight"
-                  style={{ color: theme.colors.text }}
-                >
-                  {item.title}
-                </p>
-                <p
-                  className="hidden sm:block text-xs mt-0.5"
-                  style={{ color: theme.colors.textSecondary }}
-                >
-                  {item.subtitle}
-                </p>
+                <p className="text-[11px] font-bold tracking-wide text-[#1a1a1a]">{item.title}</p>
+                <p className="text-[11px] text-[#9e9e9e]">{item.sub}</p>
               </div>
             </div>
           ))}

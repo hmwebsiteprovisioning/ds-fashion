@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Serif_Display, Inter } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
+import { STORE_NAME, DEFAULT_LOGO_PATH } from '@/lib/branding'
 
 const serifDisplay = DM_Serif_Display({
   subsets: ['latin', 'latin-ext'],
@@ -16,25 +17,25 @@ const inter = Inter({
   display: 'swap',
 })
 
-const SITE_URL = 'https://modabox.eu';
-const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ds-fashion.eu';
+const OG_IMAGE = `${SITE_URL}${DEFAULT_LOGO_PATH}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ModaBox – Луксозна мода онлайн | Дрехи, обувки, аксесоари',
-    template: '%s | ModaBox',
+    default: `${STORE_NAME} – Луксозна мода онлайн | Дрехи, обувки, аксесоари`,
+    template: `%s | ${STORE_NAME}`,
   },
   description:
-    'ModaBox.eu – онлайн магазин за луксозна мода. Открийте изключителни дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България и Европа.',
+    `${STORE_NAME} – онлайн магазин за луксозна мода. Открийте изключителни дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България и Европа.`,
   keywords: [
     'мода', 'дрехи', 'обувки', 'аксесоари', 'луксозна мода', 'онлайн магазин',
-    'мъжка мода', 'дамска мода', 'modabox', 'fashion', 'clothes', 'shoes',
+    'мъжка мода', 'дамска мода', 'ds-fashion', 'fashion', 'clothes', 'shoes',
     'accessories', 'luxury fashion', 'Bulgaria', 'online shop',
   ],
-  authors: [{ name: 'ModaBox', url: SITE_URL }],
-  creator: 'ModaBox',
-  publisher: 'ModaBox',
+  authors: [{ name: STORE_NAME, url: SITE_URL }],
+  creator: STORE_NAME,
+  publisher: STORE_NAME,
   category: 'fashion',
   robots: {
     index: true,
@@ -46,23 +47,22 @@ export const metadata: Metadata = {
     locale: 'bg_BG',
     alternateLocale: 'en_US',
     url: SITE_URL,
-    siteName: 'ModaBox',
-    title: 'ModaBox – Луксозна мода онлайн | Дрехи, обувки, аксесоари',
+    siteName: STORE_NAME,
+    title: `${STORE_NAME} – Луксозна мода онлайн | Дрехи, обувки, аксесоари`,
     description:
       'Открийте изключителни дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България и Европа.',
     images: [
       {
         url: OG_IMAGE,
-        width: 768,
-        height: 1024,
-        alt: 'ModaBox – луксозна мода',
+        width: 240,
+        height: 48,
+        alt: `${STORE_NAME} – луксозна мода`,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@modabox_eu',
-    title: 'ModaBox – Луксозна мода онлайн',
+    title: `${STORE_NAME} – Луксозна мода онлайн`,
     description:
       'Дрехи, обувки и аксесоари за жени и мъже. Бърза доставка в България.',
     images: [OG_IMAGE],
@@ -74,9 +74,6 @@ export const metadata: Metadata = {
       'en': `${SITE_URL}/en`,
     },
   },
-  verification: {
-    google: 'modabox-google-site-verification',
-  },
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
@@ -86,9 +83,9 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ClothingStore',
-  name: 'ModaBox',
+  name: STORE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
+  logo: `${SITE_URL}${DEFAULT_LOGO_PATH}`,
   image: OG_IMAGE,
   description:
     'Онлайн магазин за луксозна мода – дрехи, обувки и аксесоари за жени и мъже.',
@@ -96,10 +93,9 @@ const jsonLd = {
     '@type': 'PostalAddress',
     addressCountry: 'BG',
   },
-  sameAs: ['https://www.tiktok.com/@.modabox.bg'],
   priceRange: '€€',
   currenciesAccepted: 'EUR, BGN',
-  paymentAccepted: 'Cash, Credit Card',
+  paymentAccepted: 'Credit Card',
   openingHours: 'Mo-Su 00:00-24:00',
 };
 
@@ -113,7 +109,6 @@ export default function RootLayout({
   return (
     <html lang="bg" suppressHydrationWarning>
       <body className={`${serifDisplay.variable} ${inter.variable} antialiased`}>
-        {/* In body to avoid head injection from browser extensions; valid for schema.org */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdScript }}
@@ -126,4 +121,3 @@ export default function RootLayout({
     </html>
   )
 }
-

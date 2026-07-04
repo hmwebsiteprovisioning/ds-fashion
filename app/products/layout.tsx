@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
+import { STORE_NAME } from '@/lib/branding';
 
-const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ds-fashion.eu';
 
 export const metadata: Metadata = {
   title: 'Всички продукти – дрехи, обувки и аксесоари',
   description:
-    'Разгледайте пълната колекция на ModaBox – изключителни дрехи, обувки и аксесоари за жени и мъже на топ цени.',
-  alternates: { canonical: 'https://modabox.eu/products' },
+    `Разгледайте пълната колекция на ${STORE_NAME} – изключителни дрехи, обувки и аксесоари за жени и мъже на топ цени.`,
+  alternates: { canonical: `${SITE_URL}/products` },
   openGraph: {
-    title: 'Всички продукти | ModaBox',
+    title: `Всички продукти | ${STORE_NAME}`,
     description:
-      'Пълната колекция от дрехи, обувки и аксесоари в ModaBox.',
-    images: [{ url: OG_IMAGE, alt: 'ModaBox – колекция' }],
+      `Пълната колекция от дрехи, обувки и аксесоари в ${STORE_NAME}.`,
+    images: [{ url: `${SITE_URL}/ds-fashion-logo.svg`, alt: `${STORE_NAME} – колекция` }],
   },
 };
 

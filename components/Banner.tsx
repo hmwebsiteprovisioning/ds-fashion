@@ -1,87 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Truck } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { useStoreSettings } from '@/context/StoreSettingsContext';
+import { Truck, Shield, RotateCcw, Headphones } from 'lucide-react';
+
+const TRUST_ITEMS = [
+  { icon: Truck, label: 'Безплатна доставка над 100 лв.' },
+  { icon: Shield, label: 'Сигурно плащане 100% защита' },
+  { icon: RotateCcw, label: 'Лесно връщане до 14 дни' },
+  { icon: Headphones, label: 'Поддръжка на клиенти 0899 123 456' },
+];
 
 export default function Banner() {
-  const { settings } = useStoreSettings();
-  const { language } = useLanguage();
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const bannerLines = settings?.bannertext
-    ? settings.bannertext
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-    : [];
-
-  const duration = settings?.bannerduration || 5;
-  const defaultText =
-    language === 'bg'
-      ? 'Безплатна доставка за поръчки над 149 евро.'
-      : 'Free delivery for orders over 149 EUR';
-
-  useEffect(() => {
-    if (bannerLines.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex + 1) % bannerLines.length);
-    }, duration * 1000);
-
-    return () => clearInterval(interval);
-  }, [bannerLines.length, duration]);
-
-  const displayText =
-    bannerLines.length > 0 ? bannerLines[currentIndex] : defaultText;
-
-  const topLinks = [
-    {
-      href: '/about',
-      label: language === 'bg' ? 'За нас' : 'About us',
-    },
-    {
-      href: '/about',
-      label: language === 'bg' ? 'Помощ' : 'Help',
-    },
-    {
-      href: '/about',
-      label: language === 'bg' ? 'Контакти' : 'Contacts',
-    },
-  ];
-
   return (
-    <div
-      className="w-full border-b transition-colors duration-300"
-      style={{
-        backgroundColor: 'var(--modabox-beige)',
-        borderColor: 'var(--modabox-border)',
-      }}
-    >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-2 flex items-center justify-between gap-4">
-        <div
-          className="flex items-center gap-2 min-w-0 text-xs sm:text-sm"
-          style={{ color: 'var(--modabox-dark)' }}
-        >
-          <Truck size={14} className="shrink-0" style={{ color: 'var(--modabox-olive)' }} />
-          <p className="font-medium truncate transition-all duration-500 ease-in-out">
-            {displayText}
-          </p>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-5 shrink-0">
-          {topLinks.map(link => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="text-xs sm:text-sm transition-opacity hover:opacity-70"
-              style={{ color: 'var(--modabox-muted)' }}
-            >
-              {link.label}
-            </Link>
+    <div className="w-full bg-[#f5f0eb] border-b border-[#e8e0d5]">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+        {/* Desktop: 4 columns */}
+        <div className="hidden sm:grid sm:grid-cols-4 gap-2">
+          {TRUST_ITEMS.map(item => (
+            <div key={item.label} className="flex items-center justify-center gap-2">
+              <item.icon size={13} className="text-[#c49a3c] shrink-0" strokeWidth={1.8} />
+              <span className="text-[11px] text-[#4a4a4a] font-medium tracking-wide">{item.label}</span>
+            </div>
           ))}
+        </div>
+        {/* Mobile: single rotating item */}
+        <div className="sm:hidden flex items-center justify-center gap-2">
+          <Truck size={13} className="text-[#c49a3c] shrink-0" strokeWidth={1.8} />
+          <span className="text-[11px] text-[#4a4a4a] font-medium tracking-wide">Безплатна доставка над 100 лв.</span>
         </div>
       </div>
     </div>

@@ -1,0 +1,218 @@
+# DS Fashion — High-Resolution Website Mockups + Detailed English Plan
+
+This package contains a curated high-resolution set of ecommerce page mockups for DS Fashion.
+Each image was upscaled for higher-quality presentation and branded with the provided DS Fashion logo.
+All files are numbered and named descriptively so the purpose of each screen is clear at a glance.
+
+## Included Files
+
+### 00 — Store logo
+File: `00_Store_Logo_DS_Fashion_Original.png`  
+This is the original DS Fashion logo that was supplied and then placed onto the website mockups as a branding element.
+
+---
+
+### 01 — Homepage
+File: `01_Homepage_Desktop_and_Mobile_DS_Fashion_Luxury_Fashion_Store_Hero_Categories_Products_Testimonials_Newsletter.png`
+
+What is shown in detail
+- A responsive homepage presentation board with the desktop version on the left and the mobile version on the right.
+- A premium top information bar highlighting:
+  - free delivery over a threshold,
+  - secure payment,
+  - easy returns,
+  - customer support.
+- A hero section with a strong editorial fashion look:
+  - headline,
+  - supporting copy,
+  - primary CTA,
+  - secondary CTA,
+  - premium clothing rail visual.
+- Category entry tiles such as Women, Men, Accessories, and Sale.
+- A “Recommended for you” section with curated product cards.
+- A trust/service row with delivery, payment, returns, and support benefits.
+- A lifestyle / inspiration banner section.
+- Testimonials section.
+- Newsletter sign-up section.
+- Multi-column footer.
+- The DS Fashion logo has been added to the page layout as a visible branding element.
+
+Navigation / button map
+- Primary hero CTA (“Shop New” / equivalent) → goes to Image 02 (Category / Collection page).
+- Secondary hero CTA (“Browse Collections” / equivalent) → goes to Image 02.
+- Category tiles (Women / Men / Accessories / Sale) → conceptually open a collection page; in this set they map to Image 02 as the representative collection template.
+- Any product card image / product title in the featured products section → goes to Image 03 (Product Detail page).
+- Quick add / add-to-cart actions from featured products → goes to Image 04 (Cart page).
+- Newsletter submit button → conceptually submits the newsletter form; no separate screen in this set.
+
+---
+
+### 02 — Category / Collection Listing
+File: `02_Category_Listing_Desktop_and_Mobile_DS_Fashion_Womens_Collection_Filters_Product_Grid_Load_More.png`
+
+What is shown in detail
+- A desktop + mobile collection listing template.
+- A large collection heading section with:
+  - collection title,
+  - short collection description,
+  - editorial fashion image.
+- A desktop filter sidebar with:
+  - category filters,
+  - size options,
+  - color swatches,
+  - material filters,
+  - price range.
+- A sorting control and product count line.
+- A clean product grid built for fashion ecommerce browsing.
+- Each product card includes:
+  - product photo,
+  - product title,
+  - price,
+  - favorite / wishlist icon,
+  - quick add button,
+  - subtle color or size cues.
+- A “Load more” / equivalent action.
+- Mobile version includes:
+  - compact title and intro,
+  - filter and sort buttons,
+  - a clean 2-column product grid optimized for phone use.
+- The DS Fashion logo is placed on the page branding area.
+
+Navigation / button map
+- Filter button → opens filter controls on the same page.
+- Sort button → opens sorting controls on the same page.
+- Clicking any product image or product title → goes to Image 03 (Product Detail page).
+- Quick add button on any product card → goes to Image 04 (Cart page).
+- Load more button → loads more products on the same template.
+
+---
+
+### 03 — Product Detail
+File: `03_Product_Detail_Desktop_and_Mobile_DS_Fashion_Black_Premium_Hoodie_Gallery_Characteristics_Related_Products.png`
+
+What is shown in detail
+- A desktop + mobile product detail template for a featured premium fashion product.
+- Large product image gallery with thumbnails.
+- Product name, rating, price, stock status, and short value proposition.
+- Color selection controls.
+- Size chips and a size guide link.
+- Quantity selector.
+- Main Add to Cart action.
+- Favorite / wishlist action.
+- A characteristics / details section covering:
+  - material,
+  - fit,
+  - care,
+  - season,
+  - model information,
+  - article / SKU-style information.
+- Related products section beneath the main product area.
+- Mobile version reflows the gallery and product purchasing controls for touch interaction.
+- The DS Fashion logo has been incorporated into the page design.
+
+Navigation / button map
+- Thumbnail clicks → switch the main product image on the same page.
+- Color swatches → switch product color variant on the same page.
+- Size selector → selects size on the same page.
+- Add to Cart button → goes to Image 04 (Cart page).
+- Favorite / wishlist icon → conceptually adds to wishlist; no separate wishlist page is included in this set.
+- Related product image / title → opens another product page using the same template; in this set, the representative destination remains Image 03.
+
+---
+
+### 04 — Shopping Cart
+File: `04_Shopping_Cart_Desktop_and_Mobile_DS_Fashion_Cart_Items_Order_Summary_Coupon_Cross_Sell.png`
+
+What is shown in detail
+- A desktop + mobile cart page.
+- Cart line items with:
+  - thumbnail,
+  - product name,
+  - color,
+  - size,
+  - quantity stepper,
+  - line price,
+  - remove action.
+- Order summary block with:
+  - subtotal,
+  - delivery,
+  - coupon / discount code input,
+  - total,
+  - main checkout CTA.
+- “Save for later” style element.
+- Cross-sell / “You may also like” style product recommendations.
+- Mobile version stacks the cart entries and summary in a clean phone-optimized format.
+- The DS Fashion logo has been added into the overall branded layout.
+
+Navigation / button map
+- Quantity + / - controls → update quantity on the same page.
+- Remove icon → removes the line item from the cart on the same page.
+- Apply coupon button → applies coupon on the same page.
+- Proceed to Checkout button → goes to Image 05 (Checkout page).
+- Cross-sell product image / title → goes to Image 03 (Product Detail page).
+
+---
+
+### 05 — Checkout
+File: `05_Checkout_Desktop_and_Mobile_DS_Fashion_Customer_Details_Shipping_Payment_Order_Summary.png`
+
+What is shown in detail
+- A desktop + mobile checkout template.
+- Step indicator structure:
+  - customer details,
+  - shipping,
+  - payment,
+  - confirmation.
+- Customer data form.
+- Delivery address form.
+- Shipping method selection.
+- Payment method selection.
+- Order summary card with purchased items and final total.
+- Final order submission CTA.
+- Mobile version presents the checkout flow in a vertical, tap-friendly arrangement.
+- The DS Fashion logo is included on the page.
+
+Navigation / button map
+- Shipping method cards → update the selected shipping option on the same page.
+- Payment method cards → update the selected payment option on the same page.
+- Final CTA (“Complete Order” / equivalent) → conceptually goes to an Order Confirmation page.
+- An order confirmation page is not included in this current 5-screen set, but it is strongly recommended as the immediate next screen in the production flow.
+
+---
+
+## Core User Flow in This Set
+
+1. Homepage → Image 01  
+2. Collection / Category Listing → Image 02  
+3. Product Detail → Image 03  
+4. Shopping Cart → Image 04  
+5. Checkout → Image 05  
+6. Recommended next screen (not yet designed in this set): Order Confirmation / Thank You page
+
+---
+
+## Recommended Additional Pages for the Full Website
+
+If you want the flow to be completely production-ready, the next recommended mockups would be:
+
+1. Order Confirmation / Thank You
+2. Wishlist
+3. Search Results
+4. Login / Register
+5. My Account Dashboard
+6. Order History / Order Tracking
+7. Returns & Exchanges
+8. About Us
+9. Contact
+10. Editorial / Inspiration Landing Page
+11. Store Policies / FAQ
+12. Shipping Information
+
+---
+
+## Notes
+
+- All mockups in this package were exported in higher resolution than the original preview set.
+- The filenames were intentionally made descriptive so the purpose of each screen is obvious.
+- The package is designed to be helpful both for design review and for development handoff.
+- The pages retain the premium, elegant fashion ecommerce feel while incorporating the DS Fashion branding element supplied by the client.

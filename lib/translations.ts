@@ -798,8 +798,8 @@ export const translations: Record<Language, Translations> = {
     copyright: '© 2025',
 
     // Home Page
-    welcomeToStore: 'Welcome to Our Store',
-    homeDescription: 'Discover our latest collection of fashion and style',
+    welcomeToStore: 'Welcome to DS-Fashion',
+    homeDescription: 'Discover our latest luxury fashion collection',
     shopNow: 'Shop Now',
     wideSelection: 'Wide Selection',
     wideSelectionDesc: 'Browse through our extensive collection of quality products',
@@ -1519,8 +1519,8 @@ export const translations: Record<Language, Translations> = {
     copyright: '© 2025',
 
     // Home Page
-    welcomeToStore: 'Добре дошли в нашия магазин',
-    homeDescription: 'Открийте нашата най-нова колекция от дрехи, обувки и аксесоари',
+    welcomeToStore: 'Добре дошли в DS-Fashion',
+    homeDescription: 'Открийте нашата най-нова луксозна модна колекция',
     shopNow: 'Пазарувайте сега',
     wideSelection: 'Широк избор',
     wideSelectionDesc: 'Разгледайте нашата обширна колекция от качествени артикули',

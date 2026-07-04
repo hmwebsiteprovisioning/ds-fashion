@@ -1,293 +1,142 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import ImageSlider from './ImageSlider';
-import AddToCartModal from './AddToCartModal';
-import QuickLoginModal from './QuickLoginModal';
-import { Product } from '@/lib/data';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTheme } from '@/context/ThemeContext';
-import { useAuth } from '@/context/AuthContext';
-import { translations } from '@/lib/translations';
-import { ShoppingCart, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { Heart, ShoppingBag } from 'lucide-react';
+import { useState } from 'react';
+import type { MockProduct } from '@/lib/mock-data';
+
+// Accept either the full MockProduct or a legacy Product-like shape
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyProduct = MockProduct | any;
 
 interface ProductCardProps {
-  product: Product;
+  product: AnyProduct;
+  onAddToCart?: (product: AnyProduct) => void;
+  // Legacy compat props
   isFavorited?: boolean;
 }
 
-export default function ProductCard({ product, isFavorited: initialIsFavorited }: ProductCardProps) {
-  const router = useRouter();
-  const { language } = useLanguage();
-  const { theme } = useTheme();
-  const { user, isAuthenticated } = useAuth();
-  const t = translations[language];
-  const [showAddToCartModal, setShowAddToCartModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(initialIsFavorited || false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
-  const bgnPrice = product.price * 1.95;
+export default function ProductCard({ product, onAddToCart, isFavorited: _isFavorited }: ProductCardProps) {
+  const [wished, setWished] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-  const getUniqueImages = (images: string[] | undefined): string[] => {
-    if (!images || images.length === 0) return ['/image.png'];
-
-    const seen = new Set<string>();
-    const unique: string[] = [];
-
-    for (const image of images) {
-      const normalized = image.trim().toLowerCase();
-      if (normalized && !seen.has(normalized)) {
-        seen.add(normalized);
-        unique.push(image);
-      }
-    }
-
-    return unique.length > 0 ? unique : ['/image.png'];
-  };
-
-  const uniqueImages = getUniqueImages(product.images);
-
-  const getCategoryLabel = () => {
-    if (product.category === 'clothes') return product.type || t.clothes;
-    if (product.category === 'shoes') return t.shoes;
-    if (product.category === 'accessories') return t.accessories;
-    return '';
-  };
-
-  useEffect(() => {
-    if (initialIsFavorited !== undefined) {
-      setIsFavorited(initialIsFavorited);
-      return;
-    }
-
-    if (isAuthenticated && user) {
-      const checkFavorite = async () => {
-        try {
-          const response = await fetch('/api/favorites/check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              productId: String(product.id || product.productid || '')
-            })
-          });
-          const data = await response.json();
-          if (data.success) {
-            setIsFavorited(data.isFavorited);
-          }
-        } catch (error) {
-          console.error('Error checking favorite:', error);
-        }
-      };
-      checkFavorite();
-    }
-  }, [isAuthenticated, user, product.id, product.productid, initialIsFavorited]);
-
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
+  const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!isAuthenticated || !user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    setIsTogglingFavorite(true);
-    const productId = product.id || product.productid;
-
-    try {
-      const response = await fetch('/api/favorites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          productId: String(productId || '')
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setIsFavorited(data.isFavorited);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    } finally {
-      setIsTogglingFavorite(false);
-    }
+    if (onAddToCart) onAddToCart(product);
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (showAddToCartModal) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('[data-express-checkout]')) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-    router.push(`/products/${product.id}`);
-  };
-
-  const productTitle = `${product.brand} ${product.model}`.trim();
-  const categoryLabel = getCategoryLabel();
-  const showNewBadge = product.isfeatured;
+  // Normalise fields — handle both MockProduct and legacy Product shapes
+  const productId = product.id ?? product.productid ?? '';
+  const productName = product.name ?? `${product.brand ?? ''} ${product.model ?? ''}`.trim();
+  const productPrice: number = product.price ?? 0;
+  const rawImages: string[] = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : ['/hero-home.png'];
+  const colors: Array<{ name: string; hex: string }> = Array.isArray(product.colors)
+    ? product.colors
+    : [];
+  const sizes: string[] = Array.isArray(product.sizes)
+    ? product.sizes
+    : [];
+  const isNew: boolean = product.isNew ?? product.isfeatured ?? false;
 
   return (
-    <>
-      <div
-        className="rounded-2xl transition-all duration-300 overflow-hidden cursor-pointer border flex flex-col h-full"
-        style={{
-          backgroundColor: theme.colors.cardBg,
-          borderColor: theme.colors.border,
-          boxShadow: theme.effects.shadow,
-        }}
-        onClick={handleClick}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.boxShadow = theme.effects.shadowHover;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.boxShadow = theme.effects.shadow;
-        }}
-      >
-        <div className="relative">
-          <ImageSlider images={uniqueImages} />
-          {showNewBadge && (
-            <span
-              className="absolute bottom-3 left-3 z-10 px-2.5 py-1 text-[10px] sm:text-xs font-semibold rounded-md text-white"
-              style={{ backgroundColor: theme.colors.primary }}
-            >
-              {language === 'bg' ? 'Нов модел' : 'New'}
-            </span>
-          )}
-          <button
-            onClick={handleFavoriteClick}
-            disabled={isTogglingFavorite}
-            className="absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all duration-200 hover:scale-110 disabled:opacity-50 shadow-sm"
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
-              color: isFavorited ? '#ef4444' : theme.colors.text
-            }}
-            title={isFavorited ? t.removeFromFavorites : t.addToFavorites}
-          >
-            <Heart size={18} fill={isFavorited ? '#ef4444' : 'none'} />
-          </button>
-        </div>
+    <div className="group relative bg-white flex flex-col">
+      {/* Image */}
+      <Link href={`/products/${productId}`} className="relative block aspect-[3/4] overflow-hidden bg-[#f5f0eb]">
+        <img
+          src={rawImages[0]}
+          alt={productName}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        {/* Hover second image */}
+        {rawImages[1] && (
+          <img
+            src={rawImages[1]}
+            alt={productName}
+            className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          />
+        )}
 
-        <div className="p-3 sm:p-4 flex flex-col flex-1">
-          <h3
-            className="text-sm sm:text-[15px] font-semibold mb-1 line-clamp-2 leading-snug transition-colors duration-300"
-            style={{ color: theme.colors.text }}
-          >
-            {productTitle}
-            {product.color ? ` ${language === 'bg' ? 'цвят' : ''} ${product.color}` : ''}
+        {/* NEW badge */}
+        {isNew && (
+          <span className="absolute top-3 left-3 bg-[#1a1a1a] text-white text-[10px] font-bold tracking-widest px-2.5 py-1 uppercase">
+            НОВО
+          </span>
+        )}
+
+        {/* Wishlist */}
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWished(!wished); }}
+          className="absolute top-3 right-3 p-1.5 bg-white/90 hover:bg-white transition-colors"
+          aria-label="Добави в любими"
+        >
+          <Heart
+            size={16}
+            fill={wished ? '#c49a3c' : 'none'}
+            stroke={wished ? '#c49a3c' : '#1a1a1a'}
+          />
+        </button>
+      </Link>
+
+      {/* Info */}
+      <div className="pt-3 pb-4 px-0.5 flex flex-col flex-1">
+        <Link href={`/products/${productId}`}>
+          <h3 className="text-[13px] sm:text-[14px] text-[#1a1a1a] font-medium leading-snug hover:text-[#c49a3c] transition-colors line-clamp-2">
+            {productName}
           </h3>
+        </Link>
 
-          {categoryLabel && (
-            <p
-              className="text-xs mb-2 transition-colors duration-300"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {product.brand}
-              {categoryLabel ? ` • ${categoryLabel}` : ''}
-            </p>
-          )}
+        <p className="text-[14px] sm:text-[15px] font-semibold text-[#1a1a1a] mt-1.5">
+          {productPrice.toFixed(2)} лв.
+        </p>
 
-          <p
-            className="text-xs mb-3 transition-colors duration-300 hidden sm:block"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {t.available}:{' '}
-            <span style={{ color: theme.colors.text }}>
-              {product.quantity} {product.category === 'shoes' ? t.pairs : t.pcs}
-            </span>
-          </p>
-
-          <p
-            className="text-xs mb-3 transition-colors duration-300 sm:hidden"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {product.quantity} {product.category === 'shoes' ? t.pairs : t.pcs}{' '}
-            {language === 'bg' ? 'налични' : 'available'}
-          </p>
-
-          <div className="mt-auto">
-            <div
-              className="text-base sm:text-lg font-bold transition-colors duration-300"
-              style={{ color: theme.colors.text }}
-            >
-              €{product.price.toFixed(2)} / {bgnPrice.toFixed(2)} лв
-            </div>
-            <div
-              className="text-[10px] sm:text-xs mt-0.5 transition-colors duration-300"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {t.inclVAT}
-            </div>
+        {/* Color swatches */}
+        {colors.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-2">
+            {colors.slice(0, 4).map((color: { name: string; hex: string }) => (
+              <span
+                key={color.hex}
+                className="w-4 h-4 rounded-full border border-[#e8e0d5] cursor-pointer hover:scale-110 transition-transform"
+                style={{ backgroundColor: color.hex }}
+                title={color.name}
+              />
+            ))}
+            {colors.length > 4 && (
+              <span className="text-[10px] text-[#9e9e9e]">+{colors.length - 4}</span>
+            )}
           </div>
+        )}
 
-          {product.visible && product.quantity > 0 && (
-            <div data-express-checkout className="relative z-10 mt-3">
+        {/* Size chips */}
+        {sizes.length > 0 && sizes[0] !== 'ONE SIZE' && (
+          <div className="flex flex-wrap gap-1 mt-2.5">
+            {sizes.map((size: string) => (
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowAddToCartModal(true);
-                }}
-                className="w-full px-4 py-2.5 sm:py-3 text-white rounded-xl transition-colors duration-300 flex items-center justify-center gap-2 text-sm font-medium"
-                style={{ backgroundColor: theme.colors.primary }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.92';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1';
-                }}
+                key={size}
+                onClick={(e) => { e.preventDefault(); setSelectedSize(size); }}
+                className={`text-[10px] sm:text-[11px] px-2 py-0.5 border font-medium transition-colors ${
+                  selectedSize === size
+                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-white'
+                    : 'border-[#e0d8cf] text-[#6b6b6b] hover:border-[#1a1a1a] hover:text-[#1a1a1a]'
+                }`}
               >
-                <ShoppingCart size={16} />
-                <span className="hidden sm:inline">{t.expressAdd}</span>
+                {size}
               </button>
-            </div>
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        )}
 
-      <AddToCartModal
-        isOpen={showAddToCartModal}
-        onClose={() => setShowAddToCartModal(false)}
-        product={product}
-      />
-      <QuickLoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        productId={String(product.id || product.productid || '')}
-        onLoginSuccess={() => {
-          setShowLoginModal(false);
-          if (isAuthenticated && user) {
-            const checkFavorite = async () => {
-              try {
-                const response = await fetch('/api/favorites/check', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    userId: user.id,
-                    productId: String(product.id || product.productid || '')
-                  })
-                });
-                const data = await response.json();
-                if (data.success) {
-                  setIsFavorited(data.isFavorited);
-                }
-              } catch (error) {
-                console.error('Error checking favorite:', error);
-              }
-            };
-            checkFavorite();
-          }
-        }}
-      />
-    </>
+        {/* Quick add button */}
+        <button
+          onClick={handleAdd}
+          className="mt-3 w-full bg-[#c49a3c] hover:bg-[#a07c28] text-white text-[11px] sm:text-[12px] font-bold tracking-widest py-2.5 uppercase transition-colors flex items-center justify-center gap-2"
+        >
+          <ShoppingBag size={13} />
+          БЪРЗА ДОБАВКА
+        </button>
+      </div>
+    </div>
   );
 }

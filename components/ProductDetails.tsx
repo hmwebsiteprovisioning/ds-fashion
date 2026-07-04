@@ -8,7 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { translations } from '@/lib/translations';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Heart, Share2 } from 'lucide-react';
+import { ShoppingCart, Heart, Share2, Plus, Minus } from 'lucide-react';
 import Image from 'next/image';
 import QuickLoginModal from './QuickLoginModal';
 import FomoBadge, { type FomoMessage } from './FomoBadge';
@@ -83,6 +83,7 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [sameSizeAlternatives, setSameSizeAlternatives] = useState<Product[]>([]);
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
+  const [cartQuantity, setCartQuantity] = useState(1);
 
   // Check if product is favorited and get favorite count on mount
   useEffect(() => {
@@ -453,7 +454,7 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
       color: product.color,
       size: selectedVariant ? selectedOptions['Size'] || selectedOptions['size'] || product.size : product.size,
       price: currentPrice,
-      quantity: 1, // Default to 1, user can adjust in cart
+      quantity: cartQuantity,
       imageUrl: selectedVariant?.imageurl || product.images?.[0] || '/image.png',
       category: product.category,
       propertyValues: Object.keys(cartCompatiblePropertyValues).length > 0 ? cartCompatiblePropertyValues : undefined,
@@ -555,7 +556,7 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
       {/* Product Name and Actions - order 2 */}
       <div className="flex items-start justify-between gap-4 mb-2 order-2">
         <h1 
-          className="product__single__name text-3xl md:text-4xl font-bold capitalize transition-colors duration-300 flex-1"
+          className="product__single__name font-serif-display text-2xl md:text-4xl capitalize flex-1"
           style={{ color: theme.colors.text }}
         >
           {product.brand} {product.model}
@@ -945,16 +946,68 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
         </div>
       )}
 
-      {/* Add to Cart Button - order 8 */}
+      {/* Quantity + Add to Cart */}
       {product.visible && tracksStock && currentQuantity > 0 && (
-        <div className="mb-6 order-8">
-          <button
-            onClick={handleAddToCart}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center gap-2 font-medium"
-          >
-            <ShoppingCart size={20} />
-            {t.addToCart}
-          </button>
+        <div className="mb-6 order-8 space-y-4">
+          <div>
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: theme.colors.text }}
+            >
+              {language === 'bg' ? 'Количество' : 'Quantity'}
+            </label>
+            <div
+              className="inline-flex items-center border rounded-sm"
+              style={{ borderColor: theme.colors.border }}
+            >
+              <button
+                type="button"
+                onClick={() => setCartQuantity(q => Math.max(1, q - 1))}
+                className="p-3 hover:opacity-70 transition-opacity"
+                style={{ color: theme.colors.text }}
+                aria-label="Decrease quantity"
+              >
+                <Minus size={16} />
+              </button>
+              <span
+                className="px-4 py-2 text-sm font-medium min-w-[3rem] text-center"
+                style={{ color: theme.colors.text }}
+              >
+                {cartQuantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCartQuantity(q => Math.min(currentQuantity, q + 1))}
+                className="p-3 hover:opacity-70 transition-opacity"
+                style={{ color: theme.colors.text }}
+                aria-label="Increase quantity"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 px-6 py-3.5 rounded-sm transition-colors duration-300 flex items-center justify-center gap-2 font-medium text-white"
+              style={{ backgroundColor: theme.colors.buttonPrimary }}
+            >
+              <ShoppingCart size={18} />
+              {t.addToCart}
+            </button>
+            <button
+              onClick={handleFavorite}
+              disabled={isTogglingFavorite}
+              className="p-3.5 rounded-sm border transition-opacity hover:opacity-80 disabled:opacity-50"
+              style={{
+                borderColor: theme.colors.border,
+                color: isFavorited ? '#ef4444' : theme.colors.text,
+              }}
+              title={isFavorited ? t.removeFromFavorites : t.addToFavorites}
+            >
+              <Heart size={20} fill={isFavorited ? '#ef4444' : 'none'} />
+            </button>
+          </div>
         </div>
       )}
 

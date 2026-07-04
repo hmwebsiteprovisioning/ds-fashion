@@ -150,8 +150,8 @@ export default function AdminSettingsPage() {
         } else {
           // Create default settings if none exist
           const defaultSettings = {
-            storename: 'ModaBox',
-            logourl: null,
+            storename: 'DS-Fashion',
+            logourl: '/ds-fashion-logo.svg',
             themeid: 'default',
             language: 'en',
             bannertext: null,

@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-const SITE_URL = 'https://modabox.eu';
+import { STORE_NAME } from '@/lib/branding';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ds-fashion.eu';
 const OG_IMAGE = 'https://static-b2c.loropiana.com/cms/resource/image/440282/portrait_ratio3x4/768/1024/fb215413f1cad8636d48b2f0c1eaa1ce/62B14DD519AB6DBA760C9CE121E9F924/lp-assouline-book-1080x1350-14-.jpg';
 
 async function fetchProduct(id: string) {
@@ -38,7 +40,7 @@ export async function generateMetadata(
   const brand: string = product.brand || '';
   const description: string =
     product.description ||
-    `${brand ? `${brand} – ` : ''}${name} | Луксозна мода от ModaBox.eu`;
+    `${brand ? `${brand} – ` : ''}${name} | Луксозна мода от ${STORE_NAME}`;
 
   const rawImages: unknown = product.images;
   const firstImage: string | null =
@@ -63,7 +65,7 @@ export async function generateMetadata(
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
       url: canonical,
-      seller: { '@type': 'Organization', name: 'ModaBox' },
+      seller: { '@type': 'Organization', name: STORE_NAME },
     },
   };
 
@@ -77,7 +79,7 @@ export async function generateMetadata(
       url: canonical,
       title,
       description,
-      siteName: 'ModaBox',
+      siteName: STORE_NAME,
       images: [{ url: ogImage, alt: title }],
     },
     twitter: {

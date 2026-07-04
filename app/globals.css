@@ -34,11 +34,18 @@
     --text: 222 47% 11%;
     --text-secondary: 215 16% 47%;
 
-    --modabox-beige: #f9f7f2;
-    --modabox-olive: #7d8461;
-    --modabox-dark: #1a1a1a;
-    --modabox-muted: #6b6b6b;
-    --modabox-border: #e8e4dc;
+    --ds-cream: #f5f0eb;
+    --ds-gold: #c49a3c;
+    --ds-gold-hover: #a07c28;
+    --ds-dark: #1a1a1a;
+    --ds-muted: #6b6b6b;
+    --ds-border: #e8e0d5;
+    /* Legacy aliases */
+    --modabox-beige: var(--ds-cream);
+    --modabox-olive: var(--ds-gold);
+    --modabox-dark: var(--ds-dark);
+    --modabox-muted: var(--ds-muted);
+    --modabox-border: var(--ds-border);
   }
 
   body {

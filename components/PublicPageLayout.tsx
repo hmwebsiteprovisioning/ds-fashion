@@ -20,7 +20,10 @@ export default function PublicPageLayout({
   const { theme } = useTheme();
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.colors.background }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: theme.colors.background, color: theme.colors.text }}
+    >
       <Banner />
       <Header isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
       <div className="flex-1">{children}</div>

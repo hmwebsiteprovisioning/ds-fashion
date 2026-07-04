@@ -1,36 +1,35 @@
 import 'server-only';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Debug: Log service role client creation
-console.log('🔧 Creating supabaseAdmin client:', {
-  hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-  hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...',
-  keyLength: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
-  timestamp: new Date().toISOString()
-});
+let adminClient: SupabaseClient | null = null;
 
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
+export function getSupabaseAdmin(): SupabaseClient {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error(
+      'Missing Supabase environment variables. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local, then restart the dev server.'
+    );
   }
-);
 
-// Debug: Verify client was created successfully
-console.log('✅ supabaseAdmin client created, testing connection...');
+  if (!adminClient) {
+    adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+  }
 
-// Test the connection (this will help debug if service key is working)
-supabaseAdmin.from('orders').select('count', { count: 'exact', head: true })
-  .then(({ count, error }) => {
-    if (error) {
-      console.error('❌ supabaseAdmin connection test failed:', error.message);
-      console.error('This means the service role key is not working or RLS policies are missing');
-    } else {
-      console.log('✅ supabaseAdmin connection test passed, can access orders table');
-    }
-  });
+  return adminClient;
+}
+
+/** @deprecated Prefer getSupabaseAdmin() — kept for existing API route imports */
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabaseAdmin();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === 'function' ? (value as Function).bind(client) : value;
+  },
+});

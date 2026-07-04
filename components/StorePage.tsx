@@ -1,390 +1,343 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { SlidersHorizontal, X, ChevronUp, ChevronDown } from 'lucide-react';
 import ProductCard from './ProductCard';
-import ProductFilters from './ProductFilters';
-import FilterDrawer from './FilterDrawer';
-import TrustBar from './TrustBar';
-import CategoryPillsNav from './CategoryPillsNav';
-import { Product } from '@/lib/data';
-import { useLanguage } from '@/context/LanguageContext';
-import { useTheme } from '@/context/ThemeContext';
-import { useProductTypes } from '@/context/ProductTypeContext';
-import { useProperties } from '@/context/PropertiesContext';
-import { useAuth } from '@/context/AuthContext';
-import { translations } from '@/lib/translations';
+import { MOCK_PRODUCTS, WOMEN_CATEGORIES, type MockProduct } from '@/lib/mock-data';
+
+type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc';
+
+const COLLECTION_CONFIG: Record<string, {
+  title: string;
+  description: string;
+  image: string;
+  filter: (p: MockProduct) => boolean;
+}> = {
+  'for-her': {
+    title: 'Дамска колекция',
+    description: 'Открийте селекция от вечна елегантност и съвременен стил.\nВисококачествени материи, прецизна изработка и женствен силует.',
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&q=85',
+    filter: p => p.category === 'women',
+  },
+  'for-him': {
+    title: 'Мъжка колекция',
+    description: 'Открийте мъжка мода, вдъхновена от минимализма и качеството.\nОблекло, което говори с детайлите.',
+    image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=85',
+    filter: p => p.category === 'men',
+  },
+  accessories: {
+    title: 'Аксесоари',
+    description: 'Перфектното допълнение към всяка визия.\nЧанти, шалове, очила и още.',
+    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=85',
+    filter: p => p.category === 'accessories',
+  },
+  products: {
+    title: 'Всички продукти',
+    description: 'Разгледайте пълната колекция на DS-Fashion.',
+    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=900&q=85',
+    filter: () => true,
+  },
+};
 
 interface StorePageProps {
-  products: Product[];
   currentPage: string;
+  products?: MockProduct[];
 }
 
-export default function StorePage({ products, currentPage }: StorePageProps) {
-  const searchParams = useSearchParams();
-  const selectedCategoryFromUrl = searchParams.get('producttypeid') || 'all';
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, any>>({});
-  const [showFilters, setShowFilters] = useState(false); // Always collapsed on page refresh
-  const { language } = useLanguage();
-  const { theme } = useTheme();
-  const { productTypes, getCategoryPath } = useProductTypes();
-  const { properties } = useProperties();
-  const { user, isAuthenticated } = useAuth();
-  const t = translations[language];
-  const [favoriteStatus, setFavoriteStatus] = useState<Record<string, boolean>>({});
-  
-  // Create a map from propertyId to property name for filtering
-  const propertyIdToNameMap = new Map<string, string>();
-  properties.forEach(property => {
-    const propertyId = property.propertyid || (property as any).PropertyID || (property as any).id;
-    const propertyName = property.name || (property as any).Name;
-    if (propertyId && propertyName) {
-      propertyIdToNameMap.set(propertyId, propertyName);
+const ALL_COLORS = [
+  { name: 'Бежово', hex: '#c8b49a' },
+  { name: 'Черно', hex: '#1a1a1a' },
+  { name: 'Бяло', hex: '#f5f5f5' },
+  { name: 'Кафяво', hex: '#6b4c3b' },
+  { name: 'Сиво', hex: '#9e9e9e' },
+  { name: 'Тъмносиньо', hex: '#1c2951' },
+];
+const ALL_MATERIALS = ['Памук', 'Вълна', 'Лен', 'Кашмир', 'Вискоза'];
+const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+
+export default function StorePage({ currentPage }: StorePageProps) {
+  const config = COLLECTION_CONFIG[currentPage] || COLLECTION_CONFIG.products;
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [priceMin, setPriceMin] = useState(0);
+  const [priceMax, setPriceMax] = useState(1000);
+  const [filterOpen, setFilterOpen] = useState(false); // mobile
+  const [catOpen, setCatOpen] = useState(true);
+  const [sizeOpen, setSizeOpen] = useState(true);
+  const [colorOpen, setColorOpen] = useState(true);
+  const [matOpen, setMatOpen] = useState(true);
+  const [priceOpen, setPriceOpen] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(8);
+
+  const filtered = useMemo(() => {
+    let list = MOCK_PRODUCTS.filter(config.filter);
+    if (selectedSizes.length) list = list.filter(p => p.sizes.some(s => selectedSizes.includes(s)));
+    if (selectedColors.length) list = list.filter(p => p.colors.some(c => selectedColors.includes(c.name)));
+    if (priceMax < 1000) list = list.filter(p => p.price <= priceMax);
+    switch (sortBy) {
+      case 'price-asc': list = [...list].sort((a, b) => a.price - b.price); break;
+      case 'price-desc': list = [...list].sort((a, b) => b.price - a.price); break;
+      case 'name-asc': list = [...list].sort((a, b) => a.name.localeCompare(b.name)); break;
     }
-  });
+    return list;
+  }, [config, sortBy, selectedSizes, selectedColors, priceMax]);
 
-  // Map currentPage to rfproducttypeid for category pages
-  const getRfProductTypeId = (page: string) => {
-    const mapping: Record<string, number> = {
-      'for-him': 1,
-      'for-her': 2,
-      'accessories': 3
-    };
-    return mapping[page];
-  };
+  const displayed = filtered.slice(0, visibleCount);
 
-  const currentRfProductTypeId = getRfProductTypeId(currentPage);
+  const toggleSize = (s: string) =>
+    setSelectedSizes(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+  const toggleColor = (c: string) =>
+    setSelectedColors(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  const clearAll = () => { setSelectedSizes([]); setSelectedColors([]); setSelectedMaterials([]); setPriceMax(1000); };
 
-  // Use category from URL, default to 'all' if not specified
-  const activeCategoryFilter = selectedCategoryFromUrl;
+  const FilterContent = () => (
+    <div className="space-y-0">
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-[12px] font-bold tracking-widest uppercase text-[#1a1a1a]">Филтри</p>
+        {(selectedSizes.length || selectedColors.length) ? (
+          <button onClick={clearAll} className="text-[11px] text-[#c49a3c] hover:underline tracking-wide">
+            ИЗЧИСТИ ВСИЧКО
+          </button>
+        ) : null}
+      </div>
 
-  const filteredProducts = products.filter(p => {
-    if (!p.visible) return false;
-    // Show products with quantity > 0 OR products with no variants (newly created products)
-    if (p.quantity <= 0 && p.variants && p.variants.length > 0) return false;
-
-    // Category/Product Type filtering with hierarchy support
-    if (activeCategoryFilter === 'all') {
-      // Show all products
-    } else {
-      // Check if we're filtering by product type ID (new system)
-      const productType = productTypes.find(type => type.producttypeid === activeCategoryFilter);
-      if (productType) {
-        // If this is a parent category, include products from all child categories
-        const isParentCategory = productType.children && productType.children.length > 0;
-        if (isParentCategory) {
-          // Get all child category IDs
-          const childCategoryIds = productType.children!.map(child => child.producttypeid);
-          // Include products from parent or any child
-          const matchesParent = p.productTypeID === activeCategoryFilter;
-          const matchesChild = childCategoryIds.includes(p.productTypeID || '');
-          if (!matchesParent && !matchesChild) return false;
-        } else {
-          // Leaf category - only show products from this exact category
-          if (p.productTypeID !== activeCategoryFilter) return false;
-        }
-      } else {
-        // Fallback to legacy category filtering
-        if (p.category !== activeCategoryFilter) return false;
-      }
-    }
-
-    // Property-based filtering
-    for (const [filterKey, filterValue] of Object.entries(selectedFilters)) {
-      if (!filterValue || filterValue === '') continue;
-
-      // Handle range filters (min/max)
-      if (filterKey.endsWith('_min') || filterKey.endsWith('_max')) {
-        const propertyName = filterKey.replace(/_(min|max)$/, '');
-        const isMin = filterKey.endsWith('_min');
-
-        // First try propertyValues, then fallback to legacy fields
-        let propertyValue = p.propertyValues?.[propertyName];
-        if (!propertyValue) {
-          // Fallback to legacy field (convert to lowercase for matching)
-          const legacyField = propertyName.toLowerCase();
-          propertyValue = (p as any)[legacyField];
-        }
-
-        if (propertyValue) {
-          // Handle both string and array property values
-          const valueToParse = Array.isArray(propertyValue) ? propertyValue[0] : propertyValue;
-          const numericValue = parseFloat(valueToParse);
-          const filterNumber = parseFloat(filterValue);
-
-          if (!isNaN(numericValue) && !isNaN(filterNumber)) {
-            if (isMin && numericValue < filterNumber) return false;
-            if (!isMin && numericValue > filterNumber) return false;
-          }
-        }
-        continue;
-      }
-
-      // Regular property filtering
-      // filterKey is propertyId, map it to property name first
-      const propertyName = propertyIdToNameMap.get(filterKey) || filterKey;
-      
-      // Try propertyValues using property name first
-      let propertyValue = p.propertyValues?.[propertyName];
-      let matched = false;
-      
-      // Check if propertyValue matches filter
-      if (propertyValue) {
-        if (typeof filterValue === 'string' && propertyValue === filterValue) {
-          matched = true;
-        } else if (typeof filterValue === 'string' && typeof propertyValue === 'string' && propertyValue.toLowerCase().includes(filterValue.toLowerCase())) {
-          matched = true;
-        }
-      }
-      
-      // Also check ALL variants for property values - match by propertyId OR property name
-      // A product matches if ANY variant has the matching property value
-      if (!matched) {
-        const productVariants = p.variants || p.Variants || [];
-        for (const variant of productVariants) {
-          const propertyValues = variant.ProductVariantPropertyvalues || 
-                                variant.ProductVariantPropertyValues || 
-                                variant.product_variant_property_values ||
-                                variant.productVariantPropertyvalues ||
-                                [];
-          for (const pv of propertyValues) {
-            const propId = pv.propertyid || pv.PropertyID || pv.Property?.propertyid || pv.properties?.propertyid;
-            const propName = pv.Property?.name || pv.Property?.Name || pv.properties?.name || pv.properties?.Name || '';
-            // Match by propertyId OR property name
-            if (propId === filterKey || propName === propertyName || propName === filterKey) {
-              const variantValue = pv.value || pv.Value || '';
-              // Check if this variant's value matches the filter
-              if (variantValue && typeof filterValue === 'string') {
-                if (variantValue === filterValue) {
-                  matched = true;
-                  break;
-                } else if (typeof variantValue === 'string' && variantValue.toLowerCase().includes(filterValue.toLowerCase())) {
-                  matched = true;
-                  break;
-                }
-              }
-            }
-          }
-          if (matched) break;
-        }
-      }
-      
-      // Fallback to legacy field if still no match
-      if (!matched) {
-        // Also handle legacy- prefix (e.g., "legacy-size" -> "size")
-        let legacyField = filterKey.toLowerCase();
-        if (legacyField.startsWith('legacy-')) {
-          legacyField = legacyField.replace('legacy-', '');
-        }
-        const legacyValue = (p as any)[legacyField];
-        if (legacyValue && typeof filterValue === 'string') {
-          if (legacyValue === filterValue) {
-            matched = true;
-          } else if (typeof legacyValue === 'string' && legacyValue.toLowerCase().includes(filterValue.toLowerCase())) {
-            matched = true;
-          }
-        }
-      }
-
-      // If no match found, exclude this product
-      if (!matched) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  // Memoize product IDs for dependency array
-  const productIdsString = useMemo(() => {
-    return filteredProducts
-      .map(p => String(p.id || p.productid || ''))
-      .filter(id => id !== '')
-      .sort()
-      .join(',');
-  }, [filteredProducts]);
-
-  // Batch check favorites for all filtered products
-  useEffect(() => {
-    if (isAuthenticated && user && filteredProducts.length > 0) {
-      const checkFavorites = async () => {
-        try {
-          const productIds = filteredProducts
-            .map(p => String(p.id || p.productid || ''))
-            .filter(id => id !== '');
-          
-          if (productIds.length === 0) return;
-
-          const response = await fetch('/api/favorites/check-batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              productIds: productIds
-            })
-          });
-
-          const data = await response.json();
-          if (data.success && data.favorites) {
-            setFavoriteStatus(data.favorites);
-          }
-        } catch (error) {
-          console.error('Error checking favorites:', error);
-        }
-      };
-
-      checkFavorites();
-    } else {
-      setFavoriteStatus({});
-    }
-  }, [isAuthenticated, user, productIdsString, filteredProducts.length]);
-
-  const getPageTitle = () => {
-    if (currentPage === 'home') return t.ourCurrentStock;
-
-    // Check if a category is selected from URL
-    if (activeCategoryFilter !== 'all') {
-      const productType = productTypes.find(type => type.producttypeid === activeCategoryFilter);
-      if (productType) {
-        return language === 'bg'
-          ? `${productType.name} в наличност`
-          : `${productType.name} in Stock`;
-      }
-    }
-
-    // Fallback to legacy categories
-    if (currentPage === 'clothes') return t.clothesInStock;
-    if (currentPage === 'shoes') return t.shoesInStock;
-    if (currentPage === 'accessories') return t.accessoriesInStock;
-    
-    // Default titles for main sections
-    if (currentPage === 'for-him') return language === 'bg' ? 'За него' : 'For Him';
-    if (currentPage === 'for-her') return language === 'bg' ? 'За нея' : 'For Her';
-    if (currentPage === 'accessories') return t.accessoriesInStock;
-    
-    return t.ourCurrentStock;
-  };
-
-  const isGradientTheme = theme.id === 'gradient';
-
-  return (
-    <div
-      className="min-h-screen transition-colors duration-300"
-      style={{
-        background: isGradientTheme ? theme.colors.background : theme.colors.background,
-      }}
-    >
-      <TrustBar />
-
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-5 sm:py-8">
-        {activeCategoryFilter !== 'all' && (() => {
-          const categoryPath = getCategoryPath(activeCategoryFilter);
-          if (categoryPath.length > 0) {
-            return (
-              <div className="mb-4 text-sm" style={{ color: theme.colors.textSecondary }}>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className="cursor-pointer hover:underline"
-                    onClick={() => { window.location.href = `/${currentPage}`; }}
-                  >
-                    {currentPage === 'for-him' ? (language === 'bg' ? 'За него' : 'For Him') :
-                     currentPage === 'for-her' ? (language === 'bg' ? 'За нея' : 'For Her') :
-                     currentPage === 'accessories' ? (language === 'bg' ? 'Аксесоари' : 'Accessories') :
-                     language === 'bg' ? 'Продукти' : 'Products'}
-                  </span>
-                  {categoryPath.map((cat, index) => (
-                    <span key={cat.producttypeid} className="flex items-center gap-2">
-                      <span>/</span>
-                      {index === categoryPath.length - 1 ? (
-                        <span style={{ color: theme.colors.text }} className="font-medium">{cat.name}</span>
-                      ) : (
-                        <span
-                          className="cursor-pointer hover:underline"
-                          onClick={() => { window.location.href = `/${currentPage}?producttypeid=${cat.producttypeid}`; }}
-                        >
-                          {cat.name}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
+      {/* Category */}
+      <div className="border-t border-[#e8e0d5] py-4">
+        <button className="flex items-center justify-between w-full" onClick={() => setCatOpen(!catOpen)}>
+          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Категория</span>
+          {catOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {catOpen && (
+          <div className="mt-3 space-y-2">
+            {WOMEN_CATEGORIES.map(cat => (
+              <div key={cat.name} className="flex items-center justify-between">
+                <button className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors text-left">{cat.name}</button>
+                <span className="text-[11px] text-[#9e9e9e]">{cat.count}</span>
               </div>
-            );
-          }
-          return null;
-        })()}
+            ))}
+          </div>
+        )}
+      </div>
 
-        <div className="mb-5 sm:mb-6">
-          <h1
-            className="font-serif-display text-2xl sm:text-3xl lg:text-4xl mb-2 transition-colors duration-300"
-            style={{ color: theme.colors.text }}
-          >
-            {getPageTitle()}
-          </h1>
-          <p
-            className="text-sm sm:text-base transition-colors duration-300"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {t.browseDescription}
-          </p>
-        </div>
+      {/* Size */}
+      <div className="border-t border-[#e8e0d5] py-4">
+        <button className="flex items-center justify-between w-full" onClick={() => setSizeOpen(!sizeOpen)}>
+          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Размер</span>
+          {sizeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {sizeOpen && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {ALL_SIZES.map(s => (
+              <button
+                key={s}
+                onClick={() => toggleSize(s)}
+                className={`text-[11px] px-3 py-1.5 border font-medium transition-colors ${
+                  selectedSizes.includes(s)
+                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-white'
+                    : 'border-[#e0d8cf] text-[#6b6b6b] hover:border-[#1a1a1a]'
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-        <div className="flex items-center gap-3">
-          <CategoryPillsNav />
-          <ProductFilters
-            selectedFilters={selectedFilters}
-            onToggleVisibility={() => setShowFilters(!showFilters)}
-            layout="bar"
-            placement="desktop"
-          />
-        </div>
-
-        <ProductFilters
-          selectedFilters={selectedFilters}
-          onToggleVisibility={() => setShowFilters(!showFilters)}
-          layout="bar"
-          placement="mobile"
-        />
-
-        <FilterDrawer
-          products={products}
-          filteredProducts={filteredProducts}
-          selectedFilters={selectedFilters}
-          onFiltersChange={setSelectedFilters}
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-          selectedProductTypeId={
-            productTypes.some(type => type.producttypeid === activeCategoryFilter)
-              ? activeCategoryFilter
-              : null
-          }
-        />
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
-          {filteredProducts.map(product => {
-            const productId = String(product.id || product.productid || '');
-            return (
-              <ProductCard 
-                key={product.id} 
-                product={product}
-                isFavorited={favoriteStatus[productId] || false}
+      {/* Color */}
+      <div className="border-t border-[#e8e0d5] py-4">
+        <button className="flex items-center justify-between w-full" onClick={() => setColorOpen(!colorOpen)}>
+          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Цвят</span>
+          {colorOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {colorOpen && (
+          <div className="flex flex-wrap gap-2.5 mt-3">
+            {ALL_COLORS.map(c => (
+              <button
+                key={c.hex}
+                onClick={() => toggleColor(c.name)}
+                title={c.name}
+                className={`w-6 h-6 rounded-full border-2 transition-all ${
+                  selectedColors.includes(c.name)
+                    ? 'border-[#c49a3c] scale-110'
+                    : 'border-transparent hover:scale-105'
+                }`}
+                style={{
+                  backgroundColor: c.hex,
+                  boxShadow: '0 0 0 1px #e8e0d5',
+                }}
               />
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12 sm:py-16">
-            <p 
-              className="text-base sm:text-lg px-4 transition-colors duration-300"
-              style={{ color: theme.colors.textSecondary }}
-            >
-              {t.noProductsAvailable}
-            </p>
+      {/* Material */}
+      <div className="border-t border-[#e8e0d5] py-4">
+        <button className="flex items-center justify-between w-full" onClick={() => setMatOpen(!matOpen)}>
+          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Материя</span>
+          {matOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {matOpen && (
+          <div className="space-y-2 mt-3">
+            {ALL_MATERIALS.map(m => (
+              <label key={m} className="flex items-center gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={selectedMaterials.includes(m)}
+                  onChange={() => setSelectedMaterials(prev =>
+                    prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+                  )}
+                  className="w-3.5 h-3.5 accent-[#c49a3c]"
+                />
+                <span className="text-[12px] text-[#6b6b6b] group-hover:text-[#1a1a1a] transition-colors">{m}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Price */}
+      <div className="border-t border-[#e8e0d5] py-4">
+        <button className="flex items-center justify-between w-full" onClick={() => setPriceOpen(!priceOpen)}>
+          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Цена</span>
+          {priceOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {priceOpen && (
+          <div className="mt-4">
+            <input
+              type="range"
+              min={0}
+              max={1000}
+              step={10}
+              value={priceMax}
+              onChange={e => setPriceMax(Number(e.target.value))}
+              className="w-full accent-[#c49a3c]"
+            />
+            <div className="flex justify-between text-[11px] text-[#6b6b6b] mt-1">
+              <span>49 лв.</span>
+              <span>{priceMax === 1000 ? '699 лв.' : `${priceMax} лв.`}</span>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
-}
 
+  return (
+    <div className="bg-[#faf8f5] min-h-screen">
+      {/* Editorial header */}
+      <div className="bg-white">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-[2.75rem] text-[#1a1a1a] mb-4 leading-tight">
+                {config.title}
+              </h1>
+              <p className="text-[13px] sm:text-[14px] text-[#6b6b6b] leading-relaxed whitespace-pre-line">
+                {config.description}
+              </p>
+            </div>
+            <div className="relative aspect-[16/7] overflow-hidden">
+              <img src={config.image} alt={config.title} className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-[12px] text-[#9e9e9e] mb-5">
+          <Link href="/" className="hover:text-[#c49a3c] transition-colors">Начало</Link>
+          <span>/</span>
+          <span className="text-[#1a1a1a]">{config.title}</span>
+        </div>
+
+        {/* Count + Sort bar */}
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <p className="text-[12px] text-[#6b6b6b]">
+            Показани 1–{Math.min(visibleCount, filtered.length)} от {filtered.length} продукта
+          </p>
+          <div className="flex items-center gap-3">
+            {/* Mobile filter button */}
+            <button
+              className="lg:hidden flex items-center gap-2 text-[12px] border border-[#e8e0d5] px-4 py-2 hover:border-[#1a1a1a] transition-colors"
+              onClick={() => setFilterOpen(true)}
+            >
+              <SlidersHorizontal size={14} />
+              ФИЛТРИ
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-[#6b6b6b] hidden sm:inline">Сортирай:</span>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortOption)}
+                className="text-[12px] border border-[#e8e0d5] px-3 py-2 bg-white text-[#1a1a1a] outline-none cursor-pointer"
+              >
+                <option value="newest">Най-нови</option>
+                <option value="price-asc">Цена ↑</option>
+                <option value="price-desc">Цена ↓</option>
+                <option value="name-asc">А-Я</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-8">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block w-[210px] shrink-0">
+            <FilterContent />
+          </aside>
+
+          {/* Product grid */}
+          <div className="flex-1 min-w-0">
+            {filtered.length === 0 ? (
+              <div className="text-center py-16 text-[#9e9e9e] text-[14px]">Няма намерени продукти</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+                  {displayed.map(p => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+                {visibleCount < filtered.length && (
+                  <div className="text-center mt-10">
+                    <button
+                      onClick={() => setVisibleCount(n => n + 8)}
+                      className="px-10 py-3.5 border border-[#1a1a1a] text-[12px] font-bold tracking-widest uppercase text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors"
+                    >
+                      ЗАРЕДИ ОЩЕ ПРОДУКТИ
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile filter drawer */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setFilterOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-[280px] bg-white overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-[13px] font-bold tracking-widest">ФИЛТРИ</span>
+              <button onClick={() => setFilterOpen(false)}><X size={20} /></button>
+            </div>
+            <FilterContent />
+            <button
+              onClick={() => setFilterOpen(false)}
+              className="w-full mt-6 bg-[#c49a3c] text-white text-[12px] font-bold tracking-widest py-3.5 uppercase"
+            >
+              ПОКАЖИ {filtered.length} ПРОДУКТА
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

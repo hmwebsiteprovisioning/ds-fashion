@@ -16,6 +16,7 @@ interface FilterDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   selectedProductTypeId?: string | null;
+  variant?: 'drawer' | 'sidebar';
 }
 
 export default function FilterDrawer({
@@ -25,7 +26,8 @@ export default function FilterDrawer({
   onFiltersChange,
   isOpen,
   onClose,
-  selectedProductTypeId
+  selectedProductTypeId,
+  variant = 'drawer',
 }: FilterDrawerProps) {
   const { language } = useLanguage();
   const { theme } = useTheme();
@@ -496,6 +498,117 @@ export default function FilterDrawer({
     }
   };
 
+  const filterContent = (
+    <>
+      {getFilterCount() > 0 && (
+        <button
+          onClick={clearAllFilters}
+          className="w-full mb-4 text-sm px-3 py-2 rounded-sm transition-colors duration-300"
+          style={{
+            color: theme.colors.primary,
+            backgroundColor: theme.colors.secondary,
+            border: `1px solid ${theme.colors.border}`,
+          }}
+        >
+          {language === 'bg' ? 'Изчисти всички' : 'Clear All'}
+        </button>
+      )}
+
+      <div className="space-y-4">
+        {visibleProperties.map(property => {
+          const propertyId = getPropertyId(property);
+          const propertyName = property.name || (property as any).Name;
+          const hasValues = propertyId && availableValues[propertyId] && availableValues[propertyId].length > 0;
+
+          if (!hasValues) return null;
+
+          return (
+            <div key={propertyId}>
+              <label
+                className="block text-sm font-medium mb-2"
+                style={{ color: theme.colors.text }}
+              >
+                {property.description || propertyName}
+              </label>
+              {renderFilterInput(property)}
+            </div>
+          );
+        })}
+
+        {visibleProperties.length === 0 || visibleProperties.every(p => {
+          const propertyId = getPropertyId(p);
+          const nameKey = p.name || (p as any).Name;
+          const hasValuesById = propertyId && availableValues[propertyId] && availableValues[propertyId].length > 0;
+          const hasValuesByName = nameKey && availableValues[nameKey] && availableValues[nameKey].length > 0;
+          return !hasValuesById && !hasValuesByName;
+        }) ? (
+          <>
+            {['Color', 'Size', 'Type', 'Brand', 'Model'].map(legacyProperty => {
+              const hasValues = availableValues[legacyProperty] && availableValues[legacyProperty].length > 0;
+              if (!hasValues) return null;
+
+              const mockProperty = {
+                propertyid: `legacy-${legacyProperty.toLowerCase()}`,
+                name: legacyProperty,
+                datatype: legacyProperty.toLowerCase() === 'size' || legacyProperty.toLowerCase() === 'model' ? 'select' : 'text' as 'text' | 'select' | 'number'
+              };
+
+              return (
+                <div key={mockProperty.propertyid}>
+                  <label
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: theme.colors.text }}
+                  >
+                    {legacyProperty}
+                  </label>
+                  {renderFilterInput(mockProperty)}
+                </div>
+              );
+            })}
+          </>
+        ) : null}
+      </div>
+
+      {visibleProperties.length === 0 && (
+        <p
+          className="text-sm text-center py-4"
+          style={{ color: theme.colors.textSecondary }}
+        >
+          {language === 'bg' ? 'Няма налични филтри' : 'No filters available'}
+        </p>
+      )}
+    </>
+  );
+
+  if (variant === 'sidebar') {
+    return (
+      <aside
+        className="hidden lg:block w-64 shrink-0"
+        style={{ borderColor: theme.colors.border }}
+      >
+        <div className="sticky top-24">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter size={18} style={{ color: theme.colors.text }} />
+            <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: theme.colors.text }}>
+              {language === 'bg' ? 'Филтри' : 'Filters'}
+            </h2>
+            {getFilterCount() > 0 && (
+              <span
+                className="px-2 py-0.5 text-xs rounded-full"
+                style={{ backgroundColor: theme.colors.primary, color: '#ffffff' }}
+              >
+                {getFilterCount()}
+              </span>
+            )}
+          </div>
+          <div className="pr-2 max-h-[calc(100vh-8rem)] overflow-y-auto">
+            {filterContent}
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
   // Don't render if drawer is not visible
   if (!drawerVisible) return null;
 
@@ -577,84 +690,7 @@ export default function FilterDrawer({
               transitionDelay: isOpen ? '600ms' : '0ms'
             }}
           >
-            {getFilterCount() > 0 && (
-              <button
-                onClick={clearAllFilters}
-                className="w-full mb-4 text-sm px-3 py-2 rounded transition-colors duration-300"
-                style={{
-                  color: theme.colors.primary,
-                  backgroundColor: theme.colors.secondary,
-                  border: `1px solid ${theme.colors.border}`
-                }}
-              >
-                {language === 'bg' ? 'Изчисти всички' : 'Clear All'}
-              </button>
-            )}
-
-            <div className="space-y-4">
-              {visibleProperties.map(property => {
-                const propertyId = getPropertyId(property);
-                const propertyName = property.name || (property as any).Name;
-                const hasValues = propertyId && availableValues[propertyId] && availableValues[propertyId].length > 0;
-
-                if (!hasValues) return null;
-
-                return (
-                  <div key={propertyId}>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: theme.colors.text }}
-                    >
-                      {property.description || propertyName}
-                    </label>
-                    {renderFilterInput(property)}
-                  </div>
-                );
-              })}
-
-              {/* Legacy properties fallback */}
-              {visibleProperties.length === 0 || visibleProperties.every(p => {
-                const propertyId = getPropertyId(p);
-                const nameKey = p.name || (p as any).Name;
-                const hasValuesById = propertyId && availableValues[propertyId] && availableValues[propertyId].length > 0;
-                const hasValuesByName = nameKey && availableValues[nameKey] && availableValues[nameKey].length > 0;
-                return !hasValuesById && !hasValuesByName;
-              }) ? (
-                <>
-                  {['Color', 'Size', 'Type', 'Brand', 'Model'].map(legacyProperty => {
-                    const hasValues = availableValues[legacyProperty] && availableValues[legacyProperty].length > 0;
-                    if (!hasValues) return null;
-
-                    const mockProperty = {
-                      propertyid: `legacy-${legacyProperty.toLowerCase()}`,
-                      name: legacyProperty,
-                      datatype: legacyProperty.toLowerCase() === 'size' || legacyProperty.toLowerCase() === 'model' ? 'select' : 'text' as 'text' | 'select' | 'number'
-                    };
-
-                    return (
-                      <div key={mockProperty.propertyid}>
-                        <label
-                          className="block text-sm font-medium mb-2"
-                          style={{ color: theme.colors.text }}
-                        >
-                          {legacyProperty}
-                        </label>
-                        {renderFilterInput(mockProperty)}
-                      </div>
-                    );
-                  })}
-                </>
-              ) : null}
-            </div>
-
-            {visibleProperties.length === 0 && (
-              <p
-                className="text-sm text-center py-4"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Няма налични филтри' : 'No filters available'}
-              </p>
-            )}
+            {filterContent}
           </div>
 
           {/* Footer with Apply button */}
