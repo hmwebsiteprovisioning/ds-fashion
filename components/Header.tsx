@@ -38,21 +38,19 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b border-[#e8e0d5]">
+      <header className="sticky top-0 z-50 bg-ds-card border-b border-ds-border">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Main header row */}
           <div className="flex items-center h-16 sm:h-[72px] relative">
-            {/* Left: Search (desktop) + hamburger (mobile) */}
             <div className="flex items-center gap-3 flex-1">
               <button
                 className="lg:hidden p-1.5"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Menu"
               >
-                <Menu size={22} className="text-[#1a1a1a]" />
+                <Menu size={22} className="text-ds-text" />
               </button>
               <button
-                className="hidden lg:flex items-center gap-2 text-[#6b6b6b] text-sm hover:text-[#1a1a1a] transition-colors"
+                className="hidden lg:flex items-center gap-2 text-ds-text-secondary text-sm hover:text-ds-text transition-colors"
                 aria-label="Търсене"
               >
                 <Search size={18} />
@@ -60,7 +58,6 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               </button>
             </div>
 
-            {/* Center: Logo */}
             <Link
               href="/"
               className="absolute left-1/2 -translate-x-1/2 flex items-center"
@@ -75,30 +72,29 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               />
             </Link>
 
-            {/* Right: icons */}
             <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
               <Link
                 href={isAuthenticated && user ? '/user/dashboard' : '/user'}
-                className="p-2 hover:text-[#c49a3c] transition-colors text-[#1a1a1a]"
+                className="p-2 hover:text-ds-gold transition-colors text-ds-text"
                 aria-label="Акаунт"
               >
                 <User size={20} />
               </Link>
               <Link
                 href={isAuthenticated ? '/user/dashboard?tab=favorites' : '/user'}
-                className="p-2 hover:text-[#c49a3c] transition-colors text-[#1a1a1a]"
+                className="p-2 hover:text-ds-gold transition-colors text-ds-text"
                 aria-label="Любими"
               >
                 <Heart size={20} />
               </Link>
               <Link
                 href="/cart"
-                className="p-2 hover:text-[#c49a3c] transition-colors text-[#1a1a1a] relative"
+                className="p-2 hover:text-ds-gold transition-colors text-ds-text relative"
                 aria-label="Количка"
               >
                 <ShoppingBag size={20} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-[#c49a3c] text-white text-[10px] rounded-full h-[18px] min-w-[18px] px-1 flex items-center justify-center font-semibold">
+                  <span className="absolute -top-0.5 -right-0.5 bg-ds-gold text-white text-[10px] rounded-full h-[18px] min-w-[18px] px-1 flex items-center justify-center font-semibold">
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
@@ -106,18 +102,17 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
             </div>
           </div>
 
-          {/* Desktop nav */}
           <nav className="hidden lg:flex items-center justify-center gap-8 pb-3">
             {NAV_ITEMS.map(item => (
               <Link
                 key={item.id}
                 href={item.path}
-                className={`flex items-center gap-0.5 text-[13px] tracking-widest font-medium transition-colors hover:text-[#c49a3c] ${
+                className={`flex items-center gap-0.5 text-[13px] tracking-widest font-medium transition-colors hover:text-ds-gold ${
                   item.isSale
-                    ? 'text-red-600 hover:text-red-500'
+                    ? 'text-ds-error hover:text-ds-error/80'
                     : isActive(item.path) && item.path !== '/products'
-                    ? 'text-[#c49a3c] border-b border-[#c49a3c]'
-                    : 'text-[#1a1a1a]'
+                    ? 'text-ds-gold border-b border-ds-gold'
+                    : 'text-ds-text'
                 }`}
               >
                 {item.label}
@@ -128,15 +123,14 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
         </div>
       </header>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-[#e8e0d5]">
-              <span className="font-serif-display text-lg text-[#1a1a1a]">{storeName}</span>
+          <div className="absolute left-0 top-0 h-full w-72 bg-ds-card flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-ds-border">
+              <span className="font-serif-display text-lg text-ds-text">{storeName}</span>
               <button onClick={() => setMobileOpen(false)}>
-                <X size={22} className="text-[#1a1a1a]" />
+                <X size={22} className="text-ds-text" />
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto py-4">
@@ -146,7 +140,7 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
                   href={item.path}
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center justify-between px-6 py-3.5 text-sm tracking-widest font-medium transition-colors ${
-                    item.isSale ? 'text-red-600' : 'text-[#1a1a1a] hover:text-[#c49a3c]'
+                    item.isSale ? 'text-ds-error' : 'text-ds-text hover:text-ds-gold'
                   }`}
                 >
                   {item.label}

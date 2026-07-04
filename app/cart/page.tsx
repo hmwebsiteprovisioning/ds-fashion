@@ -54,18 +54,18 @@ export default function CartPage() {
 
   return (
     <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
-      <div className="bg-[#faf8f5] min-h-screen">
+      <div className="bg-ds-main min-h-screen">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
 
-          <h1 className="font-serif-display text-3xl sm:text-4xl text-[#1a1a1a] mb-2">Количка</h1>
-          <p className="text-[13px] text-[#9e9e9e] mb-8">{items.length} артикул{items.length !== 1 ? 'а' : ''}</p>
+          <h1 className="font-serif-display text-3xl sm:text-4xl text-ds-text mb-2">Количка</h1>
+          <p className="text-[13px] text-ds-text-muted mb-8">{items.length} артикул{items.length !== 1 ? 'а' : ''}</p>
 
           {items.length === 0 ? (
-            <div className="text-center py-20 bg-white">
-              <p className="text-[15px] text-[#6b6b6b] mb-6">Количката ви е празна</p>
+            <div className="text-center py-20 bg-ds-card">
+              <p className="text-[15px] text-ds-text-secondary mb-6">Количката ви е празна</p>
               <Link
                 href="/products"
-                className="inline-flex items-center px-8 py-3.5 bg-[#c49a3c] text-white text-[12px] font-bold tracking-widest uppercase hover:bg-[#a07c28] transition-colors"
+                className="inline-flex items-center px-8 py-3.5 bg-ds-gold text-white text-[12px] font-bold tracking-widest uppercase hover:bg-[#9C6A2D] transition-colors"
               >
                 ПРОДЪЛЖИ ПАЗАРУВАНЕТО
               </Link>
@@ -73,36 +73,36 @@ export default function CartPage() {
           ) : (
             <div className="grid lg:grid-cols-[1fr_380px] gap-8">
               {/* Cart items */}
-              <div className="bg-white">
-                <div className="divide-y divide-[#f0ebe3]">
+              <div className="bg-ds-card border border-ds-border shadow-ds-card">
+                <div className="divide-y divide-ds-border">
                   {items.map(item => (
                     <div key={item.id} className="flex gap-4 p-5 sm:p-6">
-                      <Link href={`/products/${item.productId}`} className="shrink-0 w-[90px] sm:w-[110px] aspect-[3/4] overflow-hidden bg-[#f5f0eb]">
+                      <Link href={`/products/${item.productId}`} className="shrink-0 w-[90px] sm:w-[110px] aspect-[3/4] overflow-hidden bg-ds-image">
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       </Link>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between gap-2">
                           <Link href={`/products/${item.productId}`}>
-                            <h3 className="text-[14px] font-medium text-[#1a1a1a] hover:text-[#c49a3c] transition-colors">{item.name}</h3>
+                            <h3 className="text-[14px] font-medium text-ds-text hover:text-ds-gold transition-colors">{item.name}</h3>
                           </Link>
-                          <p className="text-[14px] font-bold text-[#1a1a1a] shrink-0">
+                          <p className="text-[14px] font-bold text-ds-text shrink-0">
                             {(item.price * item.quantity).toFixed(2)} лв.
                           </p>
                         </div>
-                        <p className="text-[12px] text-[#9e9e9e] mt-1">
+                        <p className="text-[12px] text-ds-text-muted mt-1">
                           Цвят: {item.color} &nbsp;·&nbsp; Размер: {item.size}
                         </p>
                         <div className="flex items-center justify-between mt-4">
-                          <div className="inline-flex items-center border border-[#e8e0d5]">
-                            <button onClick={() => updateQty(item.id, -1)} className="px-3 py-2 hover:bg-[#f5f0eb]">
+                          <div className="inline-flex items-center border border-ds-border">
+                            <button onClick={() => updateQty(item.id, -1)} className="px-3 py-2 hover:bg-ds-main">
                               <Minus size={13} />
                             </button>
                             <span className="px-4 text-[13px] font-medium">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.id, 1)} className="px-3 py-2 hover:bg-[#f5f0eb]">
+                            <button onClick={() => updateQty(item.id, 1)} className="px-3 py-2 hover:bg-ds-main">
                               <Plus size={13} />
                             </button>
                           </div>
-                          <button onClick={() => removeItem(item.id)} className="p-1.5 hover:text-red-500 transition-colors text-[#9e9e9e]">
+                          <button onClick={() => removeItem(item.id)} className="p-1.5 hover:text-ds-error transition-colors text-ds-text-muted">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -111,7 +111,7 @@ export default function CartPage() {
                   ))}
                 </div>
                 <div className="px-5 sm:px-6 py-4 border-t border-[#f0ebe3]">
-                  <button className="flex items-center gap-2 text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors">
+                  <button className="flex items-center gap-2 text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors">
                     <Heart size={14} />
                     Запази количката за по-късно
                   </button>
@@ -120,40 +120,40 @@ export default function CartPage() {
 
               {/* Order summary */}
               <div>
-                <div className="bg-white p-6 sm:p-7">
-                  <h2 className="font-serif-display text-xl text-[#1a1a1a] mb-5">Обобщение на поръчката</h2>
+                <div className="bg-ds-card border border-ds-border shadow-ds-card p-6 sm:p-7">
+                  <h2 className="font-serif-display text-xl text-ds-text mb-5">Обобщение на поръчката</h2>
 
                   <div className="space-y-3 text-[13px] mb-5">
                     <div className="flex justify-between">
-                      <span className="text-[#6b6b6b]">Междинна сума</span>
-                      <span className="text-[#1a1a1a] font-medium">{subtotal.toFixed(2)} лв.</span>
+                      <span className="text-ds-text-secondary">Междинна сума</span>
+                      <span className="text-ds-text font-medium">{subtotal.toFixed(2)} лв.</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-[#6b6b6b]">Доставка</span>
-                      <span className="text-[#1a1a1a] font-medium">{delivery === 0 ? 'Безплатна' : `${delivery.toFixed(2)} лв.`}</span>
+                      <span className="text-ds-text-secondary">Доставка</span>
+                      <span className="text-ds-text font-medium">{delivery === 0 ? 'Безплатна' : `${delivery.toFixed(2)} лв.`}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-[#6b6b6b]">Отстъпка ({appliedCoupon})</span>
-                        <span className="text-green-600 font-medium">-{discount.toFixed(2)} лв.</span>
+                        <span className="text-ds-text-secondary">Отстъпка ({appliedCoupon})</span>
+                        <span className="text-ds-success font-medium">-{discount.toFixed(2)} лв.</span>
                       </div>
                     )}
                   </div>
 
                   {/* Coupon */}
                   <div className="mb-5">
-                    <p className="text-[12px] font-bold tracking-wide text-[#1a1a1a] mb-2">Имаш код за отстъпка?</p>
+                    <p className="text-[12px] font-bold tracking-wide text-ds-text mb-2">Имаш код за отстъпка?</p>
                     <div className="flex gap-0">
                       <input
                         type="text"
                         value={coupon}
                         onChange={e => setCoupon(e.target.value)}
                         placeholder="Въведи код"
-                        className="flex-1 px-3 py-2.5 border border-[#e8e0d5] text-[12px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]"
+                        className="flex-1 px-3 py-2.5 border border-ds-border text-[12px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold"
                       />
                       <button
                         onClick={applyCoupon}
-                        className="bg-[#1a1a1a] text-white text-[11px] font-bold tracking-widest px-4 uppercase hover:bg-[#333] transition-colors"
+                        className="border border-ds-gold bg-transparent text-ds-gold text-[11px] font-bold tracking-widest px-4 uppercase hover:bg-ds-gold hover:text-white transition-colors"
                       >
                         ПРИЛОЖИ
                       </button>
@@ -161,19 +161,19 @@ export default function CartPage() {
                     {couponError && <p className="text-[11px] text-red-500 mt-1">{couponError}</p>}
                   </div>
 
-                  <div className="border-t border-[#e8e0d5] pt-4 mb-6">
+                  <div className="border-t border-ds-border pt-4 mb-6">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-[14px] font-bold text-[#1a1a1a]">Крайна сума</span>
+                      <span className="text-[14px] font-bold text-ds-text">Крайна сума</span>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-[#1a1a1a]">{total.toFixed(2)} лв.</p>
-                        <p className="text-[11px] text-[#9e9e9e]">С включен ДДС</p>
+                        <p className="text-2xl font-bold text-ds-gold">{total.toFixed(2)} лв.</p>
+                        <p className="text-[11px] text-ds-text-muted">С включен ДДС</p>
                       </div>
                     </div>
                   </div>
 
                   <button
                     onClick={() => router.push('/checkout')}
-                    className="w-full bg-[#c49a3c] hover:bg-[#a07c28] text-white text-[13px] font-bold tracking-widest py-4 uppercase transition-colors mb-4"
+                    className="w-full bg-ds-gold hover:bg-ds-gold-dark text-white text-[13px] font-bold tracking-widest py-4 uppercase transition-colors mb-4"
                   >
                     ПРОДЪЛЖИ КЪМ CHECKOUT
                   </button>
@@ -185,8 +185,8 @@ export default function CartPage() {
                       { Icon: Shield, text: 'Сигурно плащане 100% защита' },
                       { Icon: RotateCcw, text: 'Лесно връщане до 14 дни' },
                     ].map(({ Icon, text }) => (
-                      <div key={text} className="flex items-center gap-2.5 text-[12px] text-[#6b6b6b]">
-                        <Icon size={14} className="text-[#c49a3c] shrink-0" />
+                      <div key={text} className="flex items-center gap-2.5 text-[12px] text-ds-text-secondary">
+                        <Icon size={14} className="text-ds-gold shrink-0" />
                         {text}
                       </div>
                     ))}
@@ -198,7 +198,7 @@ export default function CartPage() {
 
           {/* Cross-sell */}
           <section className="mt-12">
-            <h2 className="font-serif-display text-2xl text-[#1a1a1a] mb-6">Може да харесаш още</h2>
+            <h2 className="font-serif-display text-2xl text-ds-text mb-6">Може да харесаш още</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {CROSS_SELL.map(p => (
                 <ProductCard key={p.id} product={p} />

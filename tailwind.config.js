@@ -21,10 +21,6 @@ module.exports = {
         'admin-card': '0.75rem', // 12px - standard card radius
         'admin-card-lg': '1rem', // 16px - larger card radius
       },
-      boxShadow: {
-        'admin-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-        'admin-card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-      },
       fontSize: {
         'admin-h1': ['1.875rem', { lineHeight: '2.25rem', fontWeight: '600', letterSpacing: '-0.025em' }], // text-3xl font-semibold tracking-tight
         'admin-h2': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }], // text-xl font-semibold
@@ -77,6 +73,37 @@ module.exports = {
           DEFAULT: 'hsl(var(--text))',
           secondary: 'hsl(var(--text-secondary))',
         },
+        ds: {
+          main: 'var(--color-bg-main)',
+          soft: 'var(--color-bg-soft)',
+          card: 'var(--color-bg-card)',
+          section: 'var(--color-bg-section)',
+          info: 'var(--color-bg-info)',
+          image: 'var(--color-bg-image)',
+          gold: {
+            DEFAULT: 'var(--color-gold)',
+            dark: 'var(--color-gold-dark)',
+            light: 'var(--color-gold-light)',
+          },
+          text: {
+            DEFAULT: 'var(--color-text-main)',
+            secondary: 'var(--color-text-secondary)',
+            muted: 'var(--color-text-muted)',
+            copyright: 'var(--color-text-copyright)',
+          },
+          border: {
+            DEFAULT: 'var(--color-border)',
+            strong: 'var(--color-border-strong)',
+          },
+          success: 'var(--color-success)',
+          error: 'var(--color-error)',
+        },
+      },
+      boxShadow: {
+        'admin-card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        'admin-card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'ds-card': 'var(--shadow-card)',
+        'ds-soft': 'var(--shadow-soft)',
       },
     },
   },

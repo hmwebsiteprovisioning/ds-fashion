@@ -34,23 +34,51 @@
     --text: 222 47% 11%;
     --text-secondary: 215 16% 47%;
 
-    --ds-cream: #f5f0eb;
-    --ds-gold: #c49a3c;
-    --ds-gold-hover: #a07c28;
-    --ds-dark: #1a1a1a;
-    --ds-muted: #6b6b6b;
-    --ds-border: #e8e0d5;
+    /* DS Fashion / LUXE design system */
+    --color-bg-main: #F8F3EC;
+    --color-bg-soft: #FBF7F1;
+    --color-bg-card: #FFFDF9;
+    --color-bg-section: #EFE5D6;
+    --color-bg-info: #F3E9DA;
+    --color-bg-image: #F6EFE6;
+
+    --color-gold: #B98236;
+    --color-gold-dark: #9C6A2D;
+    --color-gold-light: #E7CFA8;
+
+    --color-text-main: #1E1B18;
+    --color-text-secondary: #6F675F;
+    --color-text-muted: #A79C91;
+    --color-text-copyright: #8D8379;
+
+    --color-border: #E2D6C8;
+    --color-border-strong: #D8CABB;
+
+    --color-success: #4F7A47;
+    --color-error: #B94A3A;
+
+    --shadow-card: 0 8px 24px rgba(30, 27, 24, 0.08);
+    --shadow-soft: 0 4px 14px rgba(30, 27, 24, 0.06);
+
     /* Legacy aliases */
-    --modabox-beige: var(--ds-cream);
-    --modabox-olive: var(--ds-gold);
-    --modabox-dark: var(--ds-dark);
-    --modabox-muted: var(--ds-muted);
-    --modabox-border: var(--ds-border);
+    --ds-cream: var(--color-bg-main);
+    --ds-gold: var(--color-gold);
+    --ds-gold-hover: var(--color-gold-dark);
+    --ds-dark: var(--color-text-main);
+    --ds-muted: var(--color-text-secondary);
+    --ds-border: var(--color-border);
+    --modabox-beige: var(--color-bg-main);
+    --modabox-olive: var(--color-gold);
+    --modabox-dark: var(--color-text-main);
+    --modabox-muted: var(--color-text-secondary);
+    --modabox-border: var(--color-border);
   }
 
   body {
     font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
+    background-color: var(--color-bg-main);
+    color: var(--color-text-main);
   }
 }
 
@@ -67,7 +95,9 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-}@keyframes zoom-in {
+}
+
+@keyframes zoom-in {
   from {
     transform: scale(1);
   }
@@ -150,9 +180,6 @@
   opacity: 0.8;
 }
 
-/* Ensure all text elements inherit color */
 .prose * {
   color: inherit;
 }
-
-

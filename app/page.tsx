@@ -32,7 +32,7 @@ export default function Home() {
 
       {/* 03: Featured products */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-[#1a1a1a] mb-8">
+        <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-ds-text mb-8">
           Подбрани за теб
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -54,7 +54,7 @@ export default function Home() {
             className="absolute inset-0 w-full h-full object-cover opacity-60"
           />
           <div className="relative z-10 px-8 sm:px-14 py-12 max-w-xl">
-            <p className="text-[11px] font-bold tracking-widest uppercase text-[#c49a3c] mb-3">ВДЪХНОВЕНИЕ</p>
+            <p className="text-[11px] font-bold tracking-widest uppercase text-ds-gold mb-3">ВДЪХНОВЕНИЕ</p>
             <h2 className="font-serif-display text-3xl sm:text-4xl text-white leading-[1.1] mb-4">
               Създадено за<br />модерен живот
             </h2>
@@ -64,7 +64,7 @@ export default function Home() {
             </p>
             <Link
               href="/products"
-              className="inline-flex items-center px-7 py-3.5 border border-white text-white text-[12px] font-bold tracking-widest uppercase hover:bg-white hover:text-[#1a1a1a] transition-colors"
+              className="inline-flex items-center px-7 py-3.5 border border-white text-white text-[12px] font-bold tracking-widest uppercase hover:bg-ds-card hover:text-ds-text transition-colors"
             >
               РАЗГЛЕДАЙ КОЛЕКЦИЯТА
             </Link>
@@ -74,44 +74,44 @@ export default function Home() {
 
       {/* 06: Testimonials */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-[#1a1a1a] mb-8">
+        <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-ds-text mb-8">
           Какво казват нашите клиенти
         </h2>
         {/* Desktop: all 3 */}
         <div className="hidden sm:grid sm:grid-cols-3 gap-6">
           {MOCK_TESTIMONIALS.map(t => (
-            <div key={t.id} className="bg-white border border-[#e8e0d5] p-6">
+            <div key={t.id} className="bg-ds-card border border-ds-border shadow-ds-card p-6">
               <div className="flex gap-0.5 mb-3">
                 {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} size={14} fill="#c49a3c" stroke="none" />
+                  <Star key={i} size={14} fill="#B98236" stroke="none" />
                 ))}
               </div>
-              <p className="text-[13px] text-[#4a4a4a] leading-relaxed mb-4 italic">"{t.text}"</p>
-              <p className="text-[12px] font-semibold text-[#1a1a1a]">{t.name}</p>
+              <p className="text-[13px] text-ds-text-secondary leading-relaxed mb-4 italic">"{t.text}"</p>
+              <p className="text-[12px] font-semibold text-ds-text">{t.name}</p>
             </div>
           ))}
         </div>
         {/* Mobile: carousel */}
         <div className="sm:hidden">
-          <div className="bg-white border border-[#e8e0d5] p-6">
+          <div className="bg-ds-card border border-ds-border shadow-ds-card p-6">
             <div className="flex gap-0.5 mb-3">
               {Array.from({ length: MOCK_TESTIMONIALS[testimonialIdx].rating }).map((_, i) => (
-                <Star key={i} size={14} fill="#c49a3c" stroke="none" />
+                <Star key={i} size={14} fill="#B98236" stroke="none" />
               ))}
             </div>
-            <p className="text-[13px] text-[#4a4a4a] leading-relaxed mb-4 italic">"{MOCK_TESTIMONIALS[testimonialIdx].text}"</p>
-            <p className="text-[12px] font-semibold text-[#1a1a1a]">{MOCK_TESTIMONIALS[testimonialIdx].name}</p>
+            <p className="text-[13px] text-ds-text-secondary leading-relaxed mb-4 italic">"{MOCK_TESTIMONIALS[testimonialIdx].text}"</p>
+            <p className="text-[12px] font-semibold text-ds-text">{MOCK_TESTIMONIALS[testimonialIdx].name}</p>
           </div>
           <div className="flex justify-center gap-4 mt-4">
             <button
               onClick={() => setTestimonialIdx(i => (i - 1 + MOCK_TESTIMONIALS.length) % MOCK_TESTIMONIALS.length)}
-              className="p-2 border border-[#e8e0d5] hover:bg-[#f5f0eb] transition-colors"
+              className="p-2 border border-ds-border hover:bg-ds-main transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={() => setTestimonialIdx(i => (i + 1) % MOCK_TESTIMONIALS.length)}
-              className="p-2 border border-[#e8e0d5] hover:bg-[#f5f0eb] transition-colors"
+              className="p-2 border border-ds-border hover:bg-ds-main transition-colors"
             >
               <ChevronRight size={18} />
             </button>

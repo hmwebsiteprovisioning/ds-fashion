@@ -13,10 +13,9 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#faf8f5] border-t border-[#e8e0d5] mt-16">
+    <footer className="bg-ds-section border-t border-ds-border-strong mt-16">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
-          {/* Col 1: Brand */}
           <div className="col-span-2 lg:col-span-1 space-y-4">
             <Link href="/">
               <Image
@@ -27,80 +26,76 @@ export default function Footer() {
                 className="h-8 w-auto object-contain mb-3"
               />
             </Link>
-            <p className="text-[12px] text-[#6b6b6b] leading-relaxed max-w-[180px]">
+            <p className="text-[12px] text-ds-text-secondary leading-relaxed max-w-[180px]">
               Луксозен облик с внимание към детайла и страст към качеството.
             </p>
             <div className="flex items-center gap-4 pt-1">
-              <a href="#" aria-label="Instagram" className="text-[#6b6b6b] hover:text-[#c49a3c] transition-colors">
+              <a href="#" aria-label="Instagram" className="text-ds-text-secondary hover:text-ds-gold transition-colors">
                 <Instagram size={17} />
               </a>
-              <a href="#" aria-label="Facebook" className="text-[#6b6b6b] hover:text-[#c49a3c] transition-colors">
+              <a href="#" aria-label="Facebook" className="text-ds-text-secondary hover:text-ds-gold transition-colors">
                 <Facebook size={17} />
               </a>
-              <a href="#" aria-label="TikTok" className="text-[#6b6b6b] hover:text-[#c49a3c] transition-colors text-[15px] font-bold leading-none">
+              <a href="#" aria-label="TikTok" className="text-ds-text-secondary hover:text-ds-gold transition-colors text-[15px] font-bold leading-none">
                 ✦
               </a>
             </div>
           </div>
 
-          {/* Col 2: Shop */}
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold tracking-widest uppercase text-[#1a1a1a] mb-4">ПАЗАРУВАЙ</h4>
+            <h4 className="text-[11px] font-bold tracking-widest uppercase text-ds-text mb-4">ПАЗАРУВАЙ</h4>
             {['Жени', 'Мъже', 'Аксесоари', 'Всички продукти', 'Sale'].map(item => (
               <div key={item}>
-                <Link href="/products" className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors block">{item}</Link>
+                <Link href="/products" className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors block">{item}</Link>
               </div>
             ))}
           </div>
 
-          {/* Col 3: Info */}
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold tracking-widest uppercase text-[#1a1a1a] mb-4">ИНФОРМАЦИЯ</h4>
+            <h4 className="text-[11px] font-bold tracking-widest uppercase text-ds-text mb-4">ИНФОРМАЦИЯ</h4>
             {['За нас', 'Доставка', 'Връщания и замяна', 'Общи условия', 'Контакти'].map(item => (
               <div key={item}>
-                <Link href="/about" className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors block">{item}</Link>
+                <Link href="/about" className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors block">{item}</Link>
               </div>
             ))}
           </div>
 
-          {/* Col 4: My account */}
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold tracking-widest uppercase text-[#1a1a1a] mb-4">МОЯ СТРАНИЦА</h4>
+            <h4 className="text-[11px] font-bold tracking-widest uppercase text-ds-text mb-4">МОЯ СТРАНИЦА</h4>
             {['Моят профил', 'Моите поръчки', 'Любими', 'Карта на сайта'].map(item => (
               <div key={item}>
-                <Link href="/user" className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors block">{item}</Link>
+                <Link href="/user" className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors block">{item}</Link>
               </div>
             ))}
           </div>
 
-          {/* Col 5: Support */}
           <div className="space-y-3">
-            <h4 className="text-[11px] font-bold tracking-widest uppercase text-[#1a1a1a] mb-4">КЛИЕНТСКА ПОДДРЪЖКА</h4>
+            <h4 className="text-[11px] font-bold tracking-widest uppercase text-ds-text mb-4">КЛИЕНТСКА ПОДДРЪЖКА</h4>
             <div className="space-y-2">
               {settings?.telephonenumber && (
-                <a href={`tel:${settings.telephonenumber}`} className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors flex items-center gap-2 block">
+                <a href={`tel:${settings.telephonenumber}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-2 block">
                   📞 {settings.telephonenumber}
                 </a>
               )}
               {!settings?.telephonenumber && (
-                <span className="text-[12px] text-[#6b6b6b] block">📞 0899 123 456</span>
+                <span className="text-[12px] text-ds-text-secondary block">📞 0899 123 456</span>
               )}
               {settings?.email && (
-                <a href={`mailto:${settings.email}`} className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors block">
+                <a href={`mailto:${settings.email}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors block">
                   ✉ {settings.email}
                 </a>
               )}
-              <span className="text-[12px] text-[#6b6b6b] block">📍 София, България</span>
+              <span className="text-[12px] text-ds-text-secondary block">📍 София, България</span>
             </div>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-[#e8e0d5] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-[#9e9e9e]">© {year} {storeName}. Всички права запазени.</p>
+        <div className="mt-10 pt-6 border-t border-ds-border-strong flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[11px] text-ds-text-copyright">© {year} {storeName}. Всички права запазени.</p>
           <div className="flex items-center gap-4">
-            <Link href="/about" className="text-[11px] text-[#9e9e9e] hover:text-[#c49a3c] transition-colors">Общи условия</Link>
-            <Link href="/about" className="text-[11px] text-[#9e9e9e] hover:text-[#c49a3c] transition-colors">Политика за поверителност</Link>
-            <Link href="/about" className="text-[11px] text-[#9e9e9e] hover:text-[#c49a3c] transition-colors">Бисквитки</Link>
+            <Link href="/about" className="text-[11px] text-ds-text-copyright hover:text-ds-gold transition-colors">Общи условия</Link>
+            <Link href="/about" className="text-[11px] text-ds-text-copyright hover:text-ds-gold transition-colors">Политика за поверителност</Link>
+            <Link href="/about" className="text-[11px] text-ds-text-copyright hover:text-ds-gold transition-colors">Бисквитки</Link>
           </div>
         </div>
       </div>

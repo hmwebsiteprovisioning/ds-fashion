@@ -11,17 +11,17 @@ const ITEMS = [
 
 export default function TrustBar() {
   return (
-    <section className="border-y border-[#e8e0d5] bg-white">
+    <section className="border-y border-ds-border bg-ds-card">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-7">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {ITEMS.map(item => (
             <div key={item.title} className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#f5f0eb]">
-                <item.icon size={18} className="text-[#c49a3c]" strokeWidth={1.5} />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-ds-main">
+                <item.icon size={18} className="text-ds-gold" strokeWidth={1.5} />
               </div>
               <div>
-                <p className="text-[11px] font-bold tracking-wide text-[#1a1a1a]">{item.title}</p>
-                <p className="text-[11px] text-[#9e9e9e]">{item.sub}</p>
+                <p className="text-[11px] font-bold tracking-wide text-ds-text">{item.title}</p>
+                <p className="text-[11px] text-ds-text-muted">{item.sub}</p>
               </div>
             </div>
           ))}

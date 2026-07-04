@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DS } from '@/lib/design-tokens';
 
 const TILES = [
   {
@@ -28,7 +29,7 @@ const TILES = [
 export default function CategoryTiles() {
   return (
     <section className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-[#1a1a1a] mb-7">
+      <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-ds-text mb-7">
         Пазарувай по категория
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
@@ -39,10 +40,21 @@ export default function CategoryTiles() {
               alt={tile.label}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+            <div
+              className="absolute inset-0 transition-colors group-hover:bg-black/35"
+              style={{ backgroundColor: DS.overlay }}
+            />
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
               <p className="text-white font-bold tracking-widest text-sm sm:text-base">{tile.label}</p>
-              <p className="text-white/70 text-[11px] sm:text-xs mt-0.5">{tile.sub}</p>
+              <span
+                className="inline-block mt-2 text-white text-[11px] sm:text-xs px-3 py-1 border transition-colors group-hover:bg-ds-gold group-hover:border-ds-gold"
+                style={{
+                  borderColor: DS.categoryBtnBorder,
+                  backgroundColor: DS.categoryBtnBg,
+                }}
+              >
+                {tile.sub}
+              </span>
             </div>
           </Link>
         ))}

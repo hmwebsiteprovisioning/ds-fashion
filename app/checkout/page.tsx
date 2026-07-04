@@ -66,18 +66,18 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] flex flex-col">
+    <div className="min-h-screen bg-ds-main flex flex-col">
       {/* Checkout header */}
-      <header className="bg-white border-b border-[#e8e0d5]">
+      <header className="bg-ds-card border-b border-ds-border">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link href="/cart" className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+          <Link href="/cart" className="flex items-center gap-1.5 text-[12px] text-ds-text-secondary hover:text-ds-text transition-colors">
             <ChevronLeft size={16} />
             Върни се към магазина
           </Link>
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
             <Image src={logoUrl} alt={storeName} width={100} height={32} className="h-7 w-auto object-contain" />
           </Link>
-          <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+          <div className="flex items-center gap-1.5 text-[12px] text-ds-text-secondary">
             <ShoppingBag size={15} />
             Сигурна поръчка
           </div>
@@ -85,7 +85,7 @@ export default function CheckoutPage() {
       </header>
 
       {/* Step indicator */}
-      <div className="bg-white border-b border-[#e8e0d5]">
+      <div className="bg-ds-card border-b border-ds-border">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-0 py-4">
             {STEPS.map((s, i) => (
@@ -98,24 +98,24 @@ export default function CheckoutPage() {
                   <span
                     className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold border-2 transition-colors ${
                       step > s.id
-                        ? 'bg-[#c49a3c] border-[#c49a3c] text-white'
+                        ? 'bg-ds-success border-ds-success text-white'
                         : step === s.id
-                        ? 'bg-[#1a1a1a] border-[#1a1a1a] text-white'
-                        : 'bg-white border-[#e8e0d5] text-[#9e9e9e]'
+                        ? 'bg-ds-gold border-ds-gold text-white'
+                        : 'bg-ds-card border-ds-border-strong text-ds-text-secondary'
                     }`}
                   >
                     {step > s.id ? <Check size={13} /> : s.id}
                   </span>
                   <span
                     className={`text-[12px] font-medium hidden sm:inline ${
-                      step === s.id ? 'text-[#1a1a1a]' : step > s.id ? 'text-[#c49a3c]' : 'text-[#9e9e9e]'
+                      step === s.id ? 'text-ds-text' : step > s.id ? 'text-ds-success' : 'text-ds-text-muted'
                     }`}
                   >
                     {s.label}
                   </span>
                 </button>
                 {i < STEPS.length - 1 && (
-                  <div className={`w-8 sm:w-14 h-px mx-2 sm:mx-3 ${step > s.id ? 'bg-[#c49a3c]' : 'bg-[#e8e0d5]'}`} />
+                  <div className={`w-8 sm:w-14 h-px mx-2 sm:mx-3 ${step > s.id ? 'bg-ds-success' : 'bg-ds-border'}`} />
                 )}
               </div>
             ))}
@@ -131,81 +131,81 @@ export default function CheckoutPage() {
 
             {/* Step 1: Customer data */}
             {step === 1 && (
-              <div className="bg-white p-6 sm:p-8">
-                <h2 className="font-serif-display text-xl text-[#1a1a1a] mb-6">Данни за клиента</h2>
+              <div className="bg-ds-card border border-ds-border shadow-ds-soft p-6 sm:p-8">
+                <h2 className="font-serif-display text-xl text-ds-text mb-6">Данни за клиента</h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Име *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Име *</label>
                       <input value={form.firstName} onChange={e => setField('firstName', e.target.value)}
                         placeholder="Въведи име"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Фамилия *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Фамилия *</label>
                       <input value={form.lastName} onChange={e => setField('lastName', e.target.value)}
                         placeholder="Въведи фамилия"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Имейл адрес *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Имейл адрес *</label>
                       <input type="email" value={form.email} onChange={e => setField('email', e.target.value)}
                         placeholder="Въведи имейл адрес"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Телефон *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Телефон *</label>
                       <input type="tel" value={form.phone} onChange={e => setField('phone', e.target.value)}
                         placeholder="Въведи телефон"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                   </div>
                   <label className="flex items-center gap-2.5 cursor-pointer">
                     <input type="checkbox" checked={form.newsletter}
                       onChange={e => setField('newsletter', e.target.checked)}
-                      className="w-4 h-4 accent-[#c49a3c]" />
-                    <span className="text-[12px] text-[#6b6b6b]">Абонирай се за нашия бюлетин и получавай ексклузивни предложения и новини.</span>
+                      className="w-4 h-4 accent-ds-gold" />
+                    <span className="text-[12px] text-ds-text-secondary">Абонирай се за нашия бюлетин и получавай ексклузивни предложения и новини.</span>
                   </label>
                 </div>
 
-                <h2 className="font-serif-display text-xl text-[#1a1a1a] mt-8 mb-5">Адрес за доставка</h2>
+                <h2 className="font-serif-display text-xl text-ds-text mt-8 mb-5">Адрес за доставка</h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Държава / Регион *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Държава / Регион *</label>
                       <select value={form.country} onChange={e => setField('country', e.target.value)}
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] outline-none focus:border-[#c49a3c] bg-white">
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text outline-none focus:border-ds-gold bg-ds-card">
                         <option>България</option>
                         <option>Румъния</option>
                         <option>Гърция</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Град *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Град *</label>
                       <input value={form.city} onChange={e => setField('city', e.target.value)}
                         placeholder="Въведи град"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                   </div>
                   <div className="grid grid-cols-[1fr_auto] gap-4">
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Адрес *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Адрес *</label>
                       <input value={form.address} onChange={e => setField('address', e.target.value)}
                         placeholder="Въведи адрес"
-                        className="w-full border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-full border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-medium text-[#1a1a1a] mb-1.5">Пощ. код *</label>
+                      <label className="block text-[12px] font-medium text-ds-text mb-1.5">Пощ. код *</label>
                       <input value={form.postcode} onChange={e => setField('postcode', e.target.value)}
                         placeholder="1000"
-                        className="w-[110px] border border-[#e8e0d5] px-3.5 py-2.5 text-[13px] text-[#1a1a1a] placeholder-[#c0b8b0] outline-none focus:border-[#c49a3c]" />
+                        className="w-[110px] border border-ds-border px-3.5 py-2.5 text-[13px] text-ds-text placeholder-ds-text-muted outline-none focus:border-ds-gold" />
                     </div>
                   </div>
                   <label className="flex items-center gap-2.5 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 accent-[#c49a3c]" />
-                    <span className="text-[12px] text-[#6b6b6b]">Доставка до различен адрес</span>
+                    <input type="checkbox" className="w-4 h-4 accent-ds-gold" />
+                    <span className="text-[12px] text-ds-text-secondary">Доставка до различен адрес</span>
                   </label>
                 </div>
               </div>
@@ -213,24 +213,24 @@ export default function CheckoutPage() {
 
             {/* Step 2: Delivery */}
             {step === 2 && (
-              <div className="bg-white p-6 sm:p-8">
-                <h2 className="font-serif-display text-xl text-[#1a1a1a] mb-6">Метод на доставка</h2>
+              <div className="bg-ds-card border border-ds-border shadow-ds-soft p-6 sm:p-8">
+                <h2 className="font-serif-display text-xl text-ds-text mb-6">Метод на доставка</h2>
                 <div className="space-y-3">
                   {DELIVERY_OPTIONS.map(opt => (
                     <label
                       key={opt.id}
                       className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition-colors ${
-                        delivery === opt.id ? 'border-[#c49a3c] bg-[#fdf9f0]' : 'border-[#e8e0d5] hover:border-[#c49a3c]/50'
+                        delivery === opt.id ? 'border-ds-gold bg-ds-soft' : 'border-ds-border hover:border-ds-gold/50'
                       }`}
                     >
                       <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id}
-                        onChange={() => setDelivery(opt.id)} className="accent-[#c49a3c]" />
+                        onChange={() => setDelivery(opt.id)} className="accent-ds-gold" />
                       <span className="text-xl">{opt.icon}</span>
                       <div className="flex-1">
-                        <p className="text-[13px] font-medium text-[#1a1a1a]">{opt.label}</p>
-                        <p className="text-[11px] text-[#9e9e9e]">{opt.sub}</p>
+                        <p className="text-[13px] font-medium text-ds-text">{opt.label}</p>
+                        <p className="text-[11px] text-ds-text-muted">{opt.sub}</p>
                       </div>
-                      <p className="text-[13px] font-bold text-[#1a1a1a]">
+                      <p className="text-[13px] font-bold text-ds-text">
                         {opt.price === 0 ? 'над 100 лв.' : `${opt.price.toFixed(2)} лв.`}
                       </p>
                     </label>
@@ -241,33 +241,33 @@ export default function CheckoutPage() {
 
             {/* Step 3: Payment */}
             {step === 3 && (
-              <div className="bg-white p-6 sm:p-8">
-                <h2 className="font-serif-display text-xl text-[#1a1a1a] mb-6">Метод на плащане</h2>
+              <div className="bg-ds-card border border-ds-border shadow-ds-soft p-6 sm:p-8">
+                <h2 className="font-serif-display text-xl text-ds-text mb-6">Метод на плащане</h2>
                 <div className="space-y-3">
                   {PAYMENT_OPTIONS.map(opt => (
                     <label
                       key={opt.id}
                       className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition-colors ${
-                        payment === opt.id ? 'border-[#c49a3c] bg-[#fdf9f0]' : 'border-[#e8e0d5] hover:border-[#c49a3c]/50'
+                        payment === opt.id ? 'border-ds-gold bg-ds-soft' : 'border-ds-border hover:border-ds-gold/50'
                       }`}
                     >
                       <input type="radio" name="payment" value={opt.id} checked={payment === opt.id}
-                        onChange={() => setPayment(opt.id)} className="accent-[#c49a3c]" />
+                        onChange={() => setPayment(opt.id)} className="accent-ds-gold" />
                       <span className="text-xl">{opt.icon}</span>
                       <div className="flex-1">
-                        <p className="text-[13px] font-medium text-[#1a1a1a]">{opt.label}</p>
-                        <p className="text-[11px] text-[#9e9e9e]">{opt.sub}</p>
+                        <p className="text-[13px] font-medium text-ds-text">{opt.label}</p>
+                        <p className="text-[11px] text-ds-text-muted">{opt.sub}</p>
                       </div>
                     </label>
                   ))}
                 </div>
                 <label className="flex items-start gap-2.5 mt-6 cursor-pointer">
-                  <input type="checkbox" required className="w-4 h-4 accent-[#c49a3c] mt-0.5" />
-                  <span className="text-[12px] text-[#6b6b6b]">
+                  <input type="checkbox" required className="w-4 h-4 accent-ds-gold mt-0.5" />
+                  <span className="text-[12px] text-ds-text-secondary">
                     Съгласявам се с{' '}
-                    <Link href="/about" className="text-[#c49a3c] underline">Общите условия</Link>
+                    <Link href="/about" className="text-ds-gold underline">Общите условия</Link>
                     {' '}и{' '}
-                    <Link href="/about" className="text-[#c49a3c] underline">Политиката за поверителност</Link>.
+                    <Link href="/about" className="text-ds-gold underline">Политиката за поверителност</Link>.
                   </span>
                 </label>
               </div>
@@ -275,12 +275,12 @@ export default function CheckoutPage() {
 
             {/* Step 4: Confirmation */}
             {step === 4 && (
-              <div className="bg-white p-6 sm:p-8 text-center">
-                <div className="w-16 h-16 bg-[#fdf9f0] border-2 border-[#c49a3c] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check size={28} className="text-[#c49a3c]" />
+              <div className="bg-ds-card border border-ds-border shadow-ds-soft p-6 sm:p-8 text-center">
+                <div className="w-16 h-16 bg-ds-soft border-2 border-ds-gold rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check size={28} className="text-ds-gold" />
                 </div>
-                <h2 className="font-serif-display text-2xl text-[#1a1a1a] mb-2">Поръчката е приета!</h2>
-                <p className="text-[13px] text-[#6b6b6b]">Ще получите потвърждение на посочения имейл адрес.</p>
+                <h2 className="font-serif-display text-2xl text-ds-text mb-2">Поръчката е приета!</h2>
+                <p className="text-[13px] text-ds-text-secondary">Ще получите потвърждение на посочения имейл адрес.</p>
               </div>
             )}
 
@@ -289,7 +289,7 @@ export default function CheckoutPage() {
               {step > 1 && step < 4 && (
                 <button
                   onClick={goBack}
-                  className="flex items-center gap-2 px-6 py-3.5 border border-[#e8e0d5] text-[12px] font-bold tracking-widest uppercase text-[#1a1a1a] hover:bg-[#f5f0eb] transition-colors"
+                  className="flex items-center gap-2 px-6 py-3.5 border border-ds-border text-[12px] font-bold tracking-widest uppercase text-ds-text hover:bg-ds-main transition-colors"
                 >
                   <ChevronLeft size={15} />
                   НАЗАД
@@ -298,7 +298,7 @@ export default function CheckoutPage() {
               {step < 3 && (
                 <button
                   onClick={goNext}
-                  className="flex-1 bg-[#c49a3c] hover:bg-[#a07c28] text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
+                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
                 >
                   ПРОДЪЛЖИ
                 </button>
@@ -306,7 +306,7 @@ export default function CheckoutPage() {
               {step === 3 && (
                 <button
                   onClick={submitOrder}
-                  className="flex-1 bg-[#c49a3c] hover:bg-[#a07c28] text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
+                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
                 >
                   ЗАВЪРШИ ПОРЪЧКАТА
                 </button>
@@ -318,27 +318,27 @@ export default function CheckoutPage() {
           <div>
             {/* Mobile toggle */}
             <button
-              className="lg:hidden w-full flex items-center justify-between p-4 bg-white border border-[#e8e0d5] mb-4"
+              className="lg:hidden w-full flex items-center justify-between p-4 bg-ds-card border border-ds-border mb-4"
               onClick={() => setSummaryOpen(!summaryOpen)}
             >
-              <span className="text-[13px] font-bold text-[#1a1a1a]">Вашата поръчка</span>
+              <span className="text-[13px] font-bold text-ds-text">Вашата поръчка</span>
               {summaryOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
 
-            <div className={`bg-white p-6 sm:p-7 ${!summaryOpen ? 'hidden lg:block' : ''}`}>
-              <h2 className="font-serif-display text-xl text-[#1a1a1a] mb-5 hidden lg:block">Вашата поръчка</h2>
+            <div className={`bg-ds-card border border-ds-border shadow-ds-card p-6 sm:p-7 ${!summaryOpen ? 'hidden lg:block' : ''}`}>
+              <h2 className="font-serif-display text-xl text-ds-text mb-5 hidden lg:block">Вашата поръчка</h2>
 
-              <div className="divide-y divide-[#f0ebe3] mb-5">
+              <div className="divide-y divide-ds-border mb-5">
                 {items.map(item => (
                   <div key={item.id} className="flex gap-3 py-3">
-                    <div className="w-12 h-14 overflow-hidden bg-[#f5f0eb] shrink-0">
+                    <div className="w-12 h-14 overflow-hidden bg-ds-image shrink-0">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#1a1a1a] truncate">{item.name}</p>
-                      <p className="text-[11px] text-[#9e9e9e]">Размер: {item.size} · Бр: {item.quantity}</p>
+                      <p className="text-[12px] font-medium text-ds-text truncate">{item.name}</p>
+                      <p className="text-[11px] text-ds-text-muted">Размер: {item.size} · Бр: {item.quantity}</p>
                     </div>
-                    <p className="text-[12px] font-bold text-[#1a1a1a] shrink-0">
+                    <p className="text-[12px] font-bold text-ds-text shrink-0">
                       {(item.price * item.quantity).toFixed(2)} лв.
                     </p>
                   </div>
@@ -347,7 +347,7 @@ export default function CheckoutPage() {
 
               {/* Coupon */}
               <div className="mb-4">
-                <button className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors flex items-center gap-1">
+                <button className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-1">
                   Имате код за отстъпка? <ChevronDown size={14} />
                 </button>
                 <div className="flex gap-0 mt-2">
@@ -355,9 +355,9 @@ export default function CheckoutPage() {
                     value={coupon}
                     onChange={e => setCoupon(e.target.value)}
                     placeholder="Въведи код"
-                    className="flex-1 border border-[#e8e0d5] px-3 py-2 text-[12px] outline-none focus:border-[#c49a3c]"
+                    className="flex-1 border border-ds-border px-3 py-2 text-[12px] outline-none focus:border-ds-gold"
                   />
-                  <button className="bg-[#1a1a1a] text-white text-[11px] font-bold px-4 uppercase hover:bg-[#333] transition-colors">
+                  <button className="border border-ds-gold bg-transparent text-ds-gold text-[11px] font-bold px-4 uppercase hover:bg-ds-gold hover:text-white transition-colors">
                     ПРИЛОЖИ
                   </button>
                 </div>
@@ -366,19 +366,19 @@ export default function CheckoutPage() {
               {/* Totals */}
               <div className="space-y-2.5 text-[13px] border-t border-[#f0ebe3] pt-4 mb-4">
                 <div className="flex justify-between">
-                  <span className="text-[#6b6b6b]">Междинна сума</span>
-                  <span className="text-[#1a1a1a]">{subtotal.toFixed(2)} лв.</span>
+                  <span className="text-ds-text-secondary">Междинна сума</span>
+                  <span className="text-ds-text">{subtotal.toFixed(2)} лв.</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#6b6b6b]">Доставка</span>
-                  <span className="text-[#1a1a1a]">{deliveryCost === 0 ? 'Безплатна' : `${deliveryCost.toFixed(2)} лв.`}</span>
+                  <span className="text-ds-text-secondary">Доставка</span>
+                  <span className="text-ds-text">{deliveryCost === 0 ? 'Безплатна' : `${deliveryCost.toFixed(2)} лв.`}</span>
                 </div>
               </div>
-              <div className="flex justify-between items-baseline pt-3 border-t border-[#e8e0d5] mb-6">
-                <span className="text-[14px] font-bold text-[#1a1a1a]">Общо</span>
+              <div className="flex justify-between items-baseline pt-3 border-t border-ds-border mb-6">
+                <span className="text-[14px] font-bold text-ds-text">Общо</span>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-[#c49a3c]">{total.toFixed(2)} лв.</p>
-                  <p className="text-[10px] text-[#9e9e9e]">с ДДС</p>
+                  <p className="text-2xl font-bold text-ds-gold">{total.toFixed(2)} лв.</p>
+                  <p className="text-[10px] text-ds-text-muted">с ДДС</p>
                 </div>
               </div>
 
@@ -390,8 +390,8 @@ export default function CheckoutPage() {
                   { Icon: RotateCcw, text: 'Лесно връщане до 14 дни' },
                   { Icon: Headphones, text: 'Поддръжка на клиенти' },
                 ].map(({ Icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 text-[11px] text-[#9e9e9e]">
-                    <Icon size={13} className="text-[#c49a3c] shrink-0" />
+                  <div key={text} className="flex items-center gap-2 text-[11px] text-ds-text-muted">
+                    <Icon size={13} className="text-ds-gold shrink-0" />
                     {text}
                   </div>
                 ))}

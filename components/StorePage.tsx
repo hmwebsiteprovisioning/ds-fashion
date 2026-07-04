@@ -47,7 +47,7 @@ interface StorePageProps {
 
 const ALL_COLORS = [
   { name: 'Бежово', hex: '#c8b49a' },
-  { name: 'Черно', hex: '#1a1a1a' },
+  { name: 'Черно', hex: '#1E1B18' },
   { name: 'Бяло', hex: '#f5f5f5' },
   { name: 'Кафяво', hex: '#6b4c3b' },
   { name: 'Сиво', hex: '#9e9e9e' },
@@ -96,26 +96,26 @@ export default function StorePage({ currentPage }: StorePageProps) {
   const FilterContent = () => (
     <div className="space-y-0">
       <div className="flex items-center justify-between mb-5">
-        <p className="text-[12px] font-bold tracking-widest uppercase text-[#1a1a1a]">Филтри</p>
+        <p className="text-[12px] font-bold tracking-widest uppercase text-ds-text">Филтри</p>
         {(selectedSizes.length || selectedColors.length) ? (
-          <button onClick={clearAll} className="text-[11px] text-[#c49a3c] hover:underline tracking-wide">
+          <button onClick={clearAll} className="text-[11px] text-ds-gold hover:underline tracking-wide">
             ИЗЧИСТИ ВСИЧКО
           </button>
         ) : null}
       </div>
 
       {/* Category */}
-      <div className="border-t border-[#e8e0d5] py-4">
+      <div className="border-t border-ds-border py-4">
         <button className="flex items-center justify-between w-full" onClick={() => setCatOpen(!catOpen)}>
-          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Категория</span>
+          <span className="text-[12px] font-bold tracking-wide text-ds-text">Категория</span>
           {catOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {catOpen && (
           <div className="mt-3 space-y-2">
             {WOMEN_CATEGORIES.map(cat => (
               <div key={cat.name} className="flex items-center justify-between">
-                <button className="text-[12px] text-[#6b6b6b] hover:text-[#c49a3c] transition-colors text-left">{cat.name}</button>
-                <span className="text-[11px] text-[#9e9e9e]">{cat.count}</span>
+                <button className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors text-left">{cat.name}</button>
+                <span className="text-[11px] text-ds-text-muted">{cat.count}</span>
               </div>
             ))}
           </div>
@@ -123,9 +123,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
       </div>
 
       {/* Size */}
-      <div className="border-t border-[#e8e0d5] py-4">
+      <div className="border-t border-ds-border py-4">
         <button className="flex items-center justify-between w-full" onClick={() => setSizeOpen(!sizeOpen)}>
-          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Размер</span>
+          <span className="text-[12px] font-bold tracking-wide text-ds-text">Размер</span>
           {sizeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {sizeOpen && (
@@ -136,8 +136,8 @@ export default function StorePage({ currentPage }: StorePageProps) {
                 onClick={() => toggleSize(s)}
                 className={`text-[11px] px-3 py-1.5 border font-medium transition-colors ${
                   selectedSizes.includes(s)
-                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-white'
-                    : 'border-[#e0d8cf] text-[#6b6b6b] hover:border-[#1a1a1a]'
+                    ? 'border-ds-gold bg-ds-gold text-white'
+                    : 'border-ds-border bg-ds-main text-ds-text-secondary hover:border-ds-gold'
                 }`}
               >
                 {s}
@@ -148,9 +148,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
       </div>
 
       {/* Color */}
-      <div className="border-t border-[#e8e0d5] py-4">
+      <div className="border-t border-ds-border py-4">
         <button className="flex items-center justify-between w-full" onClick={() => setColorOpen(!colorOpen)}>
-          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Цвят</span>
+          <span className="text-[12px] font-bold tracking-wide text-ds-text">Цвят</span>
           {colorOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {colorOpen && (
@@ -162,12 +162,12 @@ export default function StorePage({ currentPage }: StorePageProps) {
                 title={c.name}
                 className={`w-6 h-6 rounded-full border-2 transition-all ${
                   selectedColors.includes(c.name)
-                    ? 'border-[#c49a3c] scale-110'
+                    ? 'border-ds-gold scale-110'
                     : 'border-transparent hover:scale-105'
                 }`}
                 style={{
                   backgroundColor: c.hex,
-                  boxShadow: '0 0 0 1px #e8e0d5',
+                  boxShadow: '0 0 0 1px #E2D6C8',
                 }}
               />
             ))}
@@ -176,9 +176,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
       </div>
 
       {/* Material */}
-      <div className="border-t border-[#e8e0d5] py-4">
+      <div className="border-t border-ds-border py-4">
         <button className="flex items-center justify-between w-full" onClick={() => setMatOpen(!matOpen)}>
-          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Материя</span>
+          <span className="text-[12px] font-bold tracking-wide text-ds-text">Материя</span>
           {matOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {matOpen && (
@@ -191,9 +191,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
                   onChange={() => setSelectedMaterials(prev =>
                     prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
                   )}
-                  className="w-3.5 h-3.5 accent-[#c49a3c]"
+                  className="w-3.5 h-3.5 accent-ds-gold"
                 />
-                <span className="text-[12px] text-[#6b6b6b] group-hover:text-[#1a1a1a] transition-colors">{m}</span>
+                <span className="text-[12px] text-ds-text-secondary group-hover:text-ds-text transition-colors">{m}</span>
               </label>
             ))}
           </div>
@@ -201,9 +201,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
       </div>
 
       {/* Price */}
-      <div className="border-t border-[#e8e0d5] py-4">
+      <div className="border-t border-ds-border py-4">
         <button className="flex items-center justify-between w-full" onClick={() => setPriceOpen(!priceOpen)}>
-          <span className="text-[12px] font-bold tracking-wide text-[#1a1a1a]">Цена</span>
+          <span className="text-[12px] font-bold tracking-wide text-ds-text">Цена</span>
           {priceOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
         {priceOpen && (
@@ -215,9 +215,9 @@ export default function StorePage({ currentPage }: StorePageProps) {
               step={10}
               value={priceMax}
               onChange={e => setPriceMax(Number(e.target.value))}
-              className="w-full accent-[#c49a3c]"
+              className="w-full accent-ds-gold"
             />
-            <div className="flex justify-between text-[11px] text-[#6b6b6b] mt-1">
+            <div className="flex justify-between text-[11px] text-ds-text-secondary mt-1">
               <span>49 лв.</span>
               <span>{priceMax === 1000 ? '699 лв.' : `${priceMax} лв.`}</span>
             </div>
@@ -228,16 +228,16 @@ export default function StorePage({ currentPage }: StorePageProps) {
   );
 
   return (
-    <div className="bg-[#faf8f5] min-h-screen">
+    <div className="bg-ds-main min-h-screen">
       {/* Editorial header */}
-      <div className="bg-white">
+      <div className="bg-ds-section">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
-              <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-[2.75rem] text-[#1a1a1a] mb-4 leading-tight">
+              <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-[2.75rem] text-ds-text mb-4 leading-tight">
                 {config.title}
               </h1>
-              <p className="text-[13px] sm:text-[14px] text-[#6b6b6b] leading-relaxed whitespace-pre-line">
+              <p className="text-[13px] sm:text-[14px] text-ds-text-secondary leading-relaxed whitespace-pre-line">
                 {config.description}
               </p>
             </div>
@@ -250,32 +250,32 @@ export default function StorePage({ currentPage }: StorePageProps) {
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-[12px] text-[#9e9e9e] mb-5">
-          <Link href="/" className="hover:text-[#c49a3c] transition-colors">Начало</Link>
+        <div className="flex items-center gap-2 text-[12px] text-ds-text-muted mb-5">
+          <Link href="/" className="hover:text-ds-gold transition-colors">Начало</Link>
           <span>/</span>
-          <span className="text-[#1a1a1a]">{config.title}</span>
+          <span className="text-ds-text">{config.title}</span>
         </div>
 
         {/* Count + Sort bar */}
         <div className="flex items-center justify-between mb-6 gap-4">
-          <p className="text-[12px] text-[#6b6b6b]">
+          <p className="text-[12px] text-ds-text-secondary">
             Показани 1–{Math.min(visibleCount, filtered.length)} от {filtered.length} продукта
           </p>
           <div className="flex items-center gap-3">
             {/* Mobile filter button */}
             <button
-              className="lg:hidden flex items-center gap-2 text-[12px] border border-[#e8e0d5] px-4 py-2 hover:border-[#1a1a1a] transition-colors"
+              className="lg:hidden flex items-center gap-2 text-[12px] border border-ds-gold bg-ds-card px-4 py-2 text-ds-text transition-colors"
               onClick={() => setFilterOpen(true)}
             >
               <SlidersHorizontal size={14} />
               ФИЛТРИ
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[#6b6b6b] hidden sm:inline">Сортирай:</span>
+              <span className="text-[12px] text-ds-text-secondary hidden sm:inline">Сортирай:</span>
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as SortOption)}
-                className="text-[12px] border border-[#e8e0d5] px-3 py-2 bg-white text-[#1a1a1a] outline-none cursor-pointer"
+                className="text-[12px] border border-ds-border px-3 py-2 bg-ds-card text-ds-text outline-none cursor-pointer"
               >
                 <option value="newest">Най-нови</option>
                 <option value="price-asc">Цена ↑</option>
@@ -288,14 +288,14 @@ export default function StorePage({ currentPage }: StorePageProps) {
 
         <div className="flex gap-8">
           {/* Desktop Sidebar */}
-          <aside className="hidden lg:block w-[210px] shrink-0">
+          <aside className="hidden lg:block w-[210px] shrink-0 bg-ds-card border border-ds-border p-4">
             <FilterContent />
           </aside>
 
           {/* Product grid */}
           <div className="flex-1 min-w-0">
             {filtered.length === 0 ? (
-              <div className="text-center py-16 text-[#9e9e9e] text-[14px]">Няма намерени продукти</div>
+              <div className="text-center py-16 text-ds-text-muted text-[14px]">Няма намерени продукти</div>
             ) : (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
@@ -307,7 +307,7 @@ export default function StorePage({ currentPage }: StorePageProps) {
                   <div className="text-center mt-10">
                     <button
                       onClick={() => setVisibleCount(n => n + 8)}
-                      className="px-10 py-3.5 border border-[#1a1a1a] text-[12px] font-bold tracking-widest uppercase text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors"
+                      className="px-10 py-3.5 border border-ds-gold text-[12px] font-bold tracking-widest uppercase text-ds-text hover:bg-ds-gold hover:text-white transition-colors"
                     >
                       ЗАРЕДИ ОЩЕ ПРОДУКТИ
                     </button>
@@ -323,7 +323,7 @@ export default function StorePage({ currentPage }: StorePageProps) {
       {filterOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setFilterOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[280px] bg-white overflow-y-auto p-6">
+          <div className="absolute left-0 top-0 h-full w-[280px] bg-ds-card overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[13px] font-bold tracking-widest">ФИЛТРИ</span>
               <button onClick={() => setFilterOpen(false)}><X size={20} /></button>
@@ -331,7 +331,7 @@ export default function StorePage({ currentPage }: StorePageProps) {
             <FilterContent />
             <button
               onClick={() => setFilterOpen(false)}
-              className="w-full mt-6 bg-[#c49a3c] text-white text-[12px] font-bold tracking-widest py-3.5 uppercase"
+              className="w-full mt-6 bg-ds-gold text-white text-[12px] font-bold tracking-widest py-3.5 uppercase"
             >
               ПОКАЖИ {filtered.length} ПРОДУКТА
             </button>
