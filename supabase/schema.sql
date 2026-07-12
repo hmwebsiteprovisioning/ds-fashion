@@ -1,0 +1,376 @@
+-- 1. INDEPENDENT TABLES (Create these first because nothing else depends on them)
+CREATE TABLE public.customers (
+  customerid uuid NOT NULL DEFAULT gen_random_uuid(),
+  firstname text NOT NULL,INSERT INTO public.store_settings (storename, themeid, language)
+VALUES ('ModaBox', 'default', 'bg');
+  lastname text NOT NULL,
+  email text NOT NULL UNIQUE,
+  telephone text NOT NULL,
+  country text NOT NULL DEFAULT 'Bulgaria'::text,
+  city text NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT customers_pkey PRIMARY KEY (customerid)
+);
+
+CREATE TABLE public.rfproducttype (
+  rfproducttypeid integer NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT rfproducttype_pkey PRIMARY KEY (rfproducttypeid)
+);
+
+CREATE TABLE public.properties (
+  propertyid uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  description text,
+  datatype text NOT NULL DEFAULT 'text'::text CHECK (datatype = ANY (ARRAY['text'::text, 'select'::text, 'number'::text])),
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT properties_pkey PRIMARY KEY (propertyid)
+);
+
+CREATE TABLE public.discounts (
+  discountid uuid NOT NULL DEFAULT gen_random_uuid(),
+  code character varying NOT NULL UNIQUE,
+  description text,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['percentage'::character varying, 'fixed'::character varying]::text[])),
+  value numeric NOT NULL CHECK (value > 0::numeric),
+  isactive boolean DEFAULT true,
+  expiresat timestamp with time zone CHECK (expiresat IS NULL OR expiresat > now()),
+  createdat timestamp with time zone DEFAULT now(),
+  updatedat timestamp with time zone DEFAULT now(),
+  CONSTRAINT discounts_pkey PRIMARY KEY (discountid)
+);
+
+CREATE TABLE public.store_settings (
+  storesettingsid uuid NOT NULL DEFAULT gen_random_uuid(),
+  storename text NOT NULL DEFAULT 'ModaBox'::text,
+  logourl text,
+  themeid text NOT NULL DEFAULT 'default'::text,
+  language text NOT NULL DEFAULT 'en'::text CHECK (language = ANY (ARRAY['en'::text, 'bg'::text])),
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  bannertext text,
+  bannerduration integer DEFAULT 5 CHECK (bannerduration > 0),
+  heroimageurl text,
+  discordurl text,
+  facebookurl text,
+  pinteresturl text,
+  youtubeurl text,
+  instagramurl text,
+  xurl text,
+  tiktokurl text,
+  email text,
+  yearofcreation integer,
+  telephonenumber text,
+  closingremarks text,
+  aboutusphoto text,
+  aboutustext text,
+  heroimagefocusx numeric DEFAULT 50 CHECK (heroimagefocusx >= 0::numeric AND heroimagefocusx <= 100::numeric),
+  heroimagefocusy numeric DEFAULT 50 CHECK (heroimagefocusy >= 0::numeric AND heroimagefocusy <= 100::numeric),
+  CONSTRAINT store_settings_pkey PRIMARY KEY (storesettingsid)
+);
+
+CREATE TABLE public.visitor_sessions (
+  sessionid uuid NOT NULL DEFAULT gen_random_uuid(),
+  visitorid text NOT NULL,
+  ip_address text,
+  country text,
+  device_type text,
+  browser text,
+  browser_version text,
+  os text,
+  os_version text,
+  referrer text,
+  referrer_category text,
+  entry_page text,
+  exit_page text,
+  page_views integer DEFAULT 1 CHECK (page_views >= 0),
+  session_duration integer DEFAULT 0 CHECK (session_duration >= 0),
+  is_bounce boolean DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  last_activity timestamp with time zone NOT NULL DEFAULT now(),
+  consent_given boolean DEFAULT true,
+  CONSTRAINT visitor_sessions_pkey PRIMARY KEY (sessionid)
+);
+
+CREATE TABLE public.visitor_stats (
+  statid uuid NOT NULL DEFAULT gen_random_uuid(),
+  date date NOT NULL,
+  hour integer CHECK (hour >= 0 AND hour <= 23),
+  country text,
+  device_type text,
+  browser text,
+  os text,
+  referrer_category text,
+  total_visitors integer DEFAULT 0,
+  total_sessions integer DEFAULT 0,
+  total_pageviews integer DEFAULT 0,
+  bounced_sessions integer DEFAULT 0,
+  avg_session_duration integer DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT visitor_stats_pkey PRIMARY KEY (statid)
+);
+
+CREATE TABLE public.testimonials (
+  testimonialid uuid NOT NULL DEFAULT gen_random_uuid(),
+  imageurl text NOT NULL,
+  sortorder integer NOT NULL DEFAULT 0,
+  isactive boolean NOT NULL DEFAULT true,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT testimonials_pkey PRIMARY KEY (testimonialid)
+);
+
+CREATE TABLE public.users (
+  userid uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  phone text NOT NULL,
+  password text NOT NULL,
+  locationtext text,
+  locationcoordinates text,
+  addressinstructions text,
+  reset_token text,
+  reset_token_expiry timestamp with time zone,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  preferred_delivery_type text,
+  preferred_econt_office_id text,
+  preferred_city text,
+  preferred_street text,
+  preferred_street_number text,
+  preferred_entrance text,
+  preferred_floor text,
+  preferred_apartment text,
+  CONSTRAINT users_pkey PRIMARY KEY (userid)
+);
+
+CREATE TABLE public.product_types (
+  producttypeid uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  parent_producttypeid uuid,
+  CONSTRAINT product_types_pkey PRIMARY KEY (producttypeid),
+  CONSTRAINT product_types_parent_producttypeid_fkey FOREIGN KEY (parent_producttypeid) REFERENCES public.product_types(producttypeid)
+);
+
+-- 2. LEVEL 1 DEPENDENCIES (Tables that depend on the master tables above)
+CREATE TABLE public.orders (
+  orderid text NOT NULL,
+  deliverytype text NOT NULL,
+  deliverynotes text,
+  subtotal numeric NOT NULL CHECK (subtotal >= 0::numeric),
+  deliverycost numeric NOT NULL CHECK (deliverycost >= 0::numeric),
+  total numeric NOT NULL CHECK (total >= 0::numeric),
+  status text NOT NULL DEFAULT 'pending'::text,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  customerid uuid NOT NULL,
+  discountcode text,
+  discounttype text,
+  discountvalue numeric,
+  discountamount numeric DEFAULT 0,
+  econtoffice text,
+  deliverystreet text,
+  deliverystreetnumber text,
+  deliveryentrance text,
+  deliveryfloor text,
+  deliveryapartment text,
+  customer_order_note text,
+  internal_note text,
+  delivery_region text,
+  return_stock_applied boolean NOT NULL DEFAULT false,
+  CONSTRAINT orders_pkey PRIMARY KEY (orderid),
+  CONSTRAINT orders_customerid_fkey FOREIGN KEY (customerid) REFERENCES public.customers(customerid)
+);
+
+CREATE TABLE public.products (
+  productid uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  sku text UNIQUE,
+  description text,
+  producttypeid uuid NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  isdeleted boolean NOT NULL DEFAULT false,
+  rfproducttypeid integer DEFAULT 1,
+  isfeatured boolean NOT NULL DEFAULT false,
+  subtitle text,
+  isdisabled boolean NOT NULL DEFAULT false,
+  CONSTRAINT products_pkey PRIMARY KEY (productid),
+  CONSTRAINT products_producttypeid_fkey FOREIGN KEY (producttypeid) REFERENCES public.product_types(producttypeid),
+  CONSTRAINT products_rfproducttypeid_fkey FOREIGN KEY (rfproducttypeid) REFERENCES public.rfproducttype(rfproducttypeid)
+);
+
+CREATE TABLE public.property_values (
+  propertyvalueid uuid NOT NULL DEFAULT gen_random_uuid(),
+  propertyid uuid NOT NULL,
+  value text NOT NULL,
+  displayorder integer NOT NULL DEFAULT 0,
+  isactive boolean NOT NULL DEFAULT true,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT property_values_pkey PRIMARY KEY (propertyvalueid),
+  CONSTRAINT property_values_propertyid_fkey FOREIGN KEY (propertyid) REFERENCES public.properties(propertyid)
+);
+
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text,
+  role text DEFAULT 'customer'::text CHECK (role = ANY (ARRAY['customer'::text, 'admin'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+
+CREATE TABLE public.admin_order_tracking_views (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  name text NOT NULL,
+  table_key text NOT NULL DEFAULT 'order_tracking'::text,
+  visible_columns jsonb NOT NULL DEFAULT '[]'::jsonb,
+  filters jsonb,
+  sorting jsonb,
+  is_default boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT admin_order_tracking_views_pkey PRIMARY KEY (id),
+  CONSTRAINT admin_order_tracking_views_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+-- 3. LEVEL 2 DEPENDENCIES (Tables dependent on products, orders, etc.)
+CREATE TABLE public.product_variants (
+  productvariantid uuid NOT NULL DEFAULT gen_random_uuid(),
+  productid uuid NOT NULL,
+  sku text UNIQUE,
+  price numeric CHECK (price >= 0::numeric),
+  quantity integer NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+  trackquantity boolean NOT NULL DEFAULT true,
+  isvisible boolean NOT NULL DEFAULT true,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT product_variants_pkey PRIMARY KEY (productvariantid),
+  CONSTRAINT product_variants_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid)
+);
+
+CREATE TABLE public.order_status_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  order_id text NOT NULL,
+  old_status text,
+  new_status text NOT NULL,
+  note text,
+  changed_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT order_status_history_pkey PRIMARY KEY (id),
+  CONSTRAINT order_status_history_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(orderid)
+);
+
+CREATE TABLE public.product_property_values (
+  productpropertyvalueid uuid NOT NULL DEFAULT gen_random_uuid(),
+  productid uuid NOT NULL,
+  propertyid uuid NOT NULL,
+  value text NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  updatedat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT product_property_values_pkey PRIMARY KEY (productpropertyvalueid),
+  CONSTRAINT product_property_values_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid),
+  CONSTRAINT product_property_values_propertyid_fkey FOREIGN KEY (propertyid) REFERENCES public.properties(propertyid)
+);
+
+CREATE TABLE public.product_type_properties (
+  producttypepropertyid uuid NOT NULL DEFAULT gen_random_uuid(),
+  producttypeid uuid NOT NULL,
+  propertyid uuid NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT product_type_properties_pkey PRIMARY KEY (producttypepropertyid),
+  CONSTRAINT product_type_properties_producttypeid_fkey FOREIGN KEY (producttypeid) REFERENCES public.product_types(producttypeid),
+  CONSTRAINT product_type_properties_propertyid_fkey FOREIGN KEY (propertyid) REFERENCES public.properties(propertyid)
+);
+
+CREATE TABLE public.related_products (
+  relatedproductid uuid NOT NULL DEFAULT gen_random_uuid(),
+  productid uuid NOT NULL,
+  relatedproductid_ref uuid NOT NULL,
+  displayorder integer NOT NULL DEFAULT 0,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT related_products_pkey PRIMARY KEY (relatedproductid),
+  CONSTRAINT related_products_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid),
+  CONSTRAINT related_products_relatedproductid_fkey FOREIGN KEY (relatedproductid_ref) REFERENCES public.products(productid)
+);
+
+CREATE TABLE public.favorite_products (
+  favoriteid uuid NOT NULL DEFAULT gen_random_uuid(),
+  userid uuid NOT NULL,
+  productid uuid NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT favorite_products_pkey PRIMARY KEY (favoriteid),
+  CONSTRAINT favorite_products_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid),
+  CONSTRAINT favorite_products_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid)
+);
+
+-- 4. LEVEL 3 DEPENDENCIES (Tables dependent on variants + other complex combinations)
+CREATE TABLE public.order_items (
+  orderitemid uuid NOT NULL DEFAULT gen_random_uuid(),
+  orderid text NOT NULL,
+  productvariantid uuid,
+  quantity integer NOT NULL CHECK (quantity > 0),
+  price numeric NOT NULL CHECK (price >= 0::numeric),
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  productid uuid,
+  CONSTRAINT order_items_pkey PRIMARY KEY (orderitemid),
+  CONSTRAINT order_items_orderid_fkey FOREIGN KEY (orderid) REFERENCES public.orders(orderid),
+  CONSTRAINT order_items_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid),
+  CONSTRAINT order_items_productvariantid_fkey FOREIGN KEY (productvariantid) REFERENCES public.product_variants(productvariantid)
+);
+
+CREATE TABLE public.product_images (
+  productimageid uuid NOT NULL DEFAULT gen_random_uuid(),
+  productid uuid NOT NULL,
+  productvariantid uuid,
+  imageurl text NOT NULL,
+  alttext text,
+  sortorder integer NOT NULL DEFAULT 0,
+  isprimary boolean NOT NULL DEFAULT false,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT product_images_pkey PRIMARY KEY (productimageid),
+  CONSTRAINT product_images_productid_fkey FOREIGN KEY (productid) REFERENCES public.products(productid),
+  CONSTRAINT product_images_variantid_fkey FOREIGN KEY (productvariantid) REFERENCES public.product_variants(productvariantid)
+);
+
+CREATE TABLE public.product_variant_property_values (
+  productvariantpropertyvalueid uuid NOT NULL DEFAULT gen_random_uuid(),
+  productvariantid uuid NOT NULL,
+  propertyid uuid NOT NULL,
+  value text NOT NULL,
+  createdat timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT product_variant_property_values_pkey PRIMARY KEY (productvariantpropertyvalueid),
+  CONSTRAINT product_variant_property_values_propertyid_fkey FOREIGN KEY (propertyid) REFERENCES public.properties(propertyid),
+  CONSTRAINT product_variant_property_values_variantid_fkey FOREIGN KEY (productvariantid) REFERENCES public.product_variants(productvariantid)
+);
+
+CREATE TABLE public.stock_movements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  productvariantid uuid NOT NULL,
+  movement_type text NOT NULL,
+  quantity_change integer NOT NULL,
+  reason text,
+  related_order_id text,
+  note text,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT stock_movements_pkey PRIMARY KEY (id),
+  CONSTRAINT stock_movements_productvariantid_fkey FOREIGN KEY (productvariantid) REFERENCES public.product_variants(productvariantid)
+);
+
+INSERT INTO public.store_settings (storename, themeid, language)
+VALUES ('ModaBox', 'default', 'bg');
+
+INSERT INTO public.profiles (id, email, role)
+VALUES (
+  '3b85f2f3-22c6-4c6c-a615-e4f8aed1c54d',
+  'ds-fashion@gmail.com',
+  'admin'
+);
