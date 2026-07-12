@@ -1,0 +1,27 @@
+---
+description: Admin dashboard philosophy and global architecture (Section I)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# I. Core Dashboard Philosophy & Global Architecture
+
+## Prime Rule
+- A dashboard must do one thing well. If it requires a PhD to operate or looks like "a drawer emptied onto the screen," it is too complex.
+- Reject feature sprawl; prioritize the single most important workflow per view.
+
+## Dashboards vs. Landing Pages
+- **Scale**: Dashboard features are much smaller than landing page features — optimize for high data density.
+- **Typography**: Use smaller font sizes with very tight spacing between typographic sizes (`text-xs`, `text-sm` for meta; compact headings).
+- **Grid adherence**: Follow grids and layouts strictly — utilize most or all screen real estate.
+- **Contextual priority**: The main section must instantly reflect what matters most (orders/sales status for this store).
+
+## Primary View Grid Structure
+- Use a simple, rigid **two-column, two-row grid** for the primary dashboard view.
+- **Top row**: Data management (lists, tables, actionable records — e.g. recent orders, top products).
+- **Bottom row**: Key metrics and charts (KPI cards, line/bar charts).
+- Do not place KPI cards above data lists on the main dashboard.
+
+## Implementation
+- Use `AdminPage` → `PageHeader` → `Section` → `Card` from `@/app/admin/components/layout`.
+- See `ADMIN_LAYOUT_SYSTEM_SPEC.md` for tokens.

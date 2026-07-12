@@ -1,4 +1,4 @@
-# ModaBox - E-commerce Store
+# ds-fashion - E-commerce Store
 
 A comprehensive, modern e-commerce platform built with Next.js 16, featuring a complete admin panel, multi-language support, and advanced product management capabilities.
 

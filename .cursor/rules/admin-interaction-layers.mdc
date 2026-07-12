@@ -1,0 +1,33 @@
+---
+description: Admin modals, popovers, toasts, and navigation layers (Section V)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# V. Interaction Layers: Modals, Popovers, & Toasts
+
+## Popovers (Non-blocking)
+- Use `AdminPopover` for simple contexts: display settings, quick filters, date ranges.
+- Non-blocking: user can click away anywhere to close without consequence.
+
+## Modals (Blocking)
+- Use `AdminModal` for complex actions: create/edit product, create order, receive stock.
+- Blocking (default): user must explicitly click Create/Save or Cancel before interacting with the page.
+- Set `blocking={false}` only for lightweight overlays.
+
+## Toasts
+- Use `useAdminToast` for global notifications — never `window.alert` or `window.confirm`.
+- Use cases: confirming modal changes, warnings, error states.
+- Toasts inform without taking over the screen.
+
+## New Pages vs. In-Page Context
+- Route to a new page only for **permanent or massive** context (deep analytics of a single entity).
+- If routing to a new page, require a **Back button** or **Breadcrumbs** trail.
+- Prefer `AdminTabs` for related views on the same page.
+
+## Confirmations
+- Use `AdminConfirmDialog` for destructive actions — not native `confirm()`.
+
+## Implementation
+- `AdminToastProvider` wired in `AdminLayout`.
+- `AdminModal` footer slot for explicit action buttons.

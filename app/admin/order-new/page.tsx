@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import AdminLayout from '../components/AdminLayout';
-import { getAdminSession } from '@/lib/auth';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Plus, Trash2, X } from 'lucide-react';
+import { useAdminToast } from '../components/AdminToast';
+import { AdminPage, PageHeader } from '../components/layout';
 
 interface StockVariant {
   productvariantid: string;
@@ -93,11 +92,9 @@ function stockWarningBg(language: string, available: number, lineQty: number): s
 }
 
 export default function AdminNewOrderPage() {
-  const router = useRouter();
   const { language } = useLanguage();
   const { theme } = useTheme();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const toast = useAdminToast();
   const [variants, setVariants] = useState<StockVariant[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [dismissed, setDismissed] = useState<Record<string, boolean>>({});
@@ -115,33 +112,18 @@ export default function AdminNewOrderPage() {
   const [pickProductId, setPickProductId] = useState('');
   const [pickVariant, setPickVariant] = useState('');
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const session = await getAdminSession();
-        if (!session) {
-          router.push('/admin/login');
-          return;
-        }
-        setIsAuthenticated(true);
-      } catch {
-        router.push('/admin/login');
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [router]);
+    document.title = language === 'bg' ? 'Нова поръчка' : 'New order';
+  }, [language]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     (async () => {
       const res = await fetch('/api/admin/stock');
       const data = await res.json();
       if (data.success) setVariants(data.variants || []);
     })();
-  }, [isAuthenticated]);
+  }, []);
 
   const variantMap = useMemo(() => {
     const m = new Map<string, StockVariant>();
@@ -202,13 +184,12 @@ export default function AdminNewOrderPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMsg(null);
     if (!fullName.trim() || !phone.trim() || !city.trim()) {
-      setMsg(language === 'bg' ? 'Попълни име, телефон и град.' : 'Fill name, phone and city.');
+      toast.warning(language === 'bg' ? 'Попълни име, телефон и град.' : 'Fill name, phone and city.');
       return;
     }
     if (!lines.length) {
-      setMsg(language === 'bg' ? 'Добави поне един ред.' : 'Add at least one line.');
+      toast.warning(language === 'bg' ? 'Добави поне един ред.' : 'Add at least one line.');
       return;
     }
     setSaving(true);
@@ -240,7 +221,9 @@ export default function AdminNewOrderPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setMsg(language === 'bg' ? `Поръчката е създадена: ${data.orderId}` : `Order created: ${data.orderId}`);
+        toast.success(
+          language === 'bg' ? `Поръчката е създадена: ${data.orderId}` : `Order created: ${data.orderId}`
+        );
         setLines([]);
         setFullName('');
         setPhone('');
@@ -254,36 +237,27 @@ export default function AdminNewOrderPage() {
         const stockJson = await stockRes.json();
         if (stockJson.success) setVariants(stockJson.variants || []);
       } else {
-        setMsg(data.error || 'Error');
+        toast.error(data.error || (language === 'bg' ? 'Грешка' : 'Error'));
       }
     } catch {
-      setMsg(language === 'bg' ? 'Мрежова грешка' : 'Network error');
+      toast.error(language === 'bg' ? 'Мрежова грешка' : 'Network error');
     } finally {
       setSaving(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-      </div>
-    );
-  }
-  if (!isAuthenticated) return null;
-
   return (
-    <AdminLayout currentPath="/admin/order-new">
-      <div className="p-3 sm:p-4 lg:p-6 max-w-3xl mx-auto space-y-6 pb-24">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.colors.text }}>
-            {language === 'bg' ? 'Нова поръчка' : 'New order'}
-          </h1>
-          <p className="mt-2 text-sm" style={{ color: theme.colors.textSecondary }}>
-            {language === 'bg' ? 'Стоката се намалява автоматично при запис (сървърно).' : 'Stock is decreased on save (server-side).'}
-          </p>
-        </div>
+    <AdminPage>
+      <PageHeader
+        title={language === 'bg' ? 'Нова поръчка' : 'New order'}
+        subtitle={
+          language === 'bg'
+            ? 'Стоката се намалява автоматично при запис (сървърно).'
+            : 'Stock is decreased on save (server-side).'
+        }
+      />
 
+      <div className="max-w-3xl mx-auto space-y-6 pb-24">
         <form onSubmit={submit} className="space-y-8">
           <section className="rounded-xl border p-4 space-y-3" style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}>
             <h2 className="font-semibold" style={{ color: theme.colors.text }}>
@@ -496,8 +470,6 @@ export default function AdminNewOrderPage() {
             </div>
           </section>
 
-          {msg && <p className="text-sm text-center text-gray-700">{msg}</p>}
-
           <button
             type="submit"
             disabled={saving}
@@ -508,6 +480,6 @@ export default function AdminNewOrderPage() {
           </button>
         </form>
       </div>
-    </AdminLayout>
+    </AdminPage>
   );
 }

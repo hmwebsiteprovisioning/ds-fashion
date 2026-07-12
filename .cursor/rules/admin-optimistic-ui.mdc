@@ -1,0 +1,34 @@
+---
+description: Admin optimistic UI patterns (Section VII)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# VII. Performance: Optimistic UI
+
+## Concept
+- Assume the server request will succeed before it actually finishes.
+- Users want snappy, instantly responsive dashboards.
+
+## Execution
+- When a user deletes, toggles, or mutates list data: **instantly update the UI** (remove item, flip state).
+- Do **not** show an awkward loading spinner or pause while waiting for the server.
+- **Revert the UI only if** the server returns an error — show a toast on failure.
+
+## Implementation
+- Use `useOptimisticMutation` from `app/admin/lib/useOptimisticMutation.ts`.
+- Pattern: optimistic update → API call → revert + `toast.error()` on failure → `toast.success()` on confirm.
+
+```typescript
+const { mutate } = useOptimisticMutation({
+  onOptimistic: () => setItems(prev => prev.filter(i => i.id !== id)),
+  mutation: () => fetch('/api/...', { method: 'DELETE' }),
+  onError: (revert) => { revert(); toast.error('Delete failed'); },
+  onSuccess: () => toast.success('Deleted'),
+});
+```
+
+## Apply To
+- Delete flows: sales, products, media, discounts, properties, product-types.
+- Status toggles: order status, discount active/inactive.
+- Bulk actions: apply optimistic updates to all selected items.

@@ -2,7 +2,7 @@
 CREATE TABLE public.customers (
   customerid uuid NOT NULL DEFAULT gen_random_uuid(),
   firstname text NOT NULL,INSERT INTO public.store_settings (storename, themeid, language)
-VALUES ('ModaBox', 'default', 'bg');
+VALUES ('ds-fashion', 'default', 'bg');
   lastname text NOT NULL,
   email text NOT NULL UNIQUE,
   telephone text NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE public.discounts (
 
 CREATE TABLE public.store_settings (
   storesettingsid uuid NOT NULL DEFAULT gen_random_uuid(),
-  storename text NOT NULL DEFAULT 'ModaBox'::text,
+  storename text NOT NULL DEFAULT 'ds-fashion'::text,
   logourl text,
   themeid text NOT NULL DEFAULT 'default'::text,
   language text NOT NULL DEFAULT 'en'::text CHECK (language = ANY (ARRAY['en'::text, 'bg'::text])),
@@ -366,7 +366,7 @@ CREATE TABLE public.stock_movements (
 );
 
 INSERT INTO public.store_settings (storename, themeid, language)
-VALUES ('ModaBox', 'default', 'bg');
+VALUES ('ds-fashion', 'default', 'bg');
 
 INSERT INTO public.profiles (id, email, role)
 VALUES (

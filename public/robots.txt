@@ -14,4 +14,4 @@ Allow: /for-him/
 Allow: /accessories/
 Allow: /about/
 
-Sitemap: https://modabox.eu/sitemap.xml
+Sitemap: https://ds-fashion.eu/sitemap.xml

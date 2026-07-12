@@ -1,0 +1,35 @@
+---
+description: Admin sidebar navigation rules (Section II)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# II. The Sidebar (The "Spine" of the Product)
+
+## Top Placement
+- Place a **profile/management block** at the top (admin email + chevron indicating clickable).
+- Profile popover: sign-out, language toggle, account actions.
+
+## Link Design
+- Every navigation link must have a **recognizable icon** and a **short title**.
+- This enables seamless sidebar collapse and room for notification badges or "New" chips.
+
+## Reducing Cognitive Load
+- **Group links by relevant categories**: Overview, Catalog, Sales, Insights.
+- **Push rarely used items** (Settings, Help) to the bottom of the sidebar.
+
+## Scalability
+- As links expand, nest them inside **click-to-expand dropdowns** within the sidebar (`SidebarNavDropdown`).
+
+## Active States
+- Include an active state for the current page.
+- Use a **vertical rectangle indicator** on the left of the active link — not a full filled background.
+- Pair with a subtle background tint only.
+
+## Empty Space Utilization
+- Use empty sidebar space for **global search** (`AdminSearchBar`), integrations, or activity highlights.
+- Integrate search below nav groups (Linear/Dub pattern).
+
+## Implementation
+- Edit `app/admin/components/AdminSidebar.tsx`.
+- Keep collapsible behavior (64px / 256px) with icon+label pattern.

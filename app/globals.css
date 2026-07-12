@@ -67,11 +67,11 @@
     --ds-dark: var(--color-text-main);
     --ds-muted: var(--color-text-secondary);
     --ds-border: var(--color-border);
-    --modabox-beige: var(--color-bg-main);
-    --modabox-olive: var(--color-gold);
-    --modabox-dark: var(--color-text-main);
-    --modabox-muted: var(--color-text-secondary);
-    --modabox-border: var(--color-border);
+    --ds-fashion-beige: var(--color-bg-main);
+    --ds-fashion-olive: var(--color-gold);
+    --ds-fashion-dark: var(--color-text-main);
+    --ds-fashion-muted: var(--color-text-secondary);
+    --ds-fashion-border: var(--color-border);
   }
 
   body {

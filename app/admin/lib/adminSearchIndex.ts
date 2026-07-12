@@ -1033,59 +1033,77 @@ export const adminSearchIndex: SearchableItem[] = [
     keywords: ['save', 'store', 'запази']
   },
 
-  // Orders
+  // Orders (redirects to Sales tab)
   {
     id: 'orders',
     type: 'page',
-    path: '/admin/orders',
+    path: '/admin/sales?tab=orders',
     title: 'Orders',
     titleBg: 'Поръчки',
     description: 'Управляване на поръчките',
     keywords: ['orders', 'purchases', 'transactions', 'поръчки', 'покупки']
   },
   {
+    id: 'sales-orders-tab',
+    type: 'section',
+    path: '/admin/sales',
+    title: 'Orders Tab',
+    titleBg: 'Раздел Поръчки',
+    parentPath: '/admin/sales',
+    keywords: ['orders', 'tab', 'поръчки', 'раздел']
+  },
+  {
+    id: 'sales-tab',
+    type: 'section',
+    path: '/admin/sales',
+    title: 'Sales Tab',
+    titleBg: 'Раздел Продажби',
+    parentPath: '/admin/sales',
+    keywords: ['sales', 'tab', 'продажби']
+  },
+  {
     id: 'orders-list',
     type: 'section',
-    path: '/admin/orders',
+    path: '/admin/sales',
     title: 'Orders List',
     titleBg: 'Списък с поръчки',
-    parentPath: '/admin/orders',
+    parentPath: '/admin/sales',
     keywords: ['list', 'all', 'списък']
   },
   {
     id: 'order-status',
     type: 'field',
-    path: '/admin/orders',
+    path: '/admin/sales',
     title: 'Order Status',
     titleBg: 'Статус на поръчка',
-    parentPath: '/admin/orders',
+    parentPath: '/admin/sales',
     keywords: ['status', 'state', 'статус']
   },
   {
     id: 'order-customer',
     type: 'field',
-    path: '/admin/orders',
+    path: '/admin/sales',
     title: 'Customer',
     titleBg: 'Клиент',
-    parentPath: '/admin/orders',
+    parentPath: '/admin/sales',
     keywords: ['customer', 'client', 'клиент']
   },
   {
     id: 'order-total',
     type: 'field',
-    path: '/admin/orders',
+    path: '/admin/sales',
     title: 'Total',
     titleBg: 'Общо',
-    parentPath: '/admin/orders',
+    parentPath: '/admin/sales',
     keywords: ['total', 'amount', 'общо']
   },
   {
     id: 'order-date',
     type: 'field',
-    path: '/admin/orders',
+    path: '/admin/sales',
     title: 'Date',
     titleBg: 'Дата',
-    parentPath: '/admin/orders',
+    parentPath: '/admin/sales',
     keywords: ['date', 'created', 'дата']
   }
 ];

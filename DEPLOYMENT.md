@@ -204,7 +204,7 @@ This guide will walk you through deploying the eCommerce store to Vercel with Su
 
    ```sql
    INSERT INTO public.store_settings (storename, themeid, language)
-   VALUES ('ModaBox', 'default', 'en');
+   VALUES ('ds-fashion', 'default', 'en');
    ```
 
 2. **Add Initial Product Types** (Optional)

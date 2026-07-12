@@ -1,0 +1,27 @@
+---
+description: Admin chart and data visualization rules (Section IV)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# IV. Chart Design & Data Visualization
+
+## General Rule
+- Never use weird, abstract, or custom chart shapes. Stick to **simple, standard charts** via Recharts.
+- Use `AdminLineChart` and `AdminBarChart` wrappers — do not hand-roll CSS bar charts.
+
+## Line Graphs
+- Always add **grid lines** and **axis numbers** (everyone forgets these).
+- **Header elements**: Pair with a quick summary metric at top-left and a date-range selector at top-right.
+- **Hover**: Display exact number in tooltip bubble, paired with **percentage change**.
+
+## Bar Charts
+- Use to break down specific items (e.g. performance per category/product).
+- Place **thumbnail/icon** next to each bar on the axis for instant identification.
+- Allow users to **toggle data context** (e.g. orders vs. revenue).
+- **Hover**: Highlight active bar and **dim all other bars** to draw focus.
+
+## Implementation
+- Charts live in `app/admin/components/charts/`.
+- Colors from `lib/admin-chart-colors.ts`.
+- Install/use `recharts` — not Chart.js or custom SVG shapes.

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, ChevronDown, Upload, Eye, EyeOff } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
-import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
@@ -136,15 +135,25 @@ export default function ProductsPage() {
 
   // Filter state
   const [selectedProductTypeFilter, setSelectedProductTypeFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Filter products by type
-  const filteredProducts = selectedProductTypeFilter === 'all' 
-    ? products 
-    : products.filter(product => product.producttypeid === selectedProductTypeFilter);
+  // Filter products by type and search
+  const filteredProducts = products.filter((product) => {
+    if (selectedProductTypeFilter !== 'all' && product.producttypeid !== selectedProductTypeFilter) {
+      return false;
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      product.name.toLowerCase().includes(q) ||
+      (product.sku?.toLowerCase().includes(q) ?? false) ||
+      (product.description?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
   // Pagination calculations (using filtered products)
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -159,7 +168,7 @@ export default function ProductsPage() {
   // Reset to first page when products or filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [products.length, selectedProductTypeFilter]);
+  }, [products.length, selectedProductTypeFilter, searchQuery]);
 
   useEffect(() => {
     setSelectedProductIds((prev) =>
@@ -1006,7 +1015,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <AdminLayout currentPath="/admin/products">
+    <>
       <AdminPage>
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl font-bold">Артикули</h1>
@@ -1076,33 +1085,6 @@ export default function ProductsPage() {
             title={language === 'bg' ? 'Списък с артикули' : 'Items List'}
             description={language === 'bg' ? 'Управлявайте артикулите и техните варианти' : 'Manage items and their variants'}
           >
-            {/* Filter by Product Type */}
-            {products.length > 0 && (
-              <div className="mb-4 flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                  {language === 'bg' ? 'Филтър по тип:' : 'Filter by type:'}
-                </label>
-                <select
-                  value={selectedProductTypeFilter}
-                  onChange={(e) => setSelectedProductTypeFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-                >
-                  <option value="all">
-                    {language === 'bg' ? 'Всички типове' : 'All types'}
-                  </option>
-                  {productTypes.map((type) => (
-                    <option key={type.producttypeid} value={type.producttypeid}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedProductTypeFilter !== 'all' && (
-                  <span className="text-sm text-gray-500">
-                    ({filteredProducts.length} {language === 'bg' ? 'артикула' : 'items'})
-                  </span>
-                )}
-              </div>
-            )}
             {filteredProducts.length === 0 ? (
               <EmptyState
                 title={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Няма артикули' : 'Няма артикули от този тип' : selectedProductTypeFilter === 'all' ? 'No Items' : 'No items of this type'}
@@ -1132,7 +1114,29 @@ export default function ProductsPage() {
               <SectionSurface tone="soft" padding="md">
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-hidden">
-                  <DataTableShell>
+                  <DataTableShell
+                    searchValue={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder={language === 'bg' ? 'Търси артикули...' : 'Search items...'}
+                    toolbar={
+                      products.length > 0 ? (
+                        <select
+                          value={selectedProductTypeFilter}
+                          onChange={(e) => setSelectedProductTypeFilter(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                        >
+                          <option value="all">
+                            {language === 'bg' ? 'Всички типове' : 'All types'}
+                          </option>
+                          {productTypes.map((type) => (
+                            <option key={type.producttypeid} value={type.producttypeid}>
+                              {type.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : undefined
+                    }
+                  >
                     <TableHeader>
                       <TableHeaderRow>
                         <TableHeaderCell align="center">
@@ -2661,7 +2665,7 @@ export default function ProductsPage() {
             )}
           </div>
         </AdminModal>
-    </AdminLayout>
+    </>
   );
 }
 

@@ -9,9 +9,12 @@ interface AdminModalProps {
   title: string;
   subheader?: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxWidth?: string;
   minWidth?: number;
   minHeight?: number;
+  /** When true (default), backdrop click does not dismiss the modal */
+  blocking?: boolean;
 }
 
 export default function AdminModal({
@@ -23,6 +26,8 @@ export default function AdminModal({
   maxWidth = 'max-w-2xl',
   minWidth = 320,
   minHeight = 200,
+  footer,
+  blocking = true,
 }: AdminModalProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -211,7 +216,7 @@ export default function AdminModal({
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-3 md:p-4 overflow-y-auto"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !isResizing) {
+        if (e.target === e.currentTarget && !isResizing && !blocking) {
           onClose();
         }
       }}
@@ -256,6 +261,12 @@ export default function AdminModal({
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           {children}
         </div>
+
+        {footer && (
+          <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-slate-200 bg-slate-50">
+            {footer}
+          </div>
+        )}
 
         {/* Resize Handles - Visible only when cursor is near edges */}
         {showHandles.corners && (

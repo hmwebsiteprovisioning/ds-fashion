@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Plus, Edit2, Trash2, X, List, ChevronDown, ChevronRight } from 'lucide-react';
 import { Property, PropertyValue, ProductType } from '@/lib/types/product-types';
 import { PropertyValuesStorage } from '@/lib/propertyValuesStorage';
-import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
@@ -50,13 +49,24 @@ export default function PropertiesPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 10;
 
+  const filteredProperties = properties.filter((prop) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      prop.name.toLowerCase().includes(q) ||
+      (prop.description?.toLowerCase().includes(q) ?? false) ||
+      (prop.values || []).some((value) => value.value.toLowerCase().includes(q))
+    );
+  });
+
   // Pagination calculations
-  const totalPages = Math.ceil(properties.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentProperties = properties.slice(startIndex, endIndex);
+  const currentProperties = filteredProperties.slice(startIndex, endIndex);
   const currentPropertyIds = currentProperties.map((prop) => prop.propertyid);
   const allSelectedOnPage =
     currentPropertyIds.length > 0 &&
@@ -65,7 +75,7 @@ export default function PropertiesPage() {
   // Reset to first page when properties change
   useEffect(() => {
     setCurrentPage(1);
-  }, [properties.length]);
+  }, [properties.length, searchQuery]);
 
   useEffect(() => {
     setSelectedPropertyIds((prev) =>
@@ -569,8 +579,7 @@ export default function PropertiesPage() {
   };
 
   return (
-    <AdminLayout currentPath="/admin/properties">
-      <AdminPage className="space-y-6">
+    <AdminPage className="space-y-6">
         <PageHeader
           title={language === 'bg' ? 'Характеристики' : 'Characteristics'}
           actions={
@@ -633,40 +642,34 @@ export default function PropertiesPage() {
                 />
               ) : (
                 <SectionSurface tone="soft" padding="md">
-                  {/* Desktop Table View */}
-                  <div className="hidden lg:block overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 xl:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          checked={allSelectedOnPage}
-                          onChange={toggleSelectAllPropertiesOnPage}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
-                        />
-                      </th>
-                      <th className="px-4 xl:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.name}
-                      </th>
-                      <th className="px-4 xl:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.description}
-                      </th>
-                      <th className="px-4 xl:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.propertyValues}
-                      </th>
-                      <th className="px-4 xl:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t.actions}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <div className="hidden lg:block">
+                    <DataTableShell
+                      searchValue={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      searchPlaceholder={language === 'bg' ? 'Търси характеристики...' : 'Search characteristics...'}
+                    >
+                      <TableHeader>
+                        <TableHeaderRow>
+                          <TableHeaderCell align="center">
+                            <input
+                              type="checkbox"
+                              checked={allSelectedOnPage}
+                              onChange={toggleSelectAllPropertiesOnPage}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
+                            />
+                          </TableHeaderCell>
+                          <TableHeaderCell>{t.name}</TableHeaderCell>
+                          <TableHeaderCell>{t.description}</TableHeaderCell>
+                          <TableHeaderCell>{t.propertyValues}</TableHeaderCell>
+                          <TableHeaderCell align="right">{t.actions}</TableHeaderCell>
+                        </TableHeaderRow>
+                      </TableHeader>
+                      <TableBody>
                     {currentProperties.map((prop) => (
                       <React.Fragment key={prop.propertyid}>
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-center">
+                        <TableRow>
+                          <TableCell align="center">
                             <input
                               type="checkbox"
                               checked={selectedPropertyIds.includes(prop.propertyid)}
@@ -674,8 +677,8 @@ export default function PropertiesPage() {
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               aria-label={language === 'bg' ? 'Избери характеристика' : 'Select property'}
                             />
-                          </td>
-                          <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-2">
                               {prop.datatype === 'select' && (
                                 <button
@@ -690,20 +693,20 @@ export default function PropertiesPage() {
                                   )}
                                 </button>
                               )}
-                              <span className="truncate max-w-xs">{prop.name}</span>
+                              <span className="truncate max-w-xs font-medium">{prop.name}</span>
                             </div>
-                          </td>
-                          <td className="px-4 xl:px-6 py-4 text-sm text-gray-500">
+                          </TableCell>
+                          <TableCell>
                             <div className="max-w-xs truncate">{prop.description || '-'}</div>
-                          </td>
-                          <td className="px-4 xl:px-6 py-4 text-sm text-gray-500">
+                          </TableCell>
+                          <TableCell>
                             {prop.datatype === 'select' ? (
                               <span>{prop.values?.length || 0} {language === 'bg' ? 'стойности' : 'values'}</span>
                             ) : (
                               <span className="text-gray-300">-</span>
                             )}
-                          </td>
-                          <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          </TableCell>
+                          <TableCell align="right">
                             <div className="flex justify-end gap-2">
                               {prop.datatype === 'select' && (
                                 <button
@@ -729,10 +732,9 @@ export default function PropertiesPage() {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
 
-                        {/* Expanded property values - Desktop */}
                         {expandedProperties.has(prop.propertyid) && prop.datatype === 'select' && (
                           <tr>
                             <td colSpan={5} className="px-4 xl:px-6 py-0">
@@ -788,10 +790,9 @@ export default function PropertiesPage() {
                         )}
                       </React.Fragment>
                     ))}
-                  </tbody>
-                </table>
+                      </TableBody>
+                    </DataTableShell>
                   </div>
-                </div>
                 </SectionSurface>
               )}
             </Section>
@@ -962,7 +963,7 @@ export default function PropertiesPage() {
             <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-between w-full">
               <div>
                 <p className="text-xs sm:text-sm text-gray-700">
-                  {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, properties.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{properties.length}</span> {language === 'bg' ? 'характеристики' : 'properties'}
+                  {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, filteredProperties.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{filteredProperties.length}</span> {language === 'bg' ? 'характеристики' : 'properties'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1429,7 +1430,6 @@ export default function PropertiesPage() {
           </div>
         </AdminModal>
       </AdminPage>
-    </AdminLayout>
   );
 }
 

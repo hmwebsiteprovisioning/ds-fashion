@@ -1,0 +1,32 @@
+---
+description: Admin master components — lists, cards, inputs, tabs (Section VI)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# VI. The 4 Master Components of Dashboard Design
+
+## Lists and Tables
+- Focus on separation via space, lines, or alternating color — not per-item borders.
+- Tables require interactivity: **search, filter, and sort** — otherwise they are useless.
+- Use `DataTableShell`, `AdminList`, bulk selection + `BulkActionsBar`.
+
+## Cards
+- Dashboards are collections of cards (charts, metrics, data panels).
+- Keep margins well-spaced so content is not packed too tightly.
+- **Styling rule**: Use **outlines/borders for dark mode**; use **background colors/shadows for light mode** (`Card` component handles this).
+
+## User Inputs
+- Found in modals and settings pages.
+- Sometimes integrated directly into tables inside cards (inline edit, filter inputs).
+- Use consistent form styling within `AdminModal` bodies.
+
+## Tabs
+- Use `AdminTabs` to add page views without cluttering sidebar navigation (Notion-style).
+- Related data (e.g. Sales / Orders views) should use tabs, not separate sidebar entries.
+
+## Page Structure
+Every admin page: `AdminPage` → `PageHeader` (title, subtitle, actions top-right) → `Section` → `Card` / `DataTableShell` / `AdminList`.
+
+## Spec References
+- `ADMIN_LAYOUT_SYSTEM_SPEC.md`, `COLOR_SYSTEM_SPEC.md`, `WHITESPACE_ANCHORING_SPEC.md`

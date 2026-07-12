@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import AdminSidebar from './AdminSidebar';
-import AdminSearchBar from './AdminSearchBar';
+import { AdminToastProvider } from './AdminToast';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,8 +20,9 @@ export default function AdminLayout({ children, currentPath }: AdminLayoutProps)
     return false;
   });
 
-  // Calculate sidebar width
-  const sidebarWidth = isCollapsed ? 64 : 256;
+  // Calculate sidebar width (reserved for future use)
+  const _sidebarWidth = isCollapsed ? 64 : 256;
+  void _sidebarWidth;
 
   // Sync with localStorage changes from OTHER tabs/windows only
   // Note: We don't listen to sidebar-toggle events from same tab to avoid race conditions
@@ -54,25 +55,23 @@ export default function AdminLayout({ children, currentPath }: AdminLayoutProps)
   };
 
   return (
-    <div
-      className="flex flex-col lg:flex-row min-h-screen transition-colors duration-300"
-      style={{ backgroundColor: theme.colors.background }}
-    >
-      <AdminSidebar 
-        currentPath={currentPath} 
-        collapsed={isCollapsed} 
-        onToggle={handleToggle}
-      />
-      <AdminSearchBar 
-        sidebarCollapsed={isCollapsed}
-        sidebarWidth={sidebarWidth}
-      />
-      <main className="flex-1 overflow-auto">
-        <div className="lg:pt-[56px] pt-16">
-          {children}
-        </div>
-      </main>
-    </div>
+    <AdminToastProvider>
+      <div
+        className="flex flex-col lg:flex-row min-h-screen transition-colors duration-300"
+        style={{ backgroundColor: theme.colors.background }}
+      >
+        <AdminSidebar
+          currentPath={currentPath}
+          collapsed={isCollapsed}
+          onToggle={handleToggle}
+        />
+        <main className="flex-1 overflow-auto">
+          <div className="pt-16 lg:pt-0">
+            {children}
+          </div>
+        </main>
+      </div>
+    </AdminToastProvider>
   );
 }
 

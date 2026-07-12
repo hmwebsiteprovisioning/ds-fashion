@@ -1,14 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminLayout from '../components/AdminLayout';
-import { getAdminSession } from '@/lib/auth';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
-import { translations } from '@/lib/translations';
-import { Boxes, Plus, Minus, Search, AlertCircle, Save, X } from 'lucide-react';
+import { Plus, Minus, AlertCircle, Save } from 'lucide-react';
+import { AdminPage, PageHeader, Section, Card } from '../components/layout';
 
 interface StockVariant {
   productvariantid: string;
@@ -25,12 +22,8 @@ interface StockVariant {
 }
 
 export default function StockPage() {
-  const router = useRouter();
   const { language } = useLanguage();
   const { theme } = useTheme();
-  const t = translations[language || 'en'];
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [variants, setVariants] = useState<StockVariant[]>([]);
   const [filteredVariants, setFilteredVariants] = useState<StockVariant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,30 +34,8 @@ export default function StockPage() {
   const [tempQuantities, setTempQuantities] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await getAdminSession();
-        if (!session) {
-          router.push('/admin/login');
-          return;
-        }
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/admin/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadStock();
-    }
-  }, [isAuthenticated]);
+    loadStock();
+  }, []);
 
   useEffect(() => {
     filterVariants();
@@ -203,18 +174,6 @@ export default function StockPage() {
     return 'text-green-600 dark:text-green-400';
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
   const totalVariants = variants.length;
   const lowStockCount = variants.filter((v) => v.quantity === 1).length;
   const outOfStockCount = variants.filter((v) => v.quantity === 0).length;
@@ -222,32 +181,23 @@ export default function StockPage() {
   const inStockCount = variants.filter((v) => v.quantity > 1).length;
 
   return (
-    <AdminLayout currentPath="/admin/stock">
-      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        {/* Header */}
-        <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h1
-            className="text-2xl sm:text-3xl font-bold"
-            style={{ color: theme.colors.text }}
-          >
-            {language === 'bg' ? 'Наличности' : 'Stock Management'}
-          </h1>
-          <p
-            className="mt-1 sm:mt-2 text-sm sm:text-base"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {language === 'bg' ? 'Управление на наличностите по варианти' : 'Manage stock quantities for all product variants'}
-          </p>
+    <AdminPage className="space-y-4 sm:space-y-6">
+      <PageHeader
+        title={language === 'bg' ? 'Наличности' : 'Stock Management'}
+        subtitle={language === 'bg' ? 'Управление на наличностите по варианти' : 'Manage stock quantities for all product variants'}
+        actions={
           <Link
             href="/admin/stock-in"
-            className="inline-block mt-3 text-sm font-medium underline touch-manipulation min-h-[44px] py-2"
+            className="inline-flex items-center text-sm font-medium underline touch-manipulation min-h-[44px] py-2"
             style={{ color: theme.colors.primary }}
           >
             {language === 'bg' ? '→ Заприхождаване' : '→ Receive stock'}
           </Link>
-        </div>
+        }
+      />
 
         {/* Summary Cards */}
+        <Section>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
           <div
             className="p-4 sm:p-5 lg:p-6 rounded-lg shadow-sm border"
@@ -315,29 +265,23 @@ export default function StockPage() {
             <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 text-purple-600 dark:text-purple-400">{negativeStockCount}</p>
           </div>
         </div>
+        </Section>
 
         {/* Filters */}
+        <Section>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search 
-              size={18} 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2"
-              style={{ color: theme.colors.textSecondary }}
-            />
-            <input
-              type="text"
-              placeholder={language === 'bg' ? 'Търсене по продукт, SKU или характеристики...' : 'Search by product, SKU or characteristics...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:border-transparent transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                borderColor: theme.colors.border,
-                color: theme.colors.text
-              }}
-            />
-          </div>
+          <input
+            type="search"
+            placeholder={language === 'bg' ? 'Търсене по продукт, SKU или характеристики...' : 'Search by product, SKU or characteristics...'}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 px-3 py-2.5 sm:py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:border-transparent transition-colors duration-300"
+            style={{
+              backgroundColor: theme.colors.cardBg,
+              borderColor: theme.colors.border,
+              color: theme.colors.text
+            }}
+          />
 
           {/* Stock Filter */}
           <div className="flex gap-2">
@@ -362,8 +306,10 @@ export default function StockPage() {
             ))}
           </div>
         </div>
+        </Section>
 
         {/* Stock Grid */}
+        <Section>
         {loading ? (
           <div className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -380,9 +326,9 @@ export default function StockPage() {
               const isEditing = editingQuantities[variant.productvariantid] !== undefined;
 
               return (
-                <div
+                <Card
                   key={variant.productvariantid}
-                  className="p-4 sm:p-5 rounded-lg shadow-sm border"
+                  className="p-4 sm:p-5"
                   style={{
                     backgroundColor: theme.colors.surface,
                     borderColor: theme.colors.border
@@ -518,12 +464,12 @@ export default function StockPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
         )}
-      </div>
-    </AdminLayout>
+        </Section>
+    </AdminPage>
   );
 }

@@ -1,18 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Save, Upload, Settings as SettingsIcon, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { Save, Upload, Image as ImageIcon, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useTheme } from '@/context/ThemeContext';
 import { translations } from '@/lib/translations';
 import LanguageToggle from '@/components/LanguageToggle';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
-import AdminLayout from '../components/AdminLayout';
-import { uploadFile, getStorageUrl } from '@/lib/supabaseStorage';
-import { getAdminSession } from '@/lib/auth';
-import { supabase } from '@/lib/supabase-browser';
+import { AdminPage, PageHeader, AdminTabs } from '../components/layout';
+import { uploadFile } from '@/lib/supabaseStorage';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import HeroImageFocusEditor from '@/components/HeroImageFocusEditor';
 
@@ -45,13 +42,11 @@ interface StoreSettings {
 }
 
 export default function AdminSettingsPage() {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { refreshSettings } = useStoreSettings();
   const t = translations[language || 'en'];
+  const [activeTab, setActiveTab] = useState('general');
 
   useEffect(() => {
     document.title = t.settings || (language === 'bg' ? 'Настройки' : 'Settings');
@@ -70,63 +65,7 @@ export default function AdminSettingsPage() {
   const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
   const [isUploadingTestimonial, setIsUploadingTestimonial] = useState(false);
 
-  // Check authentication
   useEffect(() => {
-    const checkAuth = async () => {
-      if (typeof window === 'undefined') {
-        setIsAuthLoading(false);
-        return;
-      }
-
-      try {
-        const session = await getAdminSession();
-
-        if (!session) {
-          localStorage.removeItem('admin_authenticated');
-          localStorage.removeItem('admin_access_token');
-          localStorage.removeItem('admin_refresh_token');
-          router.push('/admin/login');
-          return;
-        }
-
-        setIsAuthenticated(true);
-        localStorage.setItem('admin_authenticated', 'true');
-        localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('admin_user_email', session.user.email || '');
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/admin/login');
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        localStorage.removeItem('admin_authenticated');
-        router.push('/admin/login');
-      } else if (event === 'SIGNED_IN' && session) {
-        const canAccess = session.user.user_metadata?.can_access || ['admin'];
-        if (!canAccess.includes('admin')) {
-          supabase.auth.signOut();
-          router.push('/admin/login');
-        } else {
-          setIsAuthenticated(true);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router]);
-
-  // Load settings from API
-  useEffect(() => {
-    if (!isAuthenticated) return;
     const loadSettings = async () => {
       try {
         const response = await fetch('/api/store-settings');
@@ -197,11 +136,9 @@ export default function AdminSettingsPage() {
     };
 
     loadSettings();
-  }, [setLanguage, setTheme, isAuthenticated]);
+  }, [setLanguage, setTheme]);
 
-  // Load testimonials
   useEffect(() => {
-    if (!isAuthenticated) return;
     const loadTestimonials = async () => {
       try {
         setIsLoadingTestimonials(true);
@@ -218,7 +155,7 @@ export default function AdminSettingsPage() {
     };
 
     loadTestimonials();
-  }, [isAuthenticated]);
+  }, []);
 
   // Sync local settings with global theme changes
   useEffect(() => {
@@ -572,63 +509,68 @@ export default function AdminSettingsPage() {
     setHasChanges(true);
   };
 
-  if (isAuthLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  const settingsTabs = [
+    { id: 'general', label: t.storeInformation },
+    { id: 'appearance', label: t.appearance },
+    { id: 'banner', label: language === 'bg' ? 'Банер' : 'Banner' },
+    { id: 'social', label: language === 'bg' ? 'Социални мрежи' : 'Social Media' },
+    { id: 'testimonials', label: language === 'bg' ? 'Отзиви' : 'Testimonials' },
+  ];
 
   if (isLoading) {
     return (
-      <AdminLayout currentPath="/admin/settings">
+      <AdminPage>
+        <PageHeader title={t.storeSettings} subtitle={t.manageStoreSettings} />
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
         </div>
-      </AdminLayout>
+      </AdminPage>
     );
   }
 
   if (!settings) {
     return (
-      <AdminLayout currentPath="/admin/settings">
+      <AdminPage>
+        <PageHeader title={t.storeSettings} subtitle={t.manageStoreSettings} />
         <div className="text-center py-12">
           <p style={{ color: theme.colors.textSecondary }}>
             {language === 'bg' ? 'Грешка при зареждане на настройките' : 'Error loading settings'}
           </p>
         </div>
-      </AdminLayout>
+      </AdminPage>
     );
   }
 
   return (
-    <AdminLayout currentPath="/admin/settings">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <SettingsIcon size={24} style={{ color: theme.colors.primary }} />
-            <h1
-              className="text-3xl font-bold"
-              style={{ color: theme.colors.text }}
-            >
-              {t.storeSettings}
-            </h1>
-          </div>
-          <p
-            className="text-base"
-            style={{ color: theme.colors.textSecondary }}
+    <AdminPage>
+      <PageHeader
+        title={t.storeSettings}
+        subtitle={t.manageStoreSettings}
+        actions={
+          <button
+            id="settings-save"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white disabled:opacity-50"
+            style={{
+              backgroundColor: hasChanges ? theme.colors.primary : theme.colors.secondary,
+            }}
           >
-            {t.manageStoreSettings}
-          </p>
-        </div>
+            <Save size={18} />
+            {isSaving ? t.saving : t.saveSettings}
+          </button>
+        }
+      />
 
-        <div className="space-y-8">
-          {/* Store Information */}
+      <AdminTabs
+        tabs={settingsTabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        className="mb-6"
+      />
+
+      <div className="max-w-4xl mx-auto space-y-8">
+          {activeTab === 'general' && (
           <div
             className="p-6 rounded-lg"
             style={{
@@ -1040,8 +982,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* Appearance Settings */}
+          {activeTab === 'appearance' && (
           <div
             id="settings-appearance"
             className="p-6 rounded-lg"
@@ -1081,8 +1024,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* Banner Settings */}
+          {activeTab === 'banner' && (
           <div
             id="settings-banner"
             className="p-6 rounded-lg"
@@ -1157,8 +1101,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* Social Media Settings */}
+          {activeTab === 'social' && (
           <div
             id="settings-social-media"
             className="p-6 rounded-lg"
@@ -1337,8 +1282,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* Testimonials Settings */}
+          {activeTab === 'testimonials' && (
           <div
             id="settings-testimonials"
             className="p-6 rounded-lg"
@@ -1486,30 +1432,8 @@ export default function AdminSettingsPage() {
               )}
             </div>
           </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <button
-              id="settings-save"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-300 disabled:opacity-50"
-              style={{
-                backgroundColor: hasChanges ? theme.colors.primary : theme.colors.secondary,
-                color: '#ffffff',
-                boxShadow: theme.effects.shadow,
-                opacity: isSaving ? 0.5 : 1
-              }}
-            >
-              <Save size={20} />
-              {isSaving
-                ? t.saving
-                : t.saveSettings
-              }
-            </button>
-          </div>
-        </div>
+          )}
       </div>
-    </AdminLayout>
+    </AdminPage>
   );
 }

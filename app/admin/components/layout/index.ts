@@ -8,3 +8,8 @@ export { default as Divider } from './Divider';
 export { default as EmptyState } from './EmptyState';
 export { default as TwoColumnLayout } from './TwoColumnLayout';
 export { default as Badge } from '../Badge';
+export { default as AdminTabs } from './AdminTabs';
+export type { AdminTab } from './AdminTabs';
+export { default as Breadcrumbs } from './Breadcrumbs';
+export type { BreadcrumbItem } from './Breadcrumbs';
+export { default as AdminList, AdminListItem } from './AdminList';

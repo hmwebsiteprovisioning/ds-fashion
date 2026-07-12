@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit2, Trash2, ChevronDown } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
-import AdminLayout from '../components/AdminLayout';
 import AdminModal from '../components/AdminModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
@@ -56,11 +55,25 @@ export default function ProductTypesPage() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 10;
+
+  const filteredProductTypes = productTypes.filter((pt) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      pt.name.toLowerCase().includes(q) ||
+      (pt.properties || []).some((prop) => prop.name.toLowerCase().includes(q))
+    );
+  });
 
   useEffect(() => {
     loadProductTypes();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productTypes.length, searchQuery]);
 
   useEffect(() => {
     const loadDeleteDependencies = async () => {
@@ -316,10 +329,10 @@ export default function ProductTypesPage() {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(productTypes.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProductTypes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedProductTypes = productTypes.slice(startIndex, endIndex);
+  const paginatedProductTypes = filteredProductTypes.slice(startIndex, endIndex);
   const paginatedProductTypeIds = paginatedProductTypes.map((pt) => pt.producttypeid);
   const allSelectedOnPage =
     paginatedProductTypeIds.length > 0 &&
@@ -332,8 +345,7 @@ export default function ProductTypesPage() {
   }, [productTypes]);
 
   return (
-    <AdminLayout currentPath="/admin/product-types">
-      <AdminPage className="space-y-6">
+    <AdminPage className="space-y-6">
         <PageHeader
           title={language === 'bg' ? 'Категории' : 'Categories'}
           actions={
@@ -401,7 +413,11 @@ export default function ProductTypesPage() {
                 <SectionSurface tone="soft" padding="md">
                   {/* Desktop Table View */}
                   <div className="overflow-hidden">
-                  <DataTableShell>
+                  <DataTableShell
+                    searchValue={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder={language === 'bg' ? 'Търси категории...' : 'Search categories...'}
+                  >
                     <TableHeader>
                       <TableHeaderRow>
                         <TableHeaderCell align="center">
@@ -657,7 +673,7 @@ export default function ProductTypesPage() {
                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
                   <div>
                     <p className="text-xs sm:text-sm text-gray-700">
-                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, productTypes.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{productTypes.length}</span> {language === 'bg' ? 'категории' : 'categories'}
+                      {t.showingTransactions || 'Showing'} <span className="font-medium">{startIndex + 1}</span> {language === 'bg' ? 'до' : 'to'} <span className="font-medium">{Math.min(endIndex, filteredProductTypes.length)}</span> {language === 'bg' ? 'от' : 'of'} <span className="font-medium">{filteredProductTypes.length}</span> {language === 'bg' ? 'категории' : 'categories'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1032,7 +1048,6 @@ export default function ProductTypesPage() {
           </div>
         </AdminModal>
       </AdminPage>
-    </AdminLayout>
   );
 }
 

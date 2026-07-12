@@ -1,17 +1,19 @@
 ﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, ChevronUp, Package, Eye, Save, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-browser';
 import AdminModal from '../components/AdminModal';
 import OrderEditModal from '../components/OrderEditModal';
-import AdminLayout from '../components/AdminLayout';
-import { getAdminSession } from '@/lib/auth';
+import AdminConfirmDialog from '../components/AdminConfirmDialog';
+import BulkActionsBar from '../components/BulkActionsBar';
+import { useAdminToast } from '../components/AdminToast';
+import { useOptimisticMutation } from '../lib/useOptimisticMutation';
 import type { EcontOfficesData, EcontOffice } from '@/types/econt';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
-import { Badge } from '../components/layout';
+import { Badge, AdminPage, PageHeader, AdminTabs, EmptyState } from '../components/layout';
 import { getOrderStatusVariant } from '@/lib/admin-status-utils';
 import { normalizeOrderStatus } from '@/lib/admin-order-status';
 
@@ -81,14 +83,22 @@ const ALL_STATUS_KEYS = [
 
 export default function SalesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const toast = useAdminToast();
+  const { mutate: optimisticMutate } = useOptimisticMutation();
   const { language } = useLanguage();
   const t = translations[language];
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'sales');
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     document.title = t.sales || (language === 'bg' ? 'Продажби' : 'Sales');
   }, [language, t]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'orders') setActiveTab('orders');
+  }, [searchParams]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
@@ -155,24 +165,9 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await getAdminSession();
-        if (!session) {
-          router.push('/admin/login');
-          return;
-        }
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/admin/login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    loadOrders();
+    loadEcontOffices();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -180,13 +175,6 @@ export default function SalesPage() {
       setAdminUserId(data.session?.user?.id ?? null);
     })();
   }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadOrders();
-      loadEcontOffices();
-    }
-  }, [isAuthenticated]);
 
   const loadSavedViews = async () => {
     if (!adminUserId) return;
@@ -198,8 +186,8 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && adminUserId) loadSavedViews();
-  }, [isAuthenticated, adminUserId]);
+    if (adminUserId) loadSavedViews();
+  }, [adminUserId]);
 
   const loadEcontOffices = async () => {
     try {
@@ -265,11 +253,11 @@ export default function SalesPage() {
           prev?.orderid === orderId ? { ...prev, status: normalized, updatedat: new Date().toISOString() } : prev
         );
       } else {
-        alert('Failed to update order status: ' + result.error);
+        toast.error('Failed to update order status: ' + result.error);
       }
     } catch (error) {
       console.error('Failed to update order status:', error);
-      alert('Failed to update order status');
+      toast.error('Failed to update order status');
     } finally {
       setUpdatingStatus(null);
     }
@@ -291,7 +279,7 @@ export default function SalesPage() {
 
   const saveCurrentView = async () => {
     if (!adminUserId || !viewNameInput.trim()) {
-      alert(language === 'bg' ? 'Въведи име на изглед' : 'Enter a view name');
+      toast.warning(language === 'bg' ? 'Въведи име на изглед' : 'Enter a view name');
       return;
     }
     const filters = { selectedStatuses, searchQuery, dateFrom, dateTo, sortKey };
@@ -311,7 +299,7 @@ export default function SalesPage() {
       setViewNameInput('');
       loadSavedViews();
     } else {
-      alert(data.error || 'Save failed');
+      toast.error(data.error || 'Save failed');
     }
   };
 
@@ -342,35 +330,31 @@ export default function SalesPage() {
 
   const confirmDeleteOrder = async () => {
     if (!orderPendingDelete) return;
-    setDeletingOrderId(orderPendingDelete.orderid);
-    try {
-      const res = await fetch(
-        `/api/admin/orders/${encodeURIComponent(orderPendingDelete.orderid)}`,
-        { method: 'DELETE' }
-      );
-      const data = await res.json();
-      if (data.success) {
-        setOrders((prev) => prev.filter((o) => o.orderid !== orderPendingDelete.orderid));
+    const orderId = orderPendingDelete.orderid;
+    const previousOrders = orders;
+
+    await optimisticMutate({
+      applyOptimistic: () => {
+        setOrders((prev) => prev.filter((o) => o.orderid !== orderId));
         closeDeleteOrderModal();
-        if (selectedOrder?.orderid === orderPendingDelete.orderid) {
-          closeOrderModal();
-        }
-      } else {
-        alert(data.error || (language === 'bg' ? 'Грешка при изтриване' : 'Delete failed'));
-      }
-    } catch {
-      alert(language === 'bg' ? 'Мрежова грешка' : 'Network error');
-    } finally {
-      setDeletingOrderId(null);
-    }
+        if (selectedOrder?.orderid === orderId) closeOrderModal();
+      },
+      rollback: () => setOrders(previousOrders),
+      request: async () => {
+        const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Delete failed');
+        return data;
+      },
+      onSuccess: () => toast.success(language === 'bg' ? 'Поръчката е изтрита' : 'Order deleted'),
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Delete failed'),
+    });
   };
 
   const confirmClearAllOrders = async () => {
     if (clearAllConfirmInput !== 'DELETE_ALL_ORDERS') {
-      alert(
-        language === 'bg'
-          ? 'Напиши точно: DELETE_ALL_ORDERS'
-          : 'Type exactly: DELETE_ALL_ORDERS'
+      toast.warning(
+        language === 'bg' ? 'Напиши точно: DELETE_ALL_ORDERS' : 'Type exactly: DELETE_ALL_ORDERS'
       );
       return;
     }
@@ -386,7 +370,7 @@ export default function SalesPage() {
       setClearAllConfirmInput('');
       await loadOrders();
       if (!res.ok) {
-        alert(data.error || (language === 'bg' ? 'Грешка' : 'Error'));
+        toast.error(data.error || (language === 'bg' ? 'Грешка' : 'Error'));
         return;
       }
       const msg =
@@ -394,12 +378,12 @@ export default function SalesPage() {
           ? `Изтрити: ${data.deleted ?? 0} от ${data.attempted ?? 0}.`
           : `Deleted: ${data.deleted ?? 0} of ${data.attempted ?? 0}.`;
       if (data.errors?.length) {
-        alert(`${msg}\n${language === 'bg' ? 'Проблеми:' : 'Issues:'}\n${data.errors.slice(0, 5).join('\n')}`);
+        toast.warning(`${msg} — ${data.errors.slice(0, 3).join(', ')}`);
       } else {
-        alert(msg);
+        toast.success(msg);
       }
     } catch {
-      alert(language === 'bg' ? 'Мрежова грешка' : 'Network error');
+      toast.error(language === 'bg' ? 'Мрежова грешка' : 'Network error');
     } finally {
       setClearingAll(false);
     }
@@ -591,25 +575,11 @@ export default function SalesPage() {
     return sorted;
   }, [orders, selectedStatuses, searchQuery, dateFrom, dateTo, sortKey]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Pagination calculations
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
 
-  // Calculate stats based on filtered orders (respect active filters)
   const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0);
   const totalOrders = filteredOrders.length;
   const pendingOrders = filteredOrders.filter((order) => order.status === 'pending').length;
@@ -623,26 +593,57 @@ export default function SalesPage() {
   const waitingStockCount = filteredOrders.filter((o) => o.status === 'waiting_for_stock').length;
   const soldItemsCount = filteredOrders.reduce((s, o) => s + (o.order_items?.reduce((a, i) => a + (i.quantity || 0), 0) || 0), 0);
 
+  const salesTabs = [
+    { id: 'sales', label: language === 'bg' ? 'Продажби' : 'Sales' },
+    { id: 'orders', label: language === 'bg' ? 'Поръчки' : 'Orders', badge: totalOrders },
+  ];
+
   return (
-    <AdminLayout currentPath="/admin/sales">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
-        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{t.sales || (language === 'bg' ? 'Продажби' : 'Sales')}</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Управление и преглед на вашите поръчки</p>
-          </div>
+    <AdminPage>
+      <PageHeader
+        title={t.sales || (language === 'bg' ? 'Продажби' : 'Sales')}
+        subtitle={language === 'bg' ? 'Управление и преглед на поръчки' : 'Manage and review orders'}
+        actions={
           <button
             type="button"
             onClick={() => {
               setClearAllConfirmInput('');
               setShowClearAllModal(true);
             }}
-            className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-red-300 bg-red-50 text-red-800 text-sm font-semibold hover:bg-red-100 min-h-[44px] touch-manipulation"
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-300 bg-red-50 text-red-800 text-sm font-semibold hover:bg-red-100"
           >
             <Trash2 className="w-4 h-4" />
-            {language === 'bg' ? 'Изтрий всички поръчки' : 'Delete all orders'}
+            {language === 'bg' ? 'Изтрий всички' : 'Delete all'}
           </button>
-        </div>
+        }
+      />
+
+      <AdminTabs
+        tabs={salesTabs}
+        activeTab={activeTab}
+        onChange={(tab) => {
+          setActiveTab(tab);
+          router.replace(tab === 'orders' ? '/admin/sales?tab=orders' : '/admin/sales');
+        }}
+        className="mb-4"
+      />
+
+      {selectedOrderIds.size > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedOrderIds.size}
+          onClear={() => setSelectedOrderIds(new Set())}
+          className="mb-4"
+        >
+          <button
+            onClick={() => toast.info(language === 'bg' ? 'Масово действие' : 'Bulk action')}
+            className="text-xs px-2 py-1 rounded bg-primary text-white"
+          >
+            {language === 'bg' ? 'Експорт' : 'Export'}
+          </button>
+        </BulkActionsBar>
+      )}
+
+      <div className="max-w-7xl mx-auto">
 
         <AdminModal
           isOpen={showDeleteOrderModal}
@@ -1700,6 +1701,6 @@ export default function SalesPage() {
           )}
         </div>
       </div>
-    </AdminLayout>
+    </AdminPage>
   );
 }

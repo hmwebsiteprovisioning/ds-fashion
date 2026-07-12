@@ -1,0 +1,37 @@
+---
+description: Admin lists, tables, and data display rules (Section III)
+globs: app/admin/**/*
+alwaysApply: false
+---
+
+# III. Main Dashboard Data & Lists
+
+## Top of Main View
+- Reserve top area for important page actions or simple navigation (e.g. "Create" button, filter dropdown via `AdminPopover`).
+
+## List Item Anatomy (Keep Simple)
+Each list item should include where applicable:
+- Thumbnail/favicon (visual identification — product image, order icon)
+- Primary label (shortened identifier)
+- Secondary meta (destination, customer, SKU)
+- Creation date
+- Count/metric (clicks, quantity, revenue)
+- Brief description (GitHub-style one-liner)
+
+## Visual Separation
+- Do **not** give each item its own full border — causes clutter.
+- Stack into clean lists using **space**, **subtle dividers** (`divide-y`), or **alternating row colors**.
+
+## Empty States
+- Always design a deliberate `EmptyState` with graphic/prompt and CTA when no data exists.
+
+## Micro-interactions (Bulk Actions)
+- Allow users to **check/select multiple items**.
+- Instantly trigger a contextual **`BulkActionsBar`** when ≥1 item is selected.
+
+## Tables
+- Use `DataTableShell` with search, filter, and sort.
+- Tables are useless without interactivity — always provide search/filter/sort.
+
+## Implementation
+- Use `AdminList`, `AdminListItem`, `DataTableShell`, `EmptyState` from layout components.

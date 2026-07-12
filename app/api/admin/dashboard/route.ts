@@ -201,6 +201,75 @@ export async function GET(request: NextRequest) {
         .gte('createdat', prevStart.toISOString())
         .lte('createdat', prevEnd.toISOString());
       previousTotalCustomers = new Set(prevCustomersData?.map(order => order.customerid).filter((id): id is string => !!id) || []).size;
+    } else if (filter === 'lastWeek') {
+      const prevStart = new Date(start);
+      prevStart.setDate(prevStart.getDate() - 7);
+      const prevEnd = new Date(end);
+      prevEnd.setDate(prevEnd.getDate() - 7);
+      const { data: prevSalesData } = await supabaseAdmin
+        .from('orders')
+        .select('total')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalSales = prevSalesData?.reduce((sum, order) => sum + Number(order.total || 0), 0) || 0;
+      const { count: prevOrders } = await supabaseAdmin
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalOrders = prevOrders || 0;
+      const { data: prevCustomersData } = await supabaseAdmin
+        .from('orders')
+        .select('customerid')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalCustomers = new Set(prevCustomersData?.map(order => order.customerid).filter((id): id is string => !!id) || []).size;
+    } else if (filter === 'lastMonth') {
+      const prevStart = new Date(start);
+      prevStart.setMonth(prevStart.getMonth() - 1);
+      const prevEnd = new Date(end);
+      prevEnd.setMonth(prevEnd.getMonth() - 1);
+      const { data: prevSalesData } = await supabaseAdmin
+        .from('orders')
+        .select('total')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalSales = prevSalesData?.reduce((sum, order) => sum + Number(order.total || 0), 0) || 0;
+      const { count: prevOrders } = await supabaseAdmin
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalOrders = prevOrders || 0;
+      const { data: prevCustomersData } = await supabaseAdmin
+        .from('orders')
+        .select('customerid')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalCustomers = new Set(prevCustomersData?.map(order => order.customerid).filter((id): id is string => !!id) || []).size;
+    } else if (filter === 'lastYear') {
+      const prevStart = new Date(start);
+      prevStart.setFullYear(prevStart.getFullYear() - 1);
+      const prevEnd = new Date(end);
+      prevEnd.setFullYear(prevEnd.getFullYear() - 1);
+      const { data: prevSalesData } = await supabaseAdmin
+        .from('orders')
+        .select('total')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalSales = prevSalesData?.reduce((sum, order) => sum + Number(order.total || 0), 0) || 0;
+      const { count: prevOrders } = await supabaseAdmin
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalOrders = prevOrders || 0;
+      const { data: prevCustomersData } = await supabaseAdmin
+        .from('orders')
+        .select('customerid')
+        .gte('createdat', prevStart.toISOString())
+        .lte('createdat', prevEnd.toISOString());
+      previousTotalCustomers = new Set(prevCustomersData?.map(order => order.customerid).filter((id): id is string => !!id) || []).size;
     }
 
     const salesGrowth = previousTotalSales > 0

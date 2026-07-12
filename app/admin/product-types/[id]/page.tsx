@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { Plus, Trash2 } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminModal from '../../components/AdminModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
 import CompleteAnimation from '@/components/CompleteAnimation';
+import { AdminPage, PageHeader, Section, Card, Breadcrumbs } from '../../components/layout';
 
 export default function ProductTypeDetailsPage() {
-  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const { language } = useLanguage();
@@ -158,45 +158,56 @@ export default function ProductTypeDetailsPage() {
   );
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 p-8">Loading...</div>;
+    return (
+      <AdminPage>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-500">{language === 'bg' ? 'Зареждане...' : 'Loading...'}</p>
+        </div>
+      </AdminPage>
+    );
   }
 
   if (!productType) {
-    return <div className="min-h-screen bg-gray-50 p-8">Product type not found</div>;
+    return (
+      <AdminPage>
+        <Breadcrumbs
+          items={[
+            { label: language === 'bg' ? 'Категории' : 'Categories', href: '/admin/product-types' },
+            { label: language === 'bg' ? 'Не е намерена' : 'Not found' },
+          ]}
+        />
+        <p className="text-gray-500">{language === 'bg' ? 'Категорията не е намерена' : 'Product type not found'}</p>
+      </AdminPage>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+    <AdminPage className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: language === 'bg' ? 'Категории' : 'Categories', href: '/admin/product-types' },
+          { label: productType.name },
+        ]}
+      />
+      <PageHeader
+        title={productType.name}
+        subtitle={language === 'bg' ? 'Управление на присвоени характеристики' : 'Manage assigned properties'}
+        actions={
           <button
-            onClick={() => router.push('/admin/product-types')}
-            className="p-2 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors touch-manipulation"
-            aria-label={language === 'bg' ? 'Назад' : 'Back'}
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation text-sm sm:text-base font-medium"
           >
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            {t.addProperty}
           </button>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{productType.name}</h1>
-        </div>
+        }
+      />
 
-        {/* Main Content Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-              {language === 'bg' ? 'Присвоени характеристики' : 'Assigned Properties'}
-            </h2>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation text-sm sm:text-base font-medium w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              {t.addProperty}
-            </button>
-          </div>
-
-          {/* Properties List */}
+      <Section
+        title={language === 'bg' ? 'Присвоени характеристики' : 'Assigned Properties'}
+      >
+        <Card padding="small">
           {assignedProperties.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <p className="text-gray-500 text-sm sm:text-base">
@@ -229,7 +240,8 @@ export default function ProductTypeDetailsPage() {
               ))}
             </div>
           )}
-        </div>
+        </Card>
+      </Section>
 
         <AdminModal
           isOpen={showAddModal}
@@ -331,8 +343,7 @@ export default function ProductTypeDetailsPage() {
             )}
           </div>
         </AdminModal>
-      </div>
-    </div>
+    </AdminPage>
   );
 }
 

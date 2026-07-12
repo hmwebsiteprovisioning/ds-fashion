@@ -2,7 +2,7 @@
 -- Run in Supabase SQL editor. Env CONTACT_EMAIL still overrides on API responses.
 
 UPDATE public.store_settings
-SET email = 'poruchki@modabox.eu',
+SET email = 'poruchki@ds-fashion.eu',
     updatedat = NOW()
 WHERE email IS NULL
    OR email ILIKE '%websiteprovisioning%'

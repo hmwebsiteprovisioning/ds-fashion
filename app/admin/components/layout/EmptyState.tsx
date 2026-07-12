@@ -10,6 +10,7 @@ interface EmptyStateProps {
   description?: string;
   action?: ReactNode;
   icon?: LucideIcon;
+  illustration?: ReactNode;
   className?: string;
 }
 
@@ -24,12 +25,14 @@ export default function EmptyState({
   description, 
   action,
   icon: Icon,
+  illustration,
   className
 }: EmptyStateProps) {
   return (
     <Card className={cn('text-center', className)}>
       <div className="py-8 sm:py-12">
-        {Icon && (
+        {illustration && <div className="mb-4 flex justify-center">{illustration}</div>}
+        {Icon && !illustration && (
           <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
             <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" />
           </div>

@@ -42,9 +42,9 @@ export default function Card({
     <div
       className={cn(
         'rounded-admin-card',
-        variant === 'default' 
-          ? 'bg-white border border-slate-200 shadow-admin-card'
-          : 'bg-white border border-slate-200/50',
+        variant === 'default'
+          ? 'bg-white border-0 shadow-admin-card dark:bg-transparent dark:border dark:border-slate-700 dark:shadow-none'
+          : 'bg-white border border-slate-200/50 dark:bg-transparent dark:border-slate-700',
         paddingClasses[padding],
         className
       )}

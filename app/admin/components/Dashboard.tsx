@@ -1,79 +1,53 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Package, ShoppingCart, Users, DollarSign, Eye, Star, EuroIcon } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  TrendingUp,
+  TrendingDown,
+  Package,
+  ShoppingCart,
+  Users,
+  EuroIcon,
+  ShoppingBag,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { translations } from '@/lib/translations';
 import AdminPage from './layout/AdminPage';
 import PageHeader from './layout/PageHeader';
 import Card from './layout/Card';
-import Section from './layout/Section';
-import SectionSurface from './layout/SectionSurface';
 import { Badge } from './layout';
+import AdminList, { AdminListItem } from './layout/AdminList';
+import EmptyState from './layout/EmptyState';
+import BulkActionsBar from './BulkActionsBar';
+import AdminPopover from './AdminPopover';
+import { AdminLineChart, AdminBarChart } from './charts';
 import { getOrderStatusVariant } from '@/lib/admin-status-utils';
-import { CHART_COLORS, CHART_COLORS_EXTENDED, getCategoryColor } from '@/lib/admin-chart-colors';
+import { ChevronDown } from 'lucide-react';
 
 type DateFilter = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear';
 
-// Mock data for the dashboard
-const mockData = {
-  totalSales: 45678.90,
-  totalOrders: 1247,
-  totalProducts: 89,
-  totalCustomers: 3421,
-  salesGrowth: 12.5,
-  ordersGrowth: 8.3,
-  productsGrowth: 15.7,
-  customersGrowth: -2.1,
-  recentOrders: [
-    { id: '#12345', customer: 'John Doe', amount: 299.99, status: 'completed', date: '2024-12-07' },
-    { id: '#12344', customer: 'Jane Smith', amount: 149.50, status: 'processing', date: '2024-12-07' },
-    { id: '#12343', customer: 'Mike Johnson', amount: 89.99, status: 'shipped', date: '2024-12-06' },
-    { id: '#12342', customer: 'Sarah Wilson', amount: 199.99, status: 'completed', date: '2024-12-06' },
-  ],
-  topProducts: [
-    { name: 'Premium Cotton T-Shirt', sales: 145, revenue: 4350.00, growth: 23.5 },
-    { name: 'Designer Jeans', sales: 98, revenue: 11760.00, growth: 18.2 },
-    { name: 'Running Shoes', sales: 76, revenue: 9120.00, growth: 12.8 },
-    { name: 'Leather Jacket', sales: 54, revenue: 12960.00, growth: 8.9 },
-    { name: 'Winter Coat', sales: 43, revenue: 7740.00, growth: -5.2 },
-  ],
-  weeklySales: [
-    { day: 'Mon', sales: 1200 },
-    { day: 'Tue', sales: 1450 },
-    { day: 'Wed', sales: 1100 },
-    { day: 'Thu', sales: 1800 },
-    { day: 'Fri', sales: 2200 },
-    { day: 'Sat', sales: 2800 },
-    { day: 'Sun', sales: 1900 },
-  ],
-  categoryPerformance: [
-    { category: 'Clothes', percentage: 45, color: CHART_COLORS.primary },
-    { category: 'Shoes', percentage: 30, color: CHART_COLORS.success },
-    { category: 'Accessories', percentage: 25, color: CHART_COLORS.warning },
-  ]
+const DATE_FILTER_LABELS: Record<DateFilter, { en: string; bg: string }> = {
+  thisWeek: { en: 'This Week', bg: 'Тази седмица' },
+  lastWeek: { en: 'Last Week', bg: 'Миналата седмица' },
+  thisMonth: { en: 'This Month', bg: 'Този месец' },
+  lastMonth: { en: 'Last Month', bg: 'Миналия месец' },
+  thisYear: { en: 'This Year', bg: 'Тази година' },
+  lastYear: { en: 'Last Year', bg: 'Миналата година' },
 };
 
 export default function Dashboard() {
   const { theme } = useTheme();
   const { language } = useLanguage();
+  const router = useRouter();
   const t = translations[language || 'en'];
   const [dateFilter, setDateFilter] = useState<DateFilter>('thisMonth');
-  const [dashboardData, setDashboardData] = useState<{
-    totalSales: number;
-    totalOrders: number;
-    totalProducts: number;
-    totalCustomers: number;
-    salesGrowth: number;
-    ordersGrowth: number;
-    productsGrowth: number;
-    customersGrowth: number;
-    weeklySales: Array<{ day: string; sales: number }>;
-    productTypePerformance: Array<{ productType: string; percentage: number; orders: number; sales: number; color?: string }>;
-    recentOrders: Array<{ id: string; customer: string; amount: number; status: string; date: string }>;
-    topProducts: Array<{ name: string; sales: number; revenue: number; growth: number }>;
-  }>({
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
     totalSales: 0,
     totalOrders: 0,
     totalProducts: 0,
@@ -82,20 +56,11 @@ export default function Dashboard() {
     ordersGrowth: 0,
     productsGrowth: 0,
     customersGrowth: 0,
-    weeklySales: [
-      { day: 'Mon', sales: 0 },
-      { day: 'Tue', sales: 0 },
-      { day: 'Wed', sales: 0 },
-      { day: 'Thu', sales: 0 },
-      { day: 'Fri', sales: 0 },
-      { day: 'Sat', sales: 0 },
-      { day: 'Sun', sales: 0 }
-    ],
-    productTypePerformance: [],
-    recentOrders: [],
-    topProducts: []
+    weeklySales: [] as Array<{ day: string; sales: number }>,
+    productTypePerformance: [] as Array<{ productType: string; percentage: number; orders: number; sales: number }>,
+    recentOrders: [] as Array<{ id: string; customer: string; amount: number; status: string; date: string }>,
+    topProducts: [] as Array<{ name: string; sales: number; revenue: number; growth: number }>,
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -103,22 +68,13 @@ export default function Dashboard() {
         setLoading(true);
         const response = await fetch(`/api/admin/dashboard?filter=${dateFilter}`);
         const result = await response.json();
-
         if (result.success && result.data) {
           setDashboardData({
             ...result.data,
             productTypePerformance: result.data.productTypePerformance || [],
-            weeklySales: result.data.weeklySales || [
-              { day: 'Mon', sales: 0 },
-              { day: 'Tue', sales: 0 },
-              { day: 'Wed', sales: 0 },
-              { day: 'Thu', sales: 0 },
-              { day: 'Fri', sales: 0 },
-              { day: 'Sat', sales: 0 },
-              { day: 'Sun', sales: 0 }
-            ],
+            weeklySales: result.data.weeklySales || [],
             recentOrders: result.data.recentOrders || [],
-            topProducts: result.data.topProducts || []
+            topProducts: result.data.topProducts || [],
           });
         }
       } catch (error) {
@@ -127,404 +83,306 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, [dateFilter]);
 
-  const MetricCard = ({ title, value, growth, icon: Icon, prefix = '', suffix = '' }: {
+  const dateFilterLabel = DATE_FILTER_LABELS[dateFilter][language === 'bg' ? 'bg' : 'en'];
+
+  const lineChartData = useMemo(
+    () =>
+      dashboardData.weeklySales.map((d) => ({
+        label: d.day,
+        value: d.sales,
+      })),
+    [dashboardData.weeklySales]
+  );
+
+  const barChartData = useMemo(
+    () =>
+      dashboardData.productTypePerformance.map((pt) => ({
+        label: pt.productType,
+        value: pt.orders,
+        secondaryValue: pt.sales,
+        category: pt.productType,
+      })),
+    [dashboardData.productTypePerformance]
+  );
+
+  const weeklyTotal = dashboardData.weeklySales.reduce((s, d) => s + d.sales, 0);
+
+  const toggleOrderSelect = (id: string, checked: boolean) => {
+    setSelectedOrders((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const MetricCard = ({
+    title,
+    value,
+    growth,
+    icon: Icon,
+    suffix = '',
+  }: {
     title: string;
     value: number | string;
     growth: number;
-    icon: any;
-    prefix?: string;
+    icon: LucideIcon;
     suffix?: string;
   }) => (
-    <Card
-      style={{
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.border,
-        color: theme.colors.text
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <p
-            className="text-xs sm:text-sm font-medium opacity-75 truncate"
-            style={{ color: theme.colors.textSecondary }}
-          >
-            {title}
+    <Card padding="small" className="!p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium text-slate-500 truncate">{title}</p>
+          <p className="text-lg font-bold text-slate-900 truncate">
+            {typeof value === 'number' ? value.toLocaleString() : value}
+            {suffix}
           </p>
-          <p className="text-xl sm:text-2xl font-bold mt-1 sm:mt-2 truncate">
-            {prefix}{typeof value === 'number' ? value.toLocaleString() : value}{suffix}
-          </p>
+          <div className="flex items-center gap-1 mt-0.5">
+            {growth >= 0 ? (
+              <TrendingUp size={12} className="text-emerald-600" />
+            ) : (
+              <TrendingDown size={12} className="text-red-600" />
+            )}
+            <span className={`text-[10px] font-medium ${growth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {growth >= 0 ? '+' : ''}
+              {growth}%
+            </span>
+          </div>
         </div>
-        <div
-          className="p-2 sm:p-3 rounded-full flex-shrink-0 ml-2"
-          style={{ backgroundColor: theme.colors.secondary }}
-        >
-          <Icon size={20} className="sm:w-6 sm:h-6" style={{ color: theme.colors.primary }} />
+        <div className="p-2 rounded-full bg-slate-100 flex-shrink-0">
+          <Icon size={16} className="text-primary" />
         </div>
-      </div>
-      <div className="flex items-center mt-3 sm:mt-4 flex-wrap gap-1">
-        {growth >= 0 ? (
-          <TrendingUp size={14} className="sm:w-4 sm:h-4 text-success" />
-        ) : (
-          <TrendingDown size={14} className="sm:w-4 sm:h-4 text-danger" />
-        )}
-        <span
-          className={`text-xs sm:text-sm font-medium ${growth >= 0 ? 'text-success' : 'text-danger'}`}
-        >
-          {growth >= 0 ? '+' : ''}{growth}%
-        </span>
-        <span
-          className="text-xs sm:text-sm opacity-75 ml-1 sm:ml-2"
-          style={{ color: theme.colors.textSecondary }}
-        >
-          {t.fromLastMonth}
-        </span>
       </div>
     </Card>
   );
 
+  const DateFilterPopover = (
+    <AdminPopover
+      align="right"
+      trigger={
+        <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50">
+          {dateFilterLabel}
+          <ChevronDown size={14} />
+        </button>
+      }
+    >
+      <div className="space-y-0.5 min-w-[160px]">
+        {(Object.keys(DATE_FILTER_LABELS) as DateFilter[]).map((key) => (
+          <button
+            key={key}
+            onClick={() => setDateFilter(key)}
+            className={`w-full text-left px-3 py-2 text-xs rounded hover:bg-slate-50 ${
+              dateFilter === key ? 'font-medium text-primary' : 'text-slate-600'
+            }`}
+          >
+            {DATE_FILTER_LABELS[key][language === 'bg' ? 'bg' : 'en']}
+          </button>
+        ))}
+      </div>
+    </AdminPopover>
+  );
+
   return (
-    <AdminPage className="space-y-6">
+    <AdminPage className="space-y-4">
       <PageHeader
         title={t.dashboard}
         subtitle={t.welcomeToAdmin}
-        actions={
-          <div className="w-full sm:w-auto">
-            <label
-              className="block text-xs sm:text-sm font-medium mb-2"
-              style={{ color: theme.colors.text }}
-            >
-              {language === 'bg' ? 'Период' : 'Period'}
-            </label>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-              className="w-full sm:w-auto px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border text-sm sm:text-base touch-manipulation min-h-[44px] sm:min-h-[auto]"
-              style={{
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                color: theme.colors.text
-              }}
-            >
-              <option value="thisWeek">{language === 'bg' ? 'Тази седмица' : 'This Week'}</option>
-              <option value="lastWeek">{language === 'bg' ? 'Миналата седмица' : 'Last Week'}</option>
-              <option value="thisMonth">{language === 'bg' ? 'Този месец' : 'This Month'}</option>
-              <option value="lastMonth">{language === 'bg' ? 'Миналия месец' : 'Last Month'}</option>
-              <option value="thisYear">{language === 'bg' ? 'Тази година' : 'This Year'}</option>
-              <option value="lastYear">{language === 'bg' ? 'Миналата година' : 'Last Year'}</option>
-            </select>
-          </div>
-        }
+        actions={DateFilterPopover}
       />
 
-      {/* Key Metrics */}
-      <Section
-        title={language === 'bg' ? 'Ключови показатели' : 'Key Metrics'}
-        description={language === 'bg' ? 'Общ преглед на продажбите и дейността' : 'Overview of sales and activity'}
-      >
-        <SectionSurface tone="soft" padding="md">
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <Card
-                  key={i}
-                  className="animate-pulse"
-                  style={{
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border
-                  }}
+      {/* Row 1: Data management */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Recent Orders */}
+        <Card padding="none">
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">{t.recentOrders}</h3>
+            <Link href="/admin/sales" className="text-xs text-primary hover:underline">
+              {language === 'bg' ? 'Виж всички' : 'View all'}
+            </Link>
+          </div>
+
+          {selectedOrders.size > 0 && (
+            <div className="px-4 py-2">
+              <BulkActionsBar selectedCount={selectedOrders.size} onClear={() => setSelectedOrders(new Set())}>
+                <button
+                  onClick={() => router.push('/admin/sales')}
+                  className="text-xs px-2 py-1 rounded bg-primary text-white"
                 >
-                  <div className="h-3 sm:h-4 bg-gray-300 rounded w-3/4 mb-3 sm:mb-4"></div>
-                  <div className="h-6 sm:h-8 bg-gray-300 rounded w-1/2"></div>
-                </Card>
+                  {language === 'bg' ? 'Отвори в продажби' : 'Open in Sales'}
+                </button>
+              </BulkActionsBar>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="p-4 space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-12 bg-slate-100 rounded animate-pulse" />
+              ))}
+            </div>
+          ) : dashboardData.recentOrders.length > 0 ? (
+            <AdminList selectable>
+              {dashboardData.recentOrders.map((order) => (
+                <AdminListItem
+                  key={order.id}
+                  selectable
+                  selected={selectedOrders.has(order.id)}
+                  onSelect={(checked) => toggleOrderSelect(order.id, checked)}
+                  onClick={() => router.push(`/admin/sales?order=${order.id}`)}
+                  thumbnail={
+                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                      <ShoppingCart size={14} className="text-slate-500" />
+                    </div>
+                  }
+                  primary={order.id}
+                  secondary={order.customer}
+                  description={order.date}
+                  meta={
+                    <div className="text-right">
+                      <span className="text-xs font-medium">€{order.amount.toFixed(2)}</span>
+                      <Badge variant={getOrderStatusVariant(order.status)} className="text-[10px] mt-0.5">
+                        {order.status}
+                      </Badge>
+                    </div>
+                  }
+                />
+              ))}
+            </AdminList>
+          ) : (
+            <div className="p-4">
+              <EmptyState
+                title={language === 'bg' ? 'Няма поръчки' : 'No orders yet'}
+                description={language === 'bg' ? 'Поръчките ще се появят тук' : 'Orders will appear here'}
+                icon={ShoppingCart}
+                action={
+                  <Link href="/admin/order-new" className="text-xs px-3 py-1.5 bg-primary text-white rounded-lg">
+                    {language === 'bg' ? 'Нова поръчка' : 'New order'}
+                  </Link>
+                }
+              />
+            </div>
+          )}
+        </Card>
+
+        {/* Top Products */}
+        <Card padding="none">
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">{t.topProducts}</h3>
+            <Link
+              href="/admin/order-new"
+              className="text-xs px-2.5 py-1 bg-primary text-white rounded-lg hover:opacity-90"
+            >
+              {language === 'bg' ? 'Нова поръчка' : 'New order'}
+            </Link>
+          </div>
+          {loading ? (
+            <div className="p-4 space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-slate-100 rounded animate-pulse" />
+              ))}
+            </div>
+          ) : dashboardData.topProducts.length > 0 ? (
+            <AdminList>
+              {dashboardData.topProducts.map((product, index) => (
+                <AdminListItem
+                  key={product.name}
+                  thumbnail={
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
+                      {index + 1}
+                    </div>
+                  }
+                  primary={product.name}
+                  secondary={`${product.sales} ${t.sales}`}
+                  meta={
+                    <div className="text-right">
+                      <span className="text-xs font-medium">€{product.revenue.toFixed(2)}</span>
+                      {product.growth !== 0 && (
+                        <span className={`text-[10px] block ${product.growth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {product.growth >= 0 ? '+' : ''}
+                          {product.growth}%
+                        </span>
+                      )}
+                    </div>
+                  }
+                />
+              ))}
+            </AdminList>
+          ) : (
+            <div className="p-4">
+              <EmptyState
+                title={language === 'bg' ? 'Няма продажби' : 'No sales yet'}
+                icon={Package}
+              />
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Row 2: Metrics + Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* KPI Cards */}
+        <Card padding="small">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+            {language === 'bg' ? 'Ключови показатели' : 'Key Metrics'}
+          </h3>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-20 bg-slate-100 rounded animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <MetricCard
-            title={t.totalSales}
-            value={dashboardData.totalSales}
-            growth={dashboardData.salesGrowth}
-            icon={EuroIcon}
-            suffix="€"
-          />
-          <MetricCard
-            title={t.totalOrders}
-            value={dashboardData.totalOrders}
-            growth={dashboardData.ordersGrowth}
-            icon={ShoppingCart}
-          />
-          <MetricCard
-            title={t.products}
-            value={dashboardData.totalProducts}
-            growth={dashboardData.productsGrowth}
-            icon={Package}
-          />
-          <MetricCard
-            title={t.customers}
-            value={dashboardData.totalCustomers}
-            growth={dashboardData.customersGrowth}
-            icon={Users}
-          />
+            <div className="grid grid-cols-2 gap-2">
+              <MetricCard title={t.totalSales} value={dashboardData.totalSales} growth={dashboardData.salesGrowth} icon={EuroIcon} suffix="€" />
+              <MetricCard title={t.totalOrders} value={dashboardData.totalOrders} growth={dashboardData.ordersGrowth} icon={ShoppingCart} />
+              <MetricCard title={t.products} value={dashboardData.totalProducts} growth={dashboardData.productsGrowth} icon={Package} />
+              <MetricCard title={t.customers} value={dashboardData.totalCustomers} growth={dashboardData.customersGrowth} icon={Users} />
             </div>
           )}
-        </SectionSurface>
-      </Section>
+        </Card>
 
-      {/* Charts and Analytics */}
-      <Section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Weekly Orders Chart */}
-          <Card
-            className="overflow-x-auto"
-            style={{
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              color: theme.colors.text
-            }}
-          >
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {language === 'bg' ? 'Поръчки за миналата седмица' : 'Orders Last Week'}
-          </h3>
-          <div className="h-48 sm:h-56 lg:h-64 flex items-end justify-between gap-1 sm:gap-2 min-w-[280px]">
-            {dashboardData.weeklySales.map((day, index) => {
-              const maxOrders = Math.max(...dashboardData.weeklySales.map(d => d.sales), 1);
-              const heightPercentage = maxOrders > 0 ? (day.sales / maxOrders) * 100 : 0;
-              
-              return (
-                <div key={day.day} className="flex flex-col items-center flex-1 min-w-[32px] sm:min-w-[40px]">
-                  <div
-                    className="w-full bg-blue-500 rounded-t mb-1 sm:mb-2 transition-all hover:bg-blue-600 relative group"
-                    style={{
-                      height: `${heightPercentage}%`,
-                      minHeight: day.sales > 0 ? '16px' : '4px'
-                    }}
-                    title={`${day.sales} ${language === 'bg' ? 'поръчки' : 'orders'}`}
-                  >
-                    {day.sales > 0 && (
-                      <span className="absolute -top-5 sm:-top-6 left-1/2 transform -translate-x-1/2 text-[10px] sm:text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        {day.sales}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className="text-[10px] sm:text-xs"
-                    style={{ color: theme.colors.textSecondary }}
-                  >
-                    {day.day}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          </Card>
+        {/* Line Chart */}
+        <Card padding="small">
+          {loading ? (
+            <div className="h-48 bg-slate-100 rounded animate-pulse" />
+          ) : (
+            <AdminLineChart
+              title={language === 'bg' ? 'Поръчки за седмицата' : 'Weekly Orders'}
+              data={lineChartData}
+              summaryMetric={{
+                label: language === 'bg' ? 'Общо' : 'Total',
+                value: weeklyTotal,
+              }}
+              dateRangeSelector={DateFilterPopover}
+              valueLabel={language === 'bg' ? 'поръчки' : 'orders'}
+            />
+          )}
+        </Card>
+      </div>
 
-          {/* Product Type Performance */}
-          <Card
-            style={{
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              color: theme.colors.text
-            }}
-          >
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {language === 'bg' ? 'Поръчки по Категория' : 'Orders by Category'}
-          </h3>
-          <div className="space-y-3 sm:space-y-4">
-            {dashboardData.productTypePerformance && dashboardData.productTypePerformance.length > 0 ? (
-              dashboardData.productTypePerformance.map((productType, index) => {
-                const color = productType.color || getCategoryColor(productType.productType, index);
-                return (
-                  <div key={productType.productType}>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 mb-1">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        <span className="text-xs sm:text-sm font-medium">{productType.productType}</span>
-                        <span
-                          className="text-[10px] sm:text-xs"
-                          style={{ color: theme.colors.textSecondary }}
-                        >
-                          ({productType.orders} {language === 'bg' ? 'поръчки' : 'orders'})
-                        </span>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <span className="text-xs sm:text-sm font-medium">{productType.percentage}%</span>
-                        <span
-                          className="text-[10px] sm:text-xs ml-1 sm:block"
-                          style={{ color: theme.colors.textSecondary }}
-                        >
-                          €{productType.sales.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 sm:h-2">
-                      <div
-                        className={`h-1.5 sm:h-2 rounded-full ${color}`}
-                        style={{ width: `${productType.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div
-                className="text-center py-6 sm:py-8 text-xs sm:text-sm"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Няма данни за категории' : 'No product type data available'}
-              </div>
-            )}
-          </div>
-          </Card>
-        </div>
-      </Section>
-
-      {/* Recent Orders and Top Products */}
-      <Section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Orders */}
-          <Card
-            style={{
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              color: theme.colors.text
-            }}
-          >
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {t.recentOrders}
-          </h3>
-          <div className="space-y-2 sm:space-y-3">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : dashboardData.recentOrders.length > 0 ? (
-              dashboardData.recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-2.5 sm:p-3 rounded border"
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm sm:text-base truncate">{order.id}</p>
-                    <p
-                      className="text-xs sm:text-sm truncate"
-                      style={{ color: theme.colors.textSecondary }}
-                    >
-                      {order.customer}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-start gap-2">
-                    <p className="font-medium text-sm sm:text-base">€{order.amount.toFixed(2)}</p>
-                    <Badge variant={getOrderStatusVariant(order.status)} className="text-[10px] sm:text-xs">
-                      {order.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div
-                className="text-center py-6 sm:py-8 text-xs sm:text-sm"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Няма поръчки' : 'No orders yet'}
-              </div>
-            )}
-          </div>
-          </Card>
-
-          {/* Top Products */}
-          <Card
-            style={{
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-              color: theme.colors.text
-            }}
-          >
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-            {t.topProducts}
-          </h3>
-          <div className="space-y-2 sm:space-y-3">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : dashboardData.topProducts.length > 0 ? (
-              dashboardData.topProducts.map((product, index) => (
-                <div
-                  key={product.name}
-                  className="flex items-center justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded border"
-                  style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: theme.colors.border
-                  }}
-                >
-                  <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <div
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0"
-                      style={{ backgroundColor: theme.colors.secondary }}
-                    >
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-xs sm:text-sm truncate">{product.name}</p>
-                      <p
-                        className="text-[10px] sm:text-xs"
-                        style={{ color: theme.colors.textSecondary }}
-                      >
-                        {product.sales} {t.sales}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-medium text-xs sm:text-sm">€{product.revenue.toFixed(2)}</p>
-                    {product.growth !== 0 && (
-                      <div className="flex items-center justify-end mt-0.5">
-                        {product.growth >= 0 ? (
-                          <TrendingUp size={10} className="sm:w-3 sm:h-3 text-green-500 mr-0.5 sm:mr-1" />
-                        ) : (
-                          <TrendingDown size={10} className="sm:w-3 sm:h-3 text-danger mr-0.5 sm:mr-1" />
-                        )}
-                        <span
-                          className={`text-[10px] sm:text-xs ${product.growth >= 0 ? 'text-success' : 'text-danger'}`}
-                        >
-                          {product.growth >= 0 ? '+' : ''}{product.growth}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div
-                className="text-center py-6 sm:py-8 text-xs sm:text-sm"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Няма продажби' : 'No sales yet'}
-              </div>
-            )}
-          </div>
-          </Card>
-        </div>
-      </Section>
+      {/* Category bar chart - full width */}
+      <Card padding="small">
+        {loading ? (
+          <div className="h-48 bg-slate-100 rounded animate-pulse" />
+        ) : barChartData.length > 0 ? (
+          <AdminBarChart
+            title={language === 'bg' ? 'Поръчки по категория' : 'Orders by Category'}
+            data={barChartData}
+            valueLabel={language === 'bg' ? 'Поръчки' : 'Orders'}
+            secondaryLabel={language === 'bg' ? 'Продажби €' : 'Sales €'}
+            showContextToggle
+            height={Math.max(200, barChartData.length * 36)}
+          />
+        ) : (
+          <EmptyState
+            title={language === 'bg' ? 'Няма данни за категории' : 'No category data'}
+            icon={ShoppingBag}
+          />
+        )}
+      </Card>
     </AdminPage>
   );
 }
-
-
-
