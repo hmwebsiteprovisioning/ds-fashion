@@ -917,46 +917,66 @@ function SalesPageContent() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Общо поръчки</h3>
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
+              {language === 'bg' ? 'Общо поръчки' : 'Total Orders'}
+            </h3>
             <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-1 sm:mt-2">{totalOrders}</p>
           </div>
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Общо приходи</h3>
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
+              {language === 'bg' ? 'Общо приходи' : 'Total Revenue'}
+            </h3>
             <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1 sm:mt-2">€{totalRevenue.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow sm:col-span-2 lg:col-span-1">
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">Поръчки в очакване</h3>
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900">
+              {language === 'bg' ? 'Поръчки в очакване' : 'Pending Orders'}
+            </h3>
             <p className="text-2xl sm:text-3xl font-bold text-orange-600 mt-1 sm:mt-2">{pendingOrders}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-xs font-semibold text-gray-700">Изпратени (бр.)</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Изпратени (бр.)' : 'Sent (pcs.)'}
+            </h3>
             <p className="text-xl font-bold text-indigo-600 mt-1">{sentCount}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-xs font-semibold text-gray-700">Взети (бр.)</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Взети (бр.)' : 'Picked up (pcs.)'}
+            </h3>
             <p className="text-xl font-bold text-green-600 mt-1">{pickedUpCount}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-xs font-semibold text-gray-700">Върнати (бр.)</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Върнати (бр.)' : 'Returned (pcs.)'}
+            </h3>
             <p className="text-xl font-bold text-red-600 mt-1">{returnedCount}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-xs font-semibold text-gray-700">Чака стока</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Чака стока' : 'Waiting for stock'}
+            </h3>
             <p className="text-xl font-bold text-amber-600 mt-1">{waitingStockCount}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 sm:col-span-1">
-            <h3 className="text-xs font-semibold text-gray-700">Сума взети / доставени</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Сума взети / доставени' : 'Delivered Amount'}
+            </h3>
             <p className="text-lg font-bold text-gray-900 mt-1">€{pickedUpTotal.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 sm:col-span-1">
-            <h3 className="text-xs font-semibold text-gray-700">Сума върнати</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Сума върнати' : 'Returned Amount'}
+            </h3>
             <p className="text-lg font-bold text-gray-900 mt-1">€{returnedTotal.toFixed(2)}</p>
           </div>
           <div className="bg-white p-4 rounded-lg shadow col-span-2 lg:col-span-2">
-            <h3 className="text-xs font-semibold text-gray-700">Общо продадени бройки (артикули)</h3>
+            <h3 className="text-xs font-semibold text-gray-700">
+              {language === 'bg' ? 'Общо продадени бройки (артикули)' : 'Total Sold Items'}
+            </h3>
             <p className="text-xl font-bold text-blue-700 mt-1">{soldItemsCount}</p>
           </div>
         </div>
@@ -1057,7 +1077,9 @@ function SalesPageContent() {
           {loading ? (
             <div className="text-center py-8 sm:py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-sm sm:text-base text-gray-500">Зареждане на поръчки...</p>
+              <p className="mt-2 text-sm sm:text-base text-gray-500">
+                {language === 'bg' ? 'Зареждане на поръчки...' : 'Loading orders...'}
+              </p>
             </div>
           ) : (
             <>
@@ -1075,34 +1097,34 @@ function SalesPageContent() {
                       ID
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      Пълно име
+                      {language === 'bg' ? 'Пълно име' : 'Full Name'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Телефон
+                      {language === 'bg' ? 'Телефон' : 'Phone'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Град
+                      {language === 'bg' ? 'Град' : 'City'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">
-                      Офис Еконт
+                      {language === 'bg' ? 'Офис Еконт' : 'Econt Office'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                      Вътрешна бележка
+                      {language === 'bg' ? 'Вътрешна бележка' : 'Internal Note'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
-                      Артикули
+                      {language === 'bg' ? 'Артикули' : 'Items'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Сума
+                      {language === 'bg' ? 'Сума' : 'Total'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Статус
+                      {language === 'bg' ? 'Статус' : 'Status'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Дата
+                      {language === 'bg' ? 'Дата' : 'Date'}
                     </th>
                     <th className="px-3 xl:px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      Действия
+                      {language === 'bg' ? 'Действия' : 'Actions'}
                     </th>
                   </tr>
                 </thead>
@@ -1266,7 +1288,7 @@ function SalesPageContent() {
                                   );
                                 })()}
                                 
-                                <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-2 sm:mb-3">Order Items</h4>
+                                <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-2 sm:mb-3">{language === 'bg' ? 'Артикули' : 'Order Items'}</h4>
                                 <div className="space-y-2 sm:space-y-3">
                                   {order.order_items.map((item, index) => (
                                     <div key={item.OrderItemID || index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 bg-gray-50 rounded-lg gap-2 sm:gap-0">
@@ -1291,7 +1313,7 @@ function SalesPageContent() {
                                           </p>
                                           <div className="text-xs text-gray-500 space-y-0.5 sm:space-y-1 mt-1">
                                             {item.product.name === 'Unknown Product' ? (
-                                              <p className="text-red-500">a️ Product data missing</p>
+                                              <p className="text-red-500">{language === 'bg' ? '⚠️ Липсва информация за продукта' : '⚠️ Product data missing'}</p>
                                             ) : (
                                               <>
                                                 {/* Display all properties */}
@@ -1305,17 +1327,17 @@ function SalesPageContent() {
                                                   <>
                                                     {/* Fallback to legacy fields if allProperties not available */}
                                                     {item.product.brand && (
-                                                      <p className="truncate"><span className="font-medium">Brand:</span> {item.product.brand}</p>
+                                                      <p className="truncate"><span className="font-medium">{language === 'bg' ? 'Марка:' : 'Brand:'}</span> {item.product.brand}</p>
                                                     )}
                                                     {item.product.model && (
-                                                      <p className="truncate"><span className="font-medium">Model:</span> {item.product.model}</p>
+                                                      <p className="truncate"><span className="font-medium">{language === 'bg' ? 'Модел:' : 'Model:'}</span> {item.product.model}</p>
                                                     )}
                                                     <div className="flex flex-wrap gap-x-2 gap-y-0.5">
                                                       {item.product.color && (
-                                                        <span><span className="font-medium">Color:</span> {item.product.color}</span>
+                                                        <span><span className="font-medium">{language === 'bg' ? 'Цвят:' : 'Color:'}</span> {item.product.color}</span>
                                                       )}
                                                       {item.product.size && (
-                                                        <span><span className="font-medium">Size:</span> {item.product.size}</span>
+                                                        <span><span className="font-medium">{language === 'bg' ? 'Размер:' : 'Size:'}</span> {item.product.size}</span>
                                                       )}
                                                     </div>
                                                   </>
@@ -1330,10 +1352,10 @@ function SalesPageContent() {
                                           €{item.price?.toFixed(2) || '0.00'}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                          Qty: {item.quantity}
+                                          {language === 'bg' ? 'Кол.' : 'Qty'}: {item.quantity}
                                         </p>
                                         <p className="text-xs text-gray-500 font-medium">
-                                          Subtotal: €{(item.price * item.quantity)?.toFixed(2) || '0.00'}
+                                          {language === 'bg' ? 'Сума' : 'Subtotal'}: €{(item.price * item.quantity)?.toFixed(2) || '0.00'}
                                         </p>
                                       </div>
                                     </div>
@@ -1421,11 +1443,11 @@ function SalesPageContent() {
                         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-4 text-sm">
                             <div>
-                              <p className="text-xs text-gray-500">Сума</p>
+                              <p className="text-xs text-gray-500">{language === 'bg' ? 'Сума' : 'Total'}</p>
                               <p className="text-sm font-semibold text-gray-900">€{order.total?.toFixed(2) || '0.00'}</p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-500">Дата</p>
+                              <p className="text-xs text-gray-500">{language === 'bg' ? 'Дата' : 'Date'}</p>
                               <p className="text-sm text-gray-700">{new Date(order.createdat).toLocaleDateString()}</p>
                             </div>
                           </div>
@@ -1474,7 +1496,7 @@ function SalesPageContent() {
                           </div>
                         </div>
                         {updatingStatus === order.orderid && (
-                          <p className="text-xs text-gray-500 text-center">Обновяване...</p>
+                          <p className="text-xs text-gray-500 text-center">{language === 'bg' ? 'Обновяване...' : 'Updating...'}</p>
                         )}
                       </div>
 
@@ -1517,7 +1539,7 @@ function SalesPageContent() {
                             );
                           })()}
                           
-                          <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">Order Items</h4>
+                          <h4 className="text-xs sm:text-sm font-medium text-gray-900 mb-2">{language === 'bg' ? 'Артикули' : 'Order Items'}</h4>
                           <div className="space-y-2">
                             {order.order_items.map((item, index) => (
                               <div key={item.OrderItemID || index} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
@@ -1542,7 +1564,7 @@ function SalesPageContent() {
                                     </p>
                                     <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                                       {item.product.name === 'Unknown Product' ? (
-                                        <p className="text-red-500">a️ Product data missing</p>
+                                        <p className="text-red-500">{language === 'bg' ? '⚠️ Липсва информация за продукта' : '⚠️ Product data missing'}</p>
                                       ) : (
                                         <>
                                           {/* Display all properties */}
@@ -1556,17 +1578,17 @@ function SalesPageContent() {
                                             <>
                                               {/* Fallback to legacy fields if allProperties not available */}
                                               {item.product.brand && (
-                                                <p><span className="font-medium">Brand:</span> {item.product.brand}</p>
+                                                <p><span className="font-medium">{language === 'bg' ? 'Марка:' : 'Brand:'}</span> {item.product.brand}</p>
                                               )}
                                               {item.product.model && (
-                                                <p><span className="font-medium">Model:</span> {item.product.model}</p>
+                                                <p><span className="font-medium">{language === 'bg' ? 'Модел:' : 'Model:'}</span> {item.product.model}</p>
                                               )}
                                               <div className="flex flex-wrap gap-x-2">
                                                 {item.product.color && (
-                                                  <span><span className="font-medium">Color:</span> {item.product.color}</span>
+                                                  <span><span className="font-medium">{language === 'bg' ? 'Цвят:' : 'Color:'}</span> {item.product.color}</span>
                                                 )}
                                                 {item.product.size && (
-                                                  <span><span className="font-medium">Size:</span> {item.product.size}</span>
+                                                  <span><span className="font-medium">{language === 'bg' ? 'Размер:' : 'Size:'}</span> {item.product.size}</span>
                                                 )}
                                               </div>
                                             </>
@@ -1576,15 +1598,15 @@ function SalesPageContent() {
                                     </div>
                                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
                                       <div>
-                                        <p className="text-xs text-gray-500">Price</p>
+                                        <p className="text-xs text-gray-500">{language === 'bg' ? 'Цена' : 'Price'}</p>
                                         <p className="text-sm font-medium text-gray-900">€{item.price?.toFixed(2) || '0.00'}</p>
                                       </div>
                                       <div>
-                                        <p className="text-xs text-gray-500">Qty</p>
+                                        <p className="text-xs text-gray-500">{language === 'bg' ? 'Кол.' : 'Qty'}</p>
                                         <p className="text-sm font-medium text-gray-900">{item.quantity}</p>
                                       </div>
                                       <div className="text-right">
-                                        <p className="text-xs text-gray-500">Subtotal</p>
+                                        <p className="text-xs text-gray-500">{language === 'bg' ? 'Сума' : 'Subtotal'}</p>
                                         <p className="text-sm font-semibold text-gray-900">€{(item.price * item.quantity)?.toFixed(2) || '0.00'}</p>
                                       </div>
                                     </div>

@@ -374,6 +374,22 @@ export default function AdminSidebar({ collapsed: externalCollapsed, onToggle }:
               {isCollapsed ? <ChevronRight size={18} /> : <><ChevronLeft size={18} /><span>{language === 'bg' ? 'Свий' : 'Collapse'}</span></>}
             </button>
 
+            <button
+              onClick={() => setLanguage(language === 'bg' ? 'en' : 'bg')}
+              className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-2 py-2 rounded-lg w-full text-xs transition-colors`}
+              style={{ backgroundColor: theme.colors.secondary, color: theme.colors.text }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[14px]">🌐</span>
+                {!isCollapsed && <span>{language === 'bg' ? 'Език / Language' : 'Language / Език'}</span>}
+              </div>
+              {!isCollapsed && (
+                <span className="font-bold text-[10px] uppercase bg-[#B98236] text-white px-1.5 py-0.5 rounded">
+                  {language === 'bg' ? 'BG' : 'EN'}
+                </span>
+              )}
+            </button>
+
             <Link
               href="/"
               onClick={closeMobile}
