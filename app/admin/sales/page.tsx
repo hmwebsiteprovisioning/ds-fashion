@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, ChevronUp, Package, Eye, Save, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-browser';
@@ -81,7 +81,7 @@ const ALL_STATUS_KEYS = [
   'waiting_for_stock',
 ] as const;
 
-export default function SalesPage() {
+function SalesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useAdminToast();
@@ -1702,5 +1702,17 @@ export default function SalesPage() {
         </div>
       </div>
     </AdminPage>
+  );
+}
+
+export default function SalesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto"></div>
+      </div>
+    }>
+      <SalesPageContent />
+    </Suspense>
   );
 }

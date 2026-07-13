@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, X, ChevronUp, ChevronDown } from 'lucide-react';
@@ -27,7 +27,7 @@ interface StorePageProps {
   config: StorePageConfig;
 }
 
-export default function StorePage({ config }: StorePageProps) {
+function StorePageContent({ config }: StorePageProps) {
   const { settings } = useStoreSettings();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category') || searchParams.get('producttypeid');
@@ -383,5 +383,17 @@ export default function StorePage({ config }: StorePageProps) {
         </div>
       )}
     </div>
+  );
+}
+
+export default function StorePage(props: StorePageProps) {
+  return (
+    <Suspense fallback={
+      <div className="bg-ds-main min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ds-gold mx-auto"></div>
+      </div>
+    }>
+      <StorePageContent {...props} />
+    </Suspense>
   );
 }
