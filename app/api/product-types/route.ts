@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
           code: item.code || '',
           rfproducttypeid: item.rfproducttypeid,
           parent_producttypeid: item.parent_producttypeid || null,
+          imageurl: item.imageurl || null,
           createdat: item.createdat,
           updatedat: item.updatedat,
           propertiesCount: item.propertiescount || 0,
@@ -291,7 +292,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient();
     const body = await request.json();
 
-    const { name, rfproducttypeid, parent_producttypeid } = body;
+    const { name, rfproducttypeid, parent_producttypeid, imageurl } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -344,6 +345,7 @@ export async function POST(request: NextRequest) {
 
     const insertData: any = {
       name,
+      imageurl: imageurl || null,
       updatedat: new Date().toISOString()
     };
 

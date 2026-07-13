@@ -368,6 +368,9 @@ export async function PUT(
       rfproducttypeid,
       isfeatured,
       isdisabled,
+      isnew,
+      isinspiration,
+      collectionid,
       Variants = [],
     } = body;
     const productImages = Array.isArray(body.productImages) ? body.productImages.filter(Boolean) : [];
@@ -412,6 +415,9 @@ export async function PUT(
         rfproducttypeid: rfproducttypeid || 1, // Default to 1 (For Him) if not provided
         isfeatured: isfeatured || false,
         isdisabled: !!isdisabled,
+        isnew: !!isnew,
+        isinspiration: !!isinspiration,
+        collectionid: collectionid || null,
         updatedat: new Date().toISOString()
       })
       .eq('productid', id)
@@ -490,6 +496,7 @@ export async function PUT(
           productid: id,
           sku: variantData.sku,
           price: variantData.price,
+          compare_at_price: variantData.compare_at_price ?? null,
           quantity: variantData.quantity,
           trackquantity: variantData.trackquantity ?? true,
           isvisible: variantData.isvisible ?? true

@@ -112,7 +112,7 @@ export async function uploadFile(
     // Use API route to upload (bypasses RLS with service role key)
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', filePath.split('/')[0] || 'images');
+    formData.append('folder', bucketName);
 
     const response = await fetch('/api/storage/upload', {
       method: 'POST',

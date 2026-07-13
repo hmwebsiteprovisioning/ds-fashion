@@ -26,7 +26,7 @@ export default function HomeHero() {
               ПАЗАРУВАЙ НОВО
             </Link>
             <Link
-              href="/products"
+              href="/collections"
               className="inline-flex items-center px-7 py-3.5 border border-ds-gold bg-ds-card text-ds-text text-[13px] font-bold tracking-widest uppercase hover:bg-ds-info hover:text-ds-gold-dark transition-colors"
             >
               РАЗГЛЕДАЙ КОЛЕКЦИИ

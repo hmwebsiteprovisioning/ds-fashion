@@ -81,7 +81,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const { name, parent_producttypeid } = body;
+    const { name, parent_producttypeid, imageurl } = body;
 
     // Validate parent_producttypeid if provided
     if (parent_producttypeid !== undefined) {
@@ -181,6 +181,10 @@ export async function PUT(
     const updateData: any = {
       updatedat: new Date().toISOString()
     };
+
+    if (imageurl !== undefined) {
+      updateData.imageurl = imageurl || null;
+    }
 
     if (name !== undefined) {
       updateData.name = name;

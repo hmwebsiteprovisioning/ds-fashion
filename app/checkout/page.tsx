@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ShoppingBag, Shield, Truck, RotateCcw, Headphones, Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { MOCK_CART_ITEMS } from '@/lib/mock-data';
+import { useCart } from '@/context/CartContext';
+import { formatPrice, formatPriceRaw } from '@/lib/price-formatter';
 import { STORE_NAME } from '@/lib/branding';
 import { getLogoUrl } from '@/lib/branding';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
@@ -31,10 +32,9 @@ const PAYMENT_OPTIONS = [
   { id: 'bank', label: 'Банков превод', sub: 'Плащане по банкови път', icon: '🏦' },
 ];
 
-const items = MOCK_CART_ITEMS;
-
 export default function CheckoutPage() {
   const router = useRouter();
+  const { items, clearCart } = useCart();
   const { settings } = useStoreSettings();
   const logoUrl = getLogoUrl(settings?.logourl);
   const storeName = settings?.storename || STORE_NAME;
@@ -50,6 +50,9 @@ export default function CheckoutPage() {
     newsletter: false,
   });
 
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
   const selected = DELIVERY_OPTIONS.find(d => d.id === delivery)!;
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const deliveryCost = selected.price;
@@ -61,8 +64,106 @@ export default function CheckoutPage() {
   const goNext = () => setStep(s => Math.min(4, s + 1) as Step);
   const goBack = () => setStep(s => Math.max(1, s - 1) as Step);
 
-  const submitOrder = () => {
-    router.push('/checkout/success?orderId=DS-' + Date.now().toString(36).toUpperCase());
+  const submitOrder = async () => {
+    setErrorMsg('');
+    
+    // Validate inputs
+    if (!form.firstName?.trim() || !form.lastName?.trim() || !form.phone?.trim() || !form.city?.trim() || !form.address?.trim() || !form.postcode?.trim()) {
+      setErrorMsg(settings?.language === 'bg' ? 'Моля, попълнете всички задължителни полета.' : 'Please fill in all required fields.');
+      setStep(1); // Go back to first step to fix fields
+      return;
+    }
+
+    if (!form.email?.trim()) {
+      setErrorMsg(settings?.language === 'bg' ? 'Моля, попълнете имейл адрес.' : 'Please enter an email address.');
+      setStep(1);
+      return;
+    }
+
+    if (items.length === 0) {
+      setErrorMsg(settings?.language === 'bg' ? 'Количката е празна.' : 'Your cart is empty.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    const orderData = {
+      customer: {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        telephone: form.phone.trim(),
+        country: form.country,
+        city: form.city.trim()
+      },
+      delivery: {
+        type: delivery,
+        notes: `Пощенски код: ${form.postcode.trim()}`,
+        street: form.address.trim(),
+        streetNumber: '',
+        entrance: '',
+        floor: '',
+        apartment: ''
+      },
+      items: items.map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size || '',
+        name: item.name
+      })),
+      totals: {
+        subtotal: subtotal,
+        delivery: deliveryCost,
+        total: total
+      },
+      discount: null
+    };
+
+    try {
+      if (payment === 'cod') {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+
+        const data = await response.json();
+        if (data.success && data.orderId) {
+          clearCart();
+          router.push(`/checkout/success?orderId=${data.orderId}`);
+        } else {
+          setErrorMsg(data.error || 'Failed to place order.');
+        }
+      } else if (payment === 'card') {
+        // Card Online via Stripe Checkout
+        const cardOrderData = {
+          ...orderData,
+          paymentMethod: 'card_online'
+        };
+
+        const response = await fetch('/api/payments/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cardOrderData)
+        });
+
+        const data = await response.json();
+        if (data.success && data.data?.url) {
+          clearCart(); // Clear cart before redirecting
+          window.location.href = data.data.url;
+        } else {
+          setErrorMsg(data.error || 'Stripe payment initialization failed.');
+        }
+      } else {
+        setErrorMsg('Избраният метод на плащане не е поддържан в момента.');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setErrorMsg('Възникна грешка при обработка на поръчката. Моля, опитайте отново.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -230,9 +331,9 @@ export default function CheckoutPage() {
                         <p className="text-[13px] font-medium text-ds-text">{opt.label}</p>
                         <p className="text-[11px] text-ds-text-muted">{opt.sub}</p>
                       </div>
-                      <p className="text-[13px] font-bold text-ds-text">
-                        {opt.price === 0 ? 'над 100 лв.' : `${opt.price.toFixed(2)} лв.`}
-                      </p>
+                      <div className="text-[13px] font-bold text-ds-text">
+                        {opt.price === 0 ? 'Безплатна' : formatPrice(opt.price, 'text-[13px] font-bold text-ds-text')}
+                      </div>
                     </label>
                   ))}
                 </div>
@@ -284,12 +385,19 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {errorMsg && (
+              <div className="bg-red-500/10 border border-red-500/25 text-red-600 text-xs p-3.5 rounded mb-4 font-medium">
+                {errorMsg}
+              </div>
+            )}
+
             {/* Navigation buttons */}
             <div className="flex gap-3">
               {step > 1 && step < 4 && (
                 <button
                   onClick={goBack}
-                  className="flex items-center gap-2 px-6 py-3.5 border border-ds-border text-[12px] font-bold tracking-widest uppercase text-ds-text hover:bg-ds-main transition-colors"
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-6 py-3.5 border border-ds-border text-[12px] font-bold tracking-widest uppercase text-ds-text hover:bg-ds-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft size={15} />
                   НАЗАД
@@ -298,7 +406,8 @@ export default function CheckoutPage() {
               {step < 3 && (
                 <button
                   onClick={goNext}
-                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
+                  disabled={submitting}
+                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ПРОДЪЛЖИ
                 </button>
@@ -306,9 +415,10 @@ export default function CheckoutPage() {
               {step === 3 && (
                 <button
                   onClick={submitOrder}
-                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors"
+                  disabled={submitting}
+                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  ЗАВЪРШИ ПОРЪЧКАТА
+                  {submitting ? 'ОБРАБОТКА...' : 'ЗАВЪРШИ ПОРЪЧКАТА'}
                 </button>
               )}
             </div>
@@ -332,15 +442,15 @@ export default function CheckoutPage() {
                 {items.map(item => (
                   <div key={item.id} className="flex gap-3 py-3">
                     <div className="w-12 h-14 overflow-hidden bg-ds-image shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.imageUrl || '/hero-home.png'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-ds-text truncate">{item.name}</p>
                       <p className="text-[11px] text-ds-text-muted">Размер: {item.size} · Бр: {item.quantity}</p>
                     </div>
-                    <p className="text-[12px] font-bold text-ds-text shrink-0">
-                      {(item.price * item.quantity).toFixed(2)} лв.
-                    </p>
+                    <div className="text-[12px] font-bold text-ds-text shrink-0">
+                      {formatPrice(item.price * item.quantity, 'text-[12px] font-bold text-ds-text')}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -365,20 +475,22 @@ export default function CheckoutPage() {
 
               {/* Totals */}
               <div className="space-y-2.5 text-[13px] border-t border-[#f0ebe3] pt-4 mb-4">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-ds-text-secondary">Междинна сума</span>
-                  <span className="text-ds-text">{subtotal.toFixed(2)} лв.</span>
+                  {formatPrice(subtotal, 'text-ds-text')}
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-baseline">
                   <span className="text-ds-text-secondary">Доставка</span>
-                  <span className="text-ds-text">{deliveryCost === 0 ? 'Безплатна' : `${deliveryCost.toFixed(2)} лв.`}</span>
+                  <span className="text-ds-text">
+                    {deliveryCost === 0 ? 'Безплатна' : formatPrice(deliveryCost, 'text-ds-text')}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-baseline pt-3 border-t border-ds-border mb-6">
                 <span className="text-[14px] font-bold text-ds-text">Общо</span>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-ds-gold">{total.toFixed(2)} лв.</p>
-                  <p className="text-[10px] text-ds-text-muted">с ДДС</p>
+                  {formatPrice(total, 'text-2xl font-bold text-ds-gold')}
+                  <p className="text-[10px] text-ds-text-muted mt-1">с ДДС</p>
                 </div>
               </div>
 

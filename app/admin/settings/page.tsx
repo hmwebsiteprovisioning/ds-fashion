@@ -39,6 +39,14 @@ interface StoreSettings {
   aboutustext: string | null;
   createdat: string;
   updatedat: string;
+  forhimlabel?: string | null;
+  forherlabel?: string | null;
+  accessorieslabel?: string | null;
+  salelabel?: string | null;
+  forhimimage?: string | null;
+  forherimage?: string | null;
+  accessoriesimage?: string | null;
+  saleimage?: string | null;
 }
 
 export default function AdminSettingsPage() {
@@ -110,7 +118,15 @@ export default function AdminSettingsPage() {
             telephonenumber: null,
             closingremarks: null,
             aboutusphoto: null,
-            aboutustext: null
+            aboutustext: null,
+            forhimlabel: 'За Него',
+            forherlabel: 'За Нея',
+            accessorieslabel: 'Аксесоари',
+            salelabel: 'SALE',
+            forhimimage: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=85',
+            forherimage: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&q=85',
+            accessoriesimage: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=85',
+            saleimage: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=900&q=85'
           };
 
           const createResponse = await fetch('/api/store-settings', {
@@ -203,7 +219,15 @@ export default function AdminSettingsPage() {
           telephonenumber: settings.telephonenumber,
           closingremarks: settings.closingremarks,
           aboutusphoto: settings.aboutusphoto,
-          aboutustext: settings.aboutustext
+          aboutustext: settings.aboutustext,
+          forhimlabel: settings.forhimlabel || 'За Него',
+          forherlabel: settings.forherlabel || 'За Нея',
+          accessorieslabel: settings.accessorieslabel || 'Аксесоари',
+          salelabel: settings.salelabel || 'SALE',
+          forhimimage: settings.forhimimage || 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=85',
+          forherimage: settings.forherimage || 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&q=85',
+          accessoriesimage: settings.accessoriesimage || 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=85',
+          saleimage: settings.saleimage || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=900&q=85'
         })
       });
 
@@ -507,6 +531,34 @@ export default function AdminSettingsPage() {
       heroimagefocusy: y
     } : null);
     setHasChanges(true);
+  };
+
+  const handleBannerImageUpload = async (field: keyof StoreSettings, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !settings) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert(t.pleaseSelectImage || 'Please select an image file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert(t.fileTooLarge || 'File size must be under 10MB');
+      return;
+    }
+
+    try {
+      const fileName = `${field}-${Date.now()}.${file.name.split('.').pop()}`;
+      const result = await uploadFile('hero-images', fileName, file);
+      if (result.success && result.url) {
+        handleSettingChange(field, result.url);
+      } else {
+        alert(language === 'bg' ? 'Неуспешно качване на изображение' : 'Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert(language === 'bg' ? 'Грешка при качване на изображение' : 'Error uploading image');
+    }
   };
 
   const settingsTabs = [
@@ -1021,6 +1073,294 @@ export default function AdminSettingsPage() {
                   {t.language}
                 </label>
                 <LanguageToggle />
+              </div>
+
+              {/* Navigation Menu Labels */}
+              <div id="settings-navigation-labels" className="border-t pt-6 mt-6 animate-fade-in" style={{ borderColor: theme.colors.border }}>
+                <h3
+                  className="text-base font-semibold mb-4"
+                  style={{ color: theme.colors.text }}
+                >
+                  {language === 'bg' ? 'Навигационни менюта (Етикети)' : 'Navigation Menu Labels'}
+                </h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* For Her */}
+                  <div>
+                    <label
+                      className="block text-xs font-medium mb-2"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      {language === 'bg' ? 'Етикет за "За Нея"' : 'Label for "For Her"'}
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.forherlabel || 'За Нея'}
+                      onChange={(e) => handleSettingChange('forherlabel', e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text
+                      }}
+                      placeholder="За Нея"
+                    />
+                  </div>
+
+                  {/* For Him */}
+                  <div>
+                    <label
+                      className="block text-xs font-medium mb-2"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      {language === 'bg' ? 'Етикет за "За Него"' : 'Label for "For Him"'}
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.forhimlabel || 'За Него'}
+                      onChange={(e) => handleSettingChange('forhimlabel', e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text
+                      }}
+                      placeholder="За Него"
+                    />
+                  </div>
+
+                  {/* Accessories */}
+                  <div>
+                    <label
+                      className="block text-xs font-medium mb-2"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      {language === 'bg' ? 'Етикет за "Аксесоари"' : 'Label for "Accessories"'}
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.accessorieslabel || 'Аксесоари'}
+                      onChange={(e) => handleSettingChange('accessorieslabel', e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text
+                      }}
+                      placeholder="Аксесоари"
+                    />
+                  </div>
+
+                  {/* Sale */}
+                  <div>
+                    <label
+                      className="block text-xs font-medium mb-2"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      {language === 'bg' ? 'Етикет за "SALE"' : 'Label for "SALE"'}
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.salelabel || 'SALE'}
+                      onChange={(e) => handleSettingChange('salelabel', e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text
+                      }}
+                      placeholder="SALE"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Page Banner Images */}
+              <div id="settings-navigation-images" className="border-t pt-6 mt-6 animate-fade-in" style={{ borderColor: theme.colors.border }}>
+                <h3
+                  className="text-base font-semibold mb-4"
+                  style={{ color: theme.colors.text }}
+                >
+                  {language === 'bg' ? 'Изображения за категориите (Банери)' : 'Category Page Banner Images'}
+                </h3>
+                
+                <div className="space-y-6">
+                  {/* For Her Image */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: theme.colors.textSecondary }}>
+                        {language === 'bg' ? 'Банер за "За Нея"' : 'Banner for "For Her"'}
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.forherimage || ''}
+                        onChange={(e) => handleSettingChange('forherimage', e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="Image URL"
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="forher-image-upload"
+                        className="hidden"
+                        onChange={(e) => handleBannerImageUpload('forherimage', e)}
+                      />
+                      <label
+                        htmlFor="forher-image-upload"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: '#ffffff'
+                        }}
+                      >
+                        <Upload size={12} />
+                        {language === 'bg' ? 'Качи изображение' : 'Upload Image'}
+                      </label>
+                    </div>
+                    {settings.forherimage && (
+                      <div className="relative aspect-[16/7] w-full max-w-[240px] rounded-md border overflow-hidden bg-gray-50 md:ml-auto">
+                        <img src={settings.forherimage} alt="For Her Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* For Him Image */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-t pt-4" style={{ borderColor: theme.colors.border }}>
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: theme.colors.textSecondary }}>
+                        {language === 'bg' ? 'Банер за "За Него"' : 'Banner for "For Him"'}
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.forhimimage || ''}
+                        onChange={(e) => handleSettingChange('forhimimage', e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="Image URL"
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="forhim-image-upload"
+                        className="hidden"
+                        onChange={(e) => handleBannerImageUpload('forhimimage', e)}
+                      />
+                      <label
+                        htmlFor="forhim-image-upload"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: '#ffffff'
+                        }}
+                      >
+                        <Upload size={12} />
+                        {language === 'bg' ? 'Качи изображение' : 'Upload Image'}
+                      </label>
+                    </div>
+                    {settings.forhimimage && (
+                      <div className="relative aspect-[16/7] w-full max-w-[240px] rounded-md border overflow-hidden bg-gray-50 md:ml-auto">
+                        <img src={settings.forhimimage} alt="For Him Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Accessories Image */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-t pt-4" style={{ borderColor: theme.colors.border }}>
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: theme.colors.textSecondary }}>
+                        {language === 'bg' ? 'Банер за "Аксесоари"' : 'Banner for "Accessories"'}
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.accessoriesimage || ''}
+                        onChange={(e) => handleSettingChange('accessoriesimage', e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="Image URL"
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="accessories-image-upload"
+                        className="hidden"
+                        onChange={(e) => handleBannerImageUpload('accessoriesimage', e)}
+                      />
+                      <label
+                        htmlFor="accessories-image-upload"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: '#ffffff'
+                        }}
+                      >
+                        <Upload size={12} />
+                        {language === 'bg' ? 'Качи изображение' : 'Upload Image'}
+                      </label>
+                    </div>
+                    {settings.accessoriesimage && (
+                      <div className="relative aspect-[16/7] w-full max-w-[240px] rounded-md border overflow-hidden bg-gray-50 md:ml-auto">
+                        <img src={settings.accessoriesimage} alt="Accessories Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sale Image */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-t pt-4" style={{ borderColor: theme.colors.border }}>
+                    <div>
+                      <label className="block text-xs font-medium mb-2" style={{ color: theme.colors.textSecondary }}>
+                        {language === 'bg' ? 'Банер за "SALE"' : 'Banner for "SALE"'}
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.saleimage || ''}
+                        onChange={(e) => handleSettingChange('saleimage', e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2"
+                        style={{
+                          backgroundColor: theme.colors.background,
+                          borderColor: theme.colors.border,
+                          color: theme.colors.text
+                        }}
+                        placeholder="Image URL"
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="sale-image-upload"
+                        className="hidden"
+                        onChange={(e) => handleBannerImageUpload('saleimage', e)}
+                      />
+                      <label
+                        htmlFor="sale-image-upload"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300"
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          color: '#ffffff'
+                        }}
+                      >
+                        <Upload size={12} />
+                        {language === 'bg' ? 'Качи изображение' : 'Upload Image'}
+                      </label>
+                    </div>
+                    {settings.saleimage && (
+                      <div className="relative aspect-[16/7] w-full max-w-[240px] rounded-md border overflow-hidden bg-gray-50 md:ml-auto">
+                        <img src={settings.saleimage} alt="Sale Banner" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

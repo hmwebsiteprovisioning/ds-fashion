@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
+import { formatPrice } from '@/lib/price-formatter';
 import { translations } from '@/lib/translations';
 import { CheckCircle, Mail, Clock, Package, Truck, MapPin } from 'lucide-react';
 import type { EcontOfficesData, EcontOffice } from '@/types/econt';
@@ -67,6 +68,7 @@ function CheckoutSuccessContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   useEffect(() => {
     const pageTitle = language === 'bg' ? 'Поръчката е успешна' : 'Order Successful';
@@ -84,14 +86,60 @@ function CheckoutSuccessContent() {
 
   useEffect(() => {
     const orderIdParam = searchParams.get('orderId');
-    if (!orderIdParam) {
+    const sessionIdParam = searchParams.get('session_id');
+
+    if (!orderIdParam && !sessionIdParam) {
       router.push('/');
       return;
     }
 
-    setOrderId(orderIdParam);
-    fetchOrderDetails(orderIdParam);
     loadEcontOffices();
+
+    if (orderIdParam) {
+      setOrderId(orderIdParam);
+      fetchOrderDetails(orderIdParam);
+    } else if (sessionIdParam) {
+      setVerifyingPayment(true);
+      setError(null);
+      setIsLoading(true);
+
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const pollStatus = async () => {
+        try {
+          const response = await fetch(`/api/payments/session-status?session_id=${sessionIdParam}`);
+          const res = await response.json();
+
+          if (res.success && res.data?.status === 'complete' && res.data?.orderId) {
+            setOrderId(res.data.orderId);
+            fetchOrderDetails(res.data.orderId);
+            setVerifyingPayment(false);
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(pollStatus, 2000); // Poll every 2 seconds
+          } else {
+            setError(language === 'bg' 
+              ? 'Възникна забавяне при обработката на плащането. Моля, проверете имейла си за потвърждение.' 
+              : 'Payment verification is taking longer than expected. Please check your email for confirmation.');
+            setIsLoading(false);
+            setVerifyingPayment(false);
+          }
+        } catch (err) {
+          console.error('Error checking payment status:', err);
+          if (attempts < maxAttempts) {
+            attempts++;
+            setTimeout(pollStatus, 2000);
+          } else {
+            setError(language === 'bg' ? 'Грешка при проверка на плащането.' : 'Error verifying payment.');
+            setIsLoading(false);
+            setVerifyingPayment(false);
+          }
+        }
+      };
+
+      pollStatus();
+    }
   }, [searchParams, router]);
 
   const loadEcontOffices = async () => {
@@ -177,25 +225,27 @@ function CheckoutSuccessContent() {
     return office ? office.name : officeId;
   };
 
-  if (!orderId) {
-    return null; // Will redirect
-  }
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-ds-main">
         <Header isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p style={{ color: theme.colors.textSecondary }}>
-              {language === 'bg' ? 'Зареждане на детайли за поръчката...' : 'Loading order details...'}
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ds-gold mx-auto mb-4"></div>
+            <p className="text-ds-text-secondary text-sm">
+              {verifyingPayment 
+                ? (language === 'bg' ? 'Потвърждаваме плащането с карта...' : 'Verifying your card payment...')
+                : (language === 'bg' ? 'Зареждане на детайли за поръчката...' : 'Loading order details...')}
             </p>
           </div>
         </div>
         <Footer />
       </div>
     );
+  }
+
+  if (!orderId) {
+    return null; // Will redirect if not loading and still empty
   }
 
   if (error || !order) {
@@ -355,12 +405,9 @@ function CheckoutSuccessContent() {
                         >
                           {language === 'bg' ? 'Количество' : 'Quantity'}: {item.quantity}
                         </span>
-                        <span 
-                          className="font-medium transition-colors duration-300"
-                          style={{ color: theme.colors.text }}
-                        >
-                          €{(item.price * item.quantity).toFixed(2)}
-                        </span>
+                        <div>
+                          {formatPrice(item.price * item.quantity, 'font-medium transition-colors duration-300')}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -371,31 +418,31 @@ function CheckoutSuccessContent() {
             {/* Order Totals */}
             <div className="pt-4 border-t" style={{ borderColor: theme.colors.border }}>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-baseline text-sm">
                   <span style={{ color: theme.colors.textSecondary }}>
                     {language === 'bg' ? 'Междинна сума' : 'Subtotal'}:
                   </span>
-                  <span style={{ color: theme.colors.text }}>€{order.subtotal.toFixed(2)}</span>
+                  {formatPrice(order.subtotal)}
                 </div>
                 {order.discountcode && order.discountamount && order.discountamount > 0 && (
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-baseline text-sm">
                     <span style={{ color: theme.colors.textSecondary }}>
                       {language === 'bg' ? 'Отстъпка' : 'Discount'} ({order.discountcode}):
                     </span>
-                    <span className="text-green-600">-€{order.discountamount.toFixed(2)}</span>
+                    <span className="text-green-600">- {formatPrice(order.discountamount, 'text-green-600')}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-baseline text-sm">
                   <span style={{ color: theme.colors.textSecondary }}>
                     {language === 'bg' ? 'Доставка' : 'Delivery'} ({getDeliveryTypeLabel(order.deliverytype)}):
                   </span>
-                  <span style={{ color: theme.colors.text }}>€{order.deliverycost.toFixed(2)}</span>
+                  {formatPrice(order.deliverycost)}
                 </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: theme.colors.border }}>
+                <div className="flex justify-between items-baseline text-lg font-bold pt-2 border-t" style={{ borderColor: theme.colors.border }}>
                   <span style={{ color: theme.colors.text }}>
                     {language === 'bg' ? 'Обща сума' : 'Total'}:
                   </span>
-                  <span style={{ color: theme.colors.primary }}>€{order.total.toFixed(2)}</span>
+                  {formatPrice(order.total, 'text-lg font-bold text-ds-gold')}
                 </div>
               </div>
             </div>

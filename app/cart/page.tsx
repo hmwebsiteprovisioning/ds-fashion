@@ -1,44 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Minus, Plus, Trash2, Heart, Truck, Shield, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
-import { MOCK_PRODUCTS, MOCK_CART_ITEMS } from '@/lib/mock-data';
-
-type CartEntry = {
-  id: string;
-  productId: string;
-  name: string;
-  color: string;
-  size: string;
-  price: number;
-  quantity: number;
-  image: string;
-};
-
-const CROSS_SELL = MOCK_PRODUCTS.filter(p => ['a1', 'a2', 'm2', 'm6'].includes(p.id));
+import { useCart } from '@/context/CartContext';
+import { fetchStorefrontProducts } from '@/lib/storefront-products';
+import { formatPrice } from '@/lib/price-formatter';
+import type { StorefrontProduct } from '@/lib/storefront-products';
 
 export default function CartPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const { items, updateQuantity, removeItem, totalPrice } = useCart();
+  const [crossSell, setCrossSell] = useState<StorefrontProduct[]>([]);
   const handleSetIsAdmin = (v: boolean) => { setIsAdmin(v); localStorage.setItem('isAdmin', v.toString()); };
 
-  const [items, setItems] = useState<CartEntry[]>(MOCK_CART_ITEMS);
+  useEffect(() => {
+    fetchStorefrontProducts({ limit: 4 }).then(setCrossSell).catch(() => setCrossSell([]));
+  }, []);
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [couponError, setCouponError] = useState('');
 
-  const updateQty = (id: string, delta: number) => {
-    setItems(prev => prev.map(item =>
-      item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-    ));
+  const updateQty = (id: string | number, delta: number, size?: string) => {
+    const item = items.find((i) => i.id === id && (size === undefined || i.size === size));
+    if (item) updateQuantity(id, Math.max(1, item.quantity + delta), size);
   };
-  const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const subtotal = totalPrice;
   const delivery = subtotal >= 100 ? 0 : 9.90;
   const discount = appliedCoupon === 'SAVE10' ? subtotal * 0.10 : 0;
   const total = subtotal + delivery - discount;
@@ -75,34 +67,36 @@ export default function CartPage() {
               {/* Cart items */}
               <div className="bg-ds-card border border-ds-border shadow-ds-card">
                 <div className="divide-y divide-ds-border">
-                  {items.map(item => (
-                    <div key={item.id} className="flex gap-4 p-5 sm:p-6">
-                      <Link href={`/products/${item.productId}`} className="shrink-0 w-[90px] sm:w-[110px] aspect-[3/4] overflow-hidden bg-ds-image">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  {items.map((item) => (
+                    <div key={`${item.id}-${item.size ?? ''}`} className="flex gap-4 p-5 sm:p-6">
+                      <Link href={`/products/${item.id}`} className="shrink-0 w-[90px] sm:w-[110px] aspect-[3/4] overflow-hidden bg-ds-image">
+                        <img src={item.imageUrl || '/hero-home.png'} alt={item.name} className="w-full h-full object-cover" />
                       </Link>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between gap-2">
-                          <Link href={`/products/${item.productId}`}>
+                          <Link href={`/products/${item.id}`}>
                             <h3 className="text-[14px] font-medium text-ds-text hover:text-ds-gold transition-colors">{item.name}</h3>
                           </Link>
-                          <p className="text-[14px] font-bold text-ds-text shrink-0">
-                            {(item.price * item.quantity).toFixed(2)} лв.
-                          </p>
+                          <div className="text-[14px] font-bold text-ds-text shrink-0">
+                            {formatPrice(item.price * item.quantity, 'text-[14px] font-bold text-ds-text')}
+                          </div>
                         </div>
-                        <p className="text-[12px] text-ds-text-muted mt-1">
-                          Цвят: {item.color} &nbsp;·&nbsp; Размер: {item.size}
-                        </p>
+                        {item.size && (
+                          <p className="text-[12px] text-ds-text-muted mt-1">
+                            Размер: {item.size}
+                          </p>
+                        )}
                         <div className="flex items-center justify-between mt-4">
                           <div className="inline-flex items-center border border-ds-border">
-                            <button onClick={() => updateQty(item.id, -1)} className="px-3 py-2 hover:bg-ds-main">
+                            <button onClick={() => updateQty(item.id, -1, item.size)} className="px-3 py-2 hover:bg-ds-main">
                               <Minus size={13} />
                             </button>
                             <span className="px-4 text-[13px] font-medium">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.id, 1)} className="px-3 py-2 hover:bg-ds-main">
+                            <button onClick={() => updateQty(item.id, 1, item.size)} className="px-3 py-2 hover:bg-ds-main">
                               <Plus size={13} />
                             </button>
                           </div>
-                          <button onClick={() => removeItem(item.id)} className="p-1.5 hover:text-ds-error transition-colors text-ds-text-muted">
+                          <button onClick={() => removeItem(item.id, item.size)} className="p-1.5 hover:text-ds-error transition-colors text-ds-text-muted">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -124,18 +118,22 @@ export default function CartPage() {
                   <h2 className="font-serif-display text-xl text-ds-text mb-5">Обобщение на поръчката</h2>
 
                   <div className="space-y-3 text-[13px] mb-5">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-baseline">
                       <span className="text-ds-text-secondary">Междинна сума</span>
-                      <span className="text-ds-text font-medium">{subtotal.toFixed(2)} лв.</span>
+                      {formatPrice(subtotal, 'text-ds-text font-medium')}
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-baseline">
                       <span className="text-ds-text-secondary">Доставка</span>
-                      <span className="text-ds-text font-medium">{delivery === 0 ? 'Безплатна' : `${delivery.toFixed(2)} лв.`}</span>
+                      <span className="text-ds-text font-medium">
+                        {delivery === 0 ? 'Безплатна' : formatPrice(delivery, 'text-ds-text font-medium')}
+                      </span>
                     </div>
                     {discount > 0 && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-baseline">
                         <span className="text-ds-text-secondary">Отстъпка ({appliedCoupon})</span>
-                        <span className="text-ds-success font-medium">-{discount.toFixed(2)} лв.</span>
+                        <span className="text-ds-success font-medium">
+                          - {formatPrice(discount, 'text-ds-success font-medium')}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -164,10 +162,10 @@ export default function CartPage() {
                   <div className="border-t border-ds-border pt-4 mb-6">
                     <div className="flex justify-between items-baseline">
                       <span className="text-[14px] font-bold text-ds-text">Крайна сума</span>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-ds-gold">{total.toFixed(2)} лв.</p>
-                        <p className="text-[11px] text-ds-text-muted">С включен ДДС</p>
-                      </div>
+                        <div className="text-right">
+                          {formatPrice(total, 'text-2xl font-bold text-ds-gold')}
+                          <p className="text-[11px] text-ds-text-muted mt-1">С включен ДДС</p>
+                        </div>
                     </div>
                   </div>
 
@@ -200,7 +198,7 @@ export default function CartPage() {
           <section className="mt-12">
             <h2 className="font-serif-display text-2xl text-ds-text mb-6">Може да харесаш още</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              {CROSS_SELL.map(p => (
+              {crossSell.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

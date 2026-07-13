@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
-import type { MockProduct } from '@/lib/mock-data';
+import type { StorefrontProduct } from '@/lib/storefront-products';
 import { DS } from '@/lib/design-tokens';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyProduct = MockProduct | any;
+import { formatPrice } from '@/lib/price-formatter';
+
+type AnyProduct = StorefrontProduct | Record<string, unknown> | object;
 
 interface ProductCardProps {
   product: AnyProduct;
@@ -25,19 +26,18 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
     if (onAddToCart) onAddToCart(product);
   };
 
-  const productId = product.id ?? product.productid ?? '';
-  const productName = product.name ?? `${product.brand ?? ''} ${product.model ?? ''}`.trim();
-  const productPrice: number = product.price ?? 0;
-  const rawImages: string[] = Array.isArray(product.images) && product.images.length > 0
-    ? product.images
+  const p = product as StorefrontProduct & Record<string, unknown>;
+  const productId = String(p.id ?? p.productid ?? '');
+  const productName = String(p.name ?? `${p.brand ?? ''} ${p.model ?? ''}`.trim());
+  const productPrice = Number(p.price ?? 0);
+  const compareAtPrice = p.compareAtPrice != null ? Number(p.compareAtPrice) : null;
+  const isOnSale = p.isOnSale ?? (compareAtPrice != null && compareAtPrice > productPrice);
+  const rawImages: string[] = Array.isArray(p.images) && p.images.length > 0
+    ? p.images as string[]
     : ['/hero-home.png'];
-  const colors: Array<{ name: string; hex: string }> = Array.isArray(product.colors)
-    ? product.colors
-    : [];
-  const sizes: string[] = Array.isArray(product.sizes)
-    ? product.sizes
-    : [];
-  const isNew: boolean = product.isNew ?? product.isfeatured ?? false;
+  const colors = Array.isArray(p.colors) ? p.colors as Array<{ name: string; hex: string }> : [];
+  const sizes: string[] = Array.isArray(p.sizes) ? p.sizes as string[] : [];
+  const isNew = !!(p.isNew ?? p.isnew);
 
   return (
     <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col">
@@ -60,6 +60,11 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
             НОВО
           </span>
         )}
+        {isOnSale && (
+          <span className="absolute top-3 left-3 bg-ds-error text-white text-[10px] font-bold tracking-widest px-2.5 py-1 uppercase">
+            SALE
+          </span>
+        )}
 
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWished(!wished); }}
@@ -67,11 +72,7 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
           style={{ backgroundColor: DS.wishlistBg }}
           aria-label="Добави в любими"
         >
-          <Heart
-            size={16}
-            fill={wished ? DS.gold : 'none'}
-            stroke={DS.gold}
-          />
+          <Heart size={16} fill={wished ? DS.gold : 'none'} stroke={DS.gold} />
         </button>
       </Link>
 
@@ -82,15 +83,20 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
           </h3>
         </Link>
 
-        <p className="text-[14px] sm:text-[15px] font-semibold text-ds-gold mt-1.5">
-          {productPrice.toFixed(2)} лв.
-        </p>
+        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
+          {formatPrice(productPrice, 'text-[14px] sm:text-[15px] font-semibold text-ds-gold')}
+          {isOnSale && compareAtPrice != null && (
+            <span className="text-[12px] text-ds-text-muted line-through">
+              {compareAtPrice.toFixed(2)} €
+            </span>
+          )}
+        </div>
 
         {colors.length > 0 && (
           <div className="flex items-center gap-1.5 mt-2">
-            {colors.slice(0, 4).map((color: { name: string; hex: string }) => (
+            {colors.slice(0, 4).map((color) => (
               <span
-                key={color.hex}
+                key={color.hex + color.name}
                 className="w-4 h-4 rounded-full border border-ds-border cursor-pointer hover:scale-110 transition-transform"
                 style={{ backgroundColor: color.hex }}
                 title={color.name}
@@ -104,7 +110,7 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
 
         {sizes.length > 0 && sizes[0] !== 'ONE SIZE' && (
           <div className="flex flex-wrap gap-1 mt-2.5">
-            {sizes.map((size: string) => (
+            {sizes.map((size) => (
               <button
                 key={size}
                 onClick={(e) => { e.preventDefault(); setSelectedSize(size); }}
@@ -131,3 +137,4 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
     </div>
   );
 }
+

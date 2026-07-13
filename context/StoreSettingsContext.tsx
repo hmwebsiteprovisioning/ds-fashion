@@ -28,6 +28,14 @@ interface StoreSettings {
   aboutustext: string | null;
   createdat: string;
   updatedat: string;
+  forhimlabel?: string | null;
+  forherlabel?: string | null;
+  accessorieslabel?: string | null;
+  salelabel?: string | null;
+  forhimimage?: string | null;
+  forherimage?: string | null;
+  accessoriesimage?: string | null;
+  saleimage?: string | null;
 }
 
 interface StoreSettingsContextType {

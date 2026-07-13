@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit2, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, Upload, Image as ImageIcon } from 'lucide-react';
 import { ProductType, Property } from '@/lib/types/product-types';
 import AdminModal from '../components/AdminModal';
 import { useLanguage } from '@/context/LanguageContext';
@@ -30,8 +30,63 @@ export default function ProductTypesPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
-  const [formData, setFormData] = useState({ name: '', parent_producttypeid: '' });
+  const [formData, setFormData] = useState({ name: '', parent_producttypeid: '', imageurl: '' });
   const [showCompleteAnimation, setShowCompleteAnimation] = useState(false);
+
+  // Media Library state
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<Array<{name: string, path: string, url: string}>>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const loadMediaFiles = async () => {
+    try {
+      setLoadingMedia(true);
+      const response = await fetch('/api/storage/list?folders=images,logos,hero-images&limit=200');
+      const result = await response.json();
+      if (result.success) setMediaFiles(result.files || []);
+    } catch (error) {
+      console.error('Failed to load media files:', error);
+    } finally {
+      setLoadingMedia(false);
+    }
+  };
+
+  const handleImageUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const file = fileList[0];
+    if (file.size > 10 * 1024 * 1024) {
+      alert(language === 'bg' ? 'Размерът на изображението трябва да е под 10MB' : 'Image size must be less than 10MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/storage/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+      if (result.success && result.url) {
+        setFormData(prev => ({ ...prev, imageurl: result.url }));
+      } else {
+        alert(language === 'bg' ? 'Неуспешно качване' : 'Failed to upload: ' + (result.error || 'Unknown error'));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleOpenMedia = () => {
+    setShowMediaModal(true);
+    loadMediaFiles();
+  };
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productTypeToDelete, setProductTypeToDelete] = useState<ProductType | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -203,7 +258,7 @@ export default function ProductTypesPage() {
         setTimeout(() => {
           setShowModal(false);
           setShowCompleteAnimation(false);
-          setFormData({ name: '', parent_producttypeid: '' });
+          setFormData({ name: '', parent_producttypeid: '', imageurl: '' });
           setEditingProductType(null);
           setSelectedPropertyIds([]);
           loadProductTypes();
@@ -221,7 +276,8 @@ export default function ProductTypesPage() {
     setEditingProductType(productType);
     setFormData({ 
       name: productType.name,
-      parent_producttypeid: productType.parent_producttypeid || ''
+      parent_producttypeid: productType.parent_producttypeid || '',
+      imageurl: (productType as any).imageurl || ''
     });
     setShowModal(true);
   };
@@ -364,7 +420,7 @@ export default function ProductTypesPage() {
               <button
                   onClick={() => {
                     setEditingProductType(null);
-                    setFormData({ name: '', parent_producttypeid: '' });
+                    setFormData({ name: '', parent_producttypeid: '', imageurl: '' });
                     setSelectedPropertyIds([]);
                     setShowModal(true);
                   }}
@@ -396,7 +452,7 @@ export default function ProductTypesPage() {
                   <button
                   onClick={() => {
                     setEditingProductType(null);
-                    setFormData({ name: '', parent_producttypeid: '' });
+                    setFormData({ name: '', parent_producttypeid: '', imageurl: '' });
                     setSelectedPropertyIds([]);
                     setShowModal(true);
                   }}
@@ -456,15 +512,14 @@ export default function ProductTypesPage() {
                               />
                             </TableCell>
                             <TableCell>
-                              <div className="truncate max-w-xs">
-                                {pt.parent_producttypeid ? (
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-xs text-gray-400">└─</span>
-                                    <span className="font-medium">{pt.name}</span>
+                              <div className="flex items-center gap-2 max-w-xs">
+                                {pt.parent_producttypeid && <span className="text-xs text-gray-400">└─</span>}
+                                {pt.imageurl && (
+                                  <div className="w-8 h-8 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0">
+                                    <img src={pt.imageurl} alt={pt.name} className="w-full h-full object-cover" />
                                   </div>
-                                ) : (
-                                  <span className="font-medium">{pt.name}</span>
                                 )}
+                                <span className="font-medium truncate">{pt.name}</span>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -560,14 +615,21 @@ export default function ProductTypesPage() {
                             aria-label={language === 'bg' ? 'Избери категория' : 'Select category'}
                           />
                           <h3 className="text-base font-semibold text-gray-900 flex-1 min-w-0">
-                            {pt.parent_producttypeid ? (
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-gray-400">└─</span>
+                            <div className="flex items-center gap-2">
+                              {pt.imageurl && (
+                                <div className="w-8 h-8 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0">
+                                  <img src={pt.imageurl} alt={pt.name} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              {pt.parent_producttypeid ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-gray-400">└─</span>
+                                  <span>{pt.name}</span>
+                                </div>
+                              ) : (
                                 <span>{pt.name}</span>
-                              </div>
-                            ) : (
-                              <span>{pt.name}</span>
-                            )}
+                              )}
+                            </div>
                           </h3>
                         </div>
                       </div>
@@ -765,6 +827,48 @@ export default function ProductTypesPage() {
                   className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Изображение' : 'Image'}
+                </label>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e.target.files)}
+                      disabled={uploadingImage}
+                    />
+                    <span className="inline-flex items-center gap-2 px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer select-none">
+                      <Upload size={14} />
+                      {uploadingImage 
+                        ? (language === 'bg' ? 'Качване...' : 'Uploading...') 
+                        : (language === 'bg' ? 'Качи изображение' : 'Upload image')}
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleOpenMedia}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <ImageIcon size={14} />
+                    {language === 'bg' ? 'Избери от медия' : 'Select from media'}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={formData.imageurl}
+                  onChange={(e) => setFormData({ ...formData, imageurl: e.target.value })}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="/images/categories/shoes.jpg"
+                />
+                {formData.imageurl && (
+                  <div className="mt-2 relative w-20 h-20 border rounded-md overflow-hidden bg-gray-50">
+                    <img src={formData.imageurl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -1046,6 +1150,52 @@ export default function ProductTypesPage() {
               </div>
             )}
           </div>
+        </AdminModal>
+
+        {/* Media Selection Modal */}
+        <AdminModal
+          isOpen={showMediaModal}
+          onClose={() => setShowMediaModal(false)}
+          title={language === 'bg' ? 'Избери изображение от медията' : 'Select Image from Media'}
+          maxWidth="max-w-4xl"
+        >
+          {loadingMedia ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-xs sm:text-sm text-gray-500">
+                {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+              </p>
+            </div>
+          ) : mediaFiles.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">{language === 'bg' ? 'Няма налични изображения' : 'No images available'}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+              {mediaFiles.map((file, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, imageurl: file.url }));
+                    setShowMediaModal(false);
+                  }}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors group"
+                >
+                  <img
+                    src={file.url}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center">
+                    <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100">
+                      {language === 'bg' ? 'Избери' : 'Select'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </AdminModal>
       </AdminPage>
   );

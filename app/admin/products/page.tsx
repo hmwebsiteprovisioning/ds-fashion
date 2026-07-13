@@ -67,6 +67,7 @@ interface Variant {
   productvariantid?: string;
   sku?: string;
   price: number;
+  compare_at_price?: number | null;
   quantity: number;
   trackquantity: boolean;
   isvisible: boolean;
@@ -102,8 +103,12 @@ export default function ProductsPage() {
     producttypeid: '',
     isfeatured: false,
     isdisabled: false,
+    isnew: false,
+    isinspiration: false,
+    collectionid: '' as string,
     propertyvalues: {} as Record<string, string>
   });
+  const [collections, setCollections] = useState<Array<{ collectionid: string; name: string }>>([]);
   const [availableProperties, setAvailableProperties] = useState<Property[]>([]);
   const [selectedPropertyValues, setSelectedPropertyValues] = useState<Record<string, string[]>>({});
   const [originalPropertyValues, setOriginalPropertyValues] = useState<Record<string, string[]>>({});
@@ -181,7 +186,18 @@ export default function ProductsPage() {
     loadProductTypes();
     loadProperties();
     loadRfProductTypes();
+    loadCollections();
   }, []);
+
+  const loadCollections = async () => {
+    try {
+      const response = await fetch('/api/collections?includeInactive=true');
+      const result = await response.json();
+      if (result.success) setCollections(result.collections || []);
+    } catch (error) {
+      console.error('Failed to load collections:', error);
+    }
+  };
 
   // Load RF Product Types (main categories)
   const loadRfProductTypes = async () => {
@@ -500,6 +516,9 @@ export default function ProductsPage() {
         producttypeid: formData.producttypeid,
         isfeatured: formData.isfeatured || false,
         isdisabled: formData.isdisabled === true,
+        isnew: formData.isnew || false,
+        isinspiration: formData.isinspiration || false,
+        collectionid: formData.collectionid || null,
         Variants: variants,
         productImages
       };
@@ -522,7 +541,7 @@ export default function ProductsPage() {
         setTimeout(() => {
           setShowModal(false);
           setShowCompleteAnimation(false);
-          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, propertyvalues: {} });
+          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
           setEditingProduct(null);
           setVariants([]);
           setVariantDisplayValues({});
@@ -566,6 +585,9 @@ export default function ProductsPage() {
           producttypeid: fullProduct.producttypeid,
           isfeatured: fullProduct.isfeatured || false,
           isdisabled: fullProduct.isdisabled === true,
+          isnew: fullProduct.isnew || false,
+          isinspiration: fullProduct.isinspiration || false,
+          collectionid: fullProduct.collectionid || '',
           propertyvalues: {}
         });
 
@@ -587,6 +609,7 @@ export default function ProductsPage() {
               productvariantid: v.productvariantid,
               sku: v.sku,
               price: v.price || 0,
+              compare_at_price: v.compare_at_price ?? null,
               quantity: v.quantity || 0,
               trackquantity: v.trackquantity ?? true,
               isvisible: v.isvisible ?? true,
@@ -1057,7 +1080,7 @@ export default function ProductsPage() {
             <button
               onClick={() => {
                 setEditingProduct(null);
-                setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, propertyvalues: {} });
+                setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
                 setProductTypeProperties([]);
                 setSelectedPropertyValues({});
                 setVariants([]);
@@ -1093,7 +1116,7 @@ export default function ProductsPage() {
                   <button
                     onClick={() => {
                       setEditingProduct(null);
-                      setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, propertyvalues: {} });
+                      setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
                       setProductTypeProperties([]);
                       setSelectedPropertyValues({});
                       setVariants([]);
@@ -1586,6 +1609,50 @@ export default function ProductsPage() {
                     </label>
                   </div>
 
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      {language === 'bg' ? 'Колекция' : 'Collection'}
+                    </label>
+                    <select
+                      value={formData.collectionid}
+                      onChange={(e) => setFormData({ ...formData, collectionid: e.target.value })}
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{language === 'bg' ? 'Без колекция' : 'No collection'}</option>
+                      {collections.map((c) => (
+                        <option key={c.collectionid} value={c.collectionid}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.isnew || false}
+                        onChange={(e) => setFormData({ ...formData, isnew: e.target.checked })}
+                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                      />
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">
+                        {language === 'bg' ? 'Ново (показва се в секция НОВО)' : 'New (shown in NEW section)'}
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.isinspiration || false}
+                        onChange={(e) => setFormData({ ...formData, isinspiration: e.target.checked })}
+                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                      />
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">
+                        {language === 'bg' ? 'Вдъхновение (показва се в секция ВДЪХНОВЕНИЕ)' : 'Inspiration (shown in INSPIRATION section)'}
+                      </span>
+                    </label>
+                  </div>
+
                   {formData.producttypeid && productTypeProperties.length > 0 && (
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
@@ -1785,6 +1852,9 @@ export default function ProductsPage() {
                               <tr>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.variant}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.price}</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                  {language === 'bg' ? 'Ориг. цена' : 'Orig. price'}
+                                </th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.quantity}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.image}</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.primary}</th>
@@ -1887,6 +1957,20 @@ export default function ProductsPage() {
                                           ? 'border-red-500 focus:ring-red-500'
                                           : 'focus:ring-blue-500'
                                       }`}
+                                    />
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      step="0.01"
+                                      value={variant.compare_at_price ?? ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        updateVariant(index, 'compare_at_price', val === '' ? null : parseFloat(val));
+                                      }}
+                                      placeholder="—"
+                                      className="w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                   </td>
                                   <td className="px-3 py-2">

@@ -66,6 +66,11 @@ export async function GET(request: NextRequest) {
     const producttypeid = searchParams.get('producttypeid');
     const excludeId = searchParams.get('excludeId');
     const limit = searchParams.get('limit');
+    const isnew = searchParams.get('isnew');
+    const isinspiration = searchParams.get('isinspiration');
+    const onsale = searchParams.get('onsale');
+    const collectionid = searchParams.get('collectionid');
+    const collectionslug = searchParams.get('collectionslug');
 
     const hideDisabledProducts = !(
       searchParams.get('includeDisabled') === 'true' && (await isVerifiedAdminRequest(request))
@@ -92,6 +97,37 @@ export async function GET(request: NextRequest) {
     // Filter by product type if provided
     if (producttypeid) {
       query = query.eq('producttypeid', producttypeid);
+    }
+
+    if (isnew === 'true') {
+      query = query.eq('isnew', true);
+    }
+
+    if (isinspiration === 'true') {
+      query = query.eq('isinspiration', true);
+    }
+
+    if (collectionid) {
+      query = query.eq('collectionid', collectionid);
+    }
+
+    if (collectionslug) {
+      const { data: collectionRow, error: collectionError } = await supabase
+        .from('collections')
+        .select('collectionid')
+        .eq('slug', collectionslug)
+        .eq('isactive', true)
+        .maybeSingle();
+
+      if (collectionError) {
+        return NextResponse.json({ error: collectionError.message }, { status: 500 });
+      }
+
+      if (!collectionRow) {
+        return NextResponse.json({ success: true, products: [] });
+      }
+
+      query = query.eq('collectionid', collectionRow.collectionid);
     }
 
     if (propertyid) {
@@ -256,6 +292,9 @@ export async function GET(request: NextRequest) {
           variants: variants || [],
           productTypeID: product.producttypeid,
           isfeatured: product.isfeatured || false,
+          isnew: product.isnew || false,
+          isinspiration: product.isinspiration || false,
+          collectionid: product.collectionid || null,
 
           // Legacy fields for backwards compatibility
           id: product.productid,
@@ -266,6 +305,7 @@ export async function GET(request: NextRequest) {
           color: variantProperties.color || variantProperties.colour || '',
           size: variantProperties.size || '',
           price: firstVariant?.price || 0,
+          compareAtPrice: firstVariant?.compare_at_price || null,
           quantity: firstVariant?.quantity || 0,
           visible: firstVariant?.isvisible ?? true,
           images: productImageUrls.length > 0 ? productImageUrls : ['/image.png'],
@@ -278,9 +318,18 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    let filteredProducts = productsWithDetails;
+    if (onsale === 'true') {
+      filteredProducts = productsWithDetails.filter((product: any) =>
+        (product.variants || []).some((v: any) =>
+          v.compare_at_price != null && Number(v.compare_at_price) > Number(v.price)
+        )
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      products: productsWithDetails
+      products: filteredProducts
     });
 
   } catch (error) {
@@ -309,6 +358,9 @@ export async function POST(request: NextRequest) {
       rfproducttypeid,
       isfeatured,
       isdisabled,
+      isnew,
+      isinspiration,
+      collectionid,
       Variants = [],
     } = body;
     const productImages = Array.isArray(body.productImages) ? body.productImages.filter(Boolean) : [];
@@ -367,6 +419,9 @@ export async function POST(request: NextRequest) {
         rfproducttypeid: rfproducttypeid || 1, // Default to 1 (For Him) if not provided
         isfeatured: isfeatured || false,
         isdisabled: !!isdisabled,
+        isnew: !!isnew,
+        isinspiration: !!isinspiration,
+        collectionid: collectionid || null,
         updatedat: new Date().toISOString()
       })
       .select()
@@ -405,6 +460,7 @@ export async function POST(request: NextRequest) {
           productid: product.productid,
           sku: variantData.sku,
           price: variantData.price,
+          compare_at_price: variantData.compare_at_price ?? null,
           quantity: variantData.quantity,
           trackquantity: variantData.trackquantity ?? true,
           isvisible: variantData.isvisible ?? true

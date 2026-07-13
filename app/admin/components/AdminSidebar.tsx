@@ -165,6 +165,7 @@ export default function AdminSidebar({ collapsed: externalCollapsed, onToggle }:
       collapsible: true,
       items: [
         { id: 'product-types', label: language === 'bg' ? 'Категории' : 'Categories', path: '/admin/product-types', icon: Tag },
+        { id: 'collections', label: language === 'bg' ? 'Колекции' : 'Collections', path: '/admin/collections', icon: Tag },
         { id: 'properties', label: language === 'bg' ? 'Характеристики' : 'Characteristics', path: '/admin/properties', icon: SlidersHorizontal },
         { id: 'products', label: language === 'bg' ? 'Артикули' : 'Items', path: '/admin/products', icon: Package },
         { id: 'stock', label: language === 'bg' ? 'Наличности' : 'Stock', path: '/admin/stock', icon: Boxes },

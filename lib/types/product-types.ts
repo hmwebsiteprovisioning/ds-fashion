@@ -7,6 +7,7 @@ export interface ProductType {
   code: string;
   rfproducttypeid?: number | null;
   parent_producttypeid?: string | null;
+  imageurl?: string | null;
   createdat: string;
   updatedat: string;
   // Extended data for hierarchical queries
