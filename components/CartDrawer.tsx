@@ -1,7 +1,7 @@
 // components/CartDrawer.tsx
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Plus, Minus, ShoppingCart, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -36,6 +36,24 @@ const CartDrawer: React.FC = () => {
 
   const t = translations[language || 'en'];
   const scrollYRef = useRef(0);
+  const [shouldRender, setShouldRender] = useState(isCartOpen);
+  const [animateState, setAnimateState] = useState<'closed' | 'open'>('closed');
+
+  useEffect(() => {
+    if (isCartOpen) {
+      setShouldRender(true);
+      const t1 = setTimeout(() => {
+        setAnimateState('open');
+      }, 10);
+      return () => clearTimeout(t1);
+    } else {
+      setAnimateState('closed');
+      const t2 = setTimeout(() => {
+        setShouldRender(false);
+      }, 300);
+      return () => clearTimeout(t2);
+    }
+  }, [isCartOpen]);
 
   const formatPrice = (price: number | undefined | null) => {
     const n = Number(price);
@@ -62,18 +80,27 @@ const CartDrawer: React.FC = () => {
     }
   }, [isCartOpen]);
 
-  if (!isCartOpen) return null;
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div
-        className="absolute inset-0 bg-black/50 transition-opacity"
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+          animateState === 'open' ? 'opacity-100' : 'opacity-0'
+        }`}
         onClick={closeCart}
       />
 
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md shadow-xl transform transition-transform flex flex-col"
-        style={{ backgroundColor: theme.colors.surface }}
+        className={`absolute right-0 top-0 h-full w-full max-w-md shadow-xl flex flex-col overflow-hidden transition-all duration-300 ease-in-out lg:top-6 lg:right-6 lg:h-[calc(100vh-3rem)] lg:rounded-[24px] lg:border ${
+          animateState === 'open'
+            ? 'translate-x-0 lg:opacity-100 lg:scale-100 lg:translate-y-0'
+            : 'translate-x-full lg:opacity-0 lg:scale-95 lg:translate-y-4'
+        }`}
+        style={{ 
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border
+        }}
       >
         <div
           className="flex items-center justify-between p-5 sm:p-6 border-b"

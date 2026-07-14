@@ -38,12 +38,40 @@ interface HeaderProps {
 
 export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shouldRenderMobile, setShouldRenderMobile] = useState(false);
+  const [mobileAnimateState, setMobileAnimateState] = useState<'closed' | 'open'>('closed');
+
+  useEffect(() => {
+    if (mobileOpen) {
+      setShouldRenderMobile(true);
+      const t1 = setTimeout(() => {
+        setMobileAnimateState('open');
+      }, 10);
+      return () => clearTimeout(t1);
+    } else {
+      setMobileAnimateState('closed');
+      const t2 = setTimeout(() => {
+        setShouldRenderMobile(false);
+      }, 300);
+      return () => clearTimeout(t2);
+    }
+  }, [mobileOpen]);
   const [rfTypes, setRfTypes] = useState<RfProductType[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const { totalItems } = useCart();
+  const { totalItems, openCart } = useCart();
+  const [cartBouncing, setCartBouncing] = useState(false);
+  const prevItemsCount = useRef(totalItems);
+
+  useEffect(() => {
+    if (totalItems > prevItemsCount.current) {
+      setCartBouncing(true);
+    }
+    prevItemsCount.current = totalItems;
+  }, [totalItems]);
+
   const { user, isAuthenticated } = useAuth();
   const { settings } = useStoreSettings();
   const { language } = useLanguage();
@@ -56,6 +84,21 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
     collections: any[];
     categories: any[];
   }>({ products: [], collections: [], categories: [] });
+
+  const resetMobileZoom = () => {
+    if (typeof window === 'undefined') return;
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0');
+      setTimeout(() => {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }, 150);
+    }
+  };
+
+  useEffect(() => {
+    resetMobileZoom();
+  }, [pathname, mobileOpen, showSearch]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -195,13 +238,6 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
             </Link>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
-              <button
-                onClick={() => setShowSearch(true)}
-                className="lg:hidden p-2 hover:text-ds-gold transition-colors text-ds-text"
-                aria-label="Търсене"
-              >
-                <Search size={20} />
-              </button>
               <Link
                 href={isAuthenticated && user ? '/user/dashboard' : '/user'}
                 className="p-2 hover:text-ds-gold transition-colors text-ds-text"
@@ -216,9 +252,16 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               >
                 <Heart size={20} />
               </Link>
-              <Link
-                href="/cart"
-                className="p-2 hover:text-ds-gold transition-colors text-ds-text relative"
+              <button
+                id="header-cart-icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openCart();
+                }}
+                className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${
+                  cartBouncing ? 'animate-cart-bounce' : ''
+                }`}
+                onAnimationEnd={() => setCartBouncing(false)}
                 aria-label="Количка"
               >
                 <ShoppingBag size={20} />
@@ -227,7 +270,7 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -280,40 +323,194 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
         </div>
       </header>
 
-      {mobileOpen && (
+      {shouldRenderMobile && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-ds-card flex flex-col">
+          <div 
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+              mobileAnimateState === 'open' ? 'opacity-100' : 'opacity-0'
+            }`} 
+            onClick={() => { setMobileOpen(false); setSearchQuery(''); }} 
+          />
+          <div 
+            className={`absolute left-0 top-0 h-full w-72 bg-ds-card flex flex-col transition-transform duration-300 ease-in-out ${
+              mobileAnimateState === 'open' ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
             <div className="flex items-center justify-between p-5 border-b border-ds-border">
               <span className="font-serif-display text-lg text-ds-text">{storeName}</span>
-              <button onClick={() => setMobileOpen(false)}>
+              <button onClick={() => { setMobileOpen(false); setSearchQuery(''); }}>
                 <X size={22} className="text-ds-text" />
               </button>
             </div>
+
+            {/* Search Input inside Burger Menu */}
+            <div className="px-5 py-3 border-b border-ds-border bg-ds-card">
+              <div className="relative flex items-center bg-ds-main rounded-md border border-ds-border px-3 py-2 text-ds-text transition-all duration-200 focus-within:border-ds-gold focus-within:ring-1 focus-within:ring-ds-gold">
+                <Search size={18} className="text-ds-text-secondary mr-2 flex-shrink-0 transition-transform duration-200 group-focus-within:scale-105" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={language === 'bg' ? 'Търсене...' : 'Search...'}
+                  className="bg-transparent border-none outline-none text-base w-full placeholder-ds-text-muted text-ds-text"
+                />
+                {searching ? (
+                  <Loader2 className="w-4 h-4 text-ds-gold animate-spin flex-shrink-0 ml-1" />
+                ) : searchQuery ? (
+                  <button onClick={() => setSearchQuery('')} className="p-0.5 hover:bg-ds-main rounded-full ml-1 transition-transform duration-150 active:scale-90">
+                    <X size={14} className="text-ds-text-secondary" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             <nav className="flex-1 overflow-y-auto py-4">
-              {navItems.map((item) => (
-                <div key={item.id}>
-                  <Link
-                    href={item.path}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between px-6 py-3.5 text-sm tracking-widest font-medium transition-colors ${
-                      item.isSale ? 'text-ds-error' : 'text-ds-text hover:text-ds-gold'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                  {'dropdownItems' in item && item.dropdownItems?.map((sub) => (
-                    <Link
-                      key={sub.path}
-                      href={sub.path}
-                      onClick={() => setMobileOpen(false)}
-                      className="block px-10 py-2 text-[12px] text-ds-text-secondary hover:text-ds-gold"
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
+              {searchQuery.trim() !== '' ? (
+                <div className="px-5 space-y-6">
+                  {searching && !searchResults.products.length && !searchResults.collections.length && !searchResults.categories.length ? (
+                    <div className="text-center py-8 text-ds-text-muted text-xs">
+                      {language === 'bg' ? 'Търсене...' : 'Searching...'}
+                    </div>
+                  ) : !searchResults.products.length && !searchResults.collections.length && !searchResults.categories.length ? (
+                    <div className="text-center py-8 text-ds-text-muted text-xs">
+                      {language === 'bg' ? 'Няма намерени резултати' : 'No results found'}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Products */}
+                      {searchResults.products.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold tracking-widest uppercase text-ds-gold border-b border-ds-border pb-1.5">
+                            {language === 'bg' ? 'Продукти' : 'Products'}
+                          </h4>
+                          <div className="space-y-2">
+                            {searchResults.products.slice(0, 5).map((product, idx) => (
+                              <Link
+                                key={product.productid}
+                                href={`/products/${product.productid}`}
+                                onClick={() => {
+                                  setMobileOpen(false);
+                                  setSearchQuery('');
+                                }}
+                                className="flex gap-3 p-1.5 rounded hover:bg-ds-main transition-colors group animate-item-slide-in"
+                                style={{ animationDelay: `${(idx + 1) * 40}ms` }}
+                              >
+                                <div className="relative w-10 h-10 bg-ds-main border border-ds-border rounded overflow-hidden flex-shrink-0">
+                                  <img
+                                    src={product.imageurl || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=100&q=80'}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="text-xs font-medium text-ds-text truncate group-hover:text-ds-gold transition-colors">
+                                    {product.name}
+                                  </h5>
+                                  <div className="mt-0.5 truncate">
+                                    {formatPrice(product.price, 'text-xs font-semibold text-ds-text', 'text-[10px] text-ds-text-secondary/70')}
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Collections */}
+                      {searchResults.collections.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold tracking-widest uppercase text-ds-gold border-b border-ds-border pb-1.5">
+                            {language === 'bg' ? 'Колекции' : 'Collections'}
+                          </h4>
+                          <div className="space-y-1.5">
+                            {searchResults.collections.slice(0, 3).map((col, idx) => (
+                              <Link
+                                key={col.collectionid}
+                                href={`/collections/${col.slug}`}
+                                onClick={() => {
+                                  setMobileOpen(false);
+                                  setSearchQuery('');
+                                }}
+                                className="flex items-center gap-2 p-1.5 rounded hover:bg-ds-main transition-colors group animate-item-slide-in"
+                                style={{ animationDelay: `${(idx + 1) * 40}ms` }}
+                              >
+                                <div className="relative w-6 h-6 rounded-full overflow-hidden border border-ds-border bg-ds-main flex-shrink-0">
+                                  <img
+                                    src={col.imageurl || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=100&q=80'}
+                                    alt={col.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="text-xs font-medium text-ds-text group-hover:text-ds-gold transition-colors truncate">
+                                  {col.name}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Categories */}
+                      {searchResults.categories.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-[10px] font-bold tracking-widest uppercase text-ds-gold border-b border-ds-border pb-1.5">
+                            {language === 'bg' ? 'Категории' : 'Categories'}
+                          </h4>
+                          <div className="space-y-1.5">
+                            {searchResults.categories.slice(0, 3).map((cat, idx) => (
+                              <Link
+                                key={cat.producttypeid}
+                                href={`/products?category=${cat.producttypeid}`}
+                                onClick={() => {
+                                  setMobileOpen(false);
+                                  setSearchQuery('');
+                                }}
+                                className="flex items-center gap-2 p-1.5 rounded hover:bg-ds-main transition-colors group animate-item-slide-in"
+                                style={{ animationDelay: `${(idx + 1) * 40}ms` }}
+                              >
+                                <div className="w-6 h-6 rounded border border-ds-border bg-ds-main flex items-center justify-center text-ds-text-secondary flex-shrink-0">
+                                  <Folder size={12} />
+                                </div>
+                                <span className="text-xs font-medium text-ds-text group-hover:text-ds-gold transition-colors truncate">
+                                  {cat.name}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
+              ) : (
+                navItems.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="animate-item-slide-in"
+                    style={{ animationDelay: `${(idx + 1) * 45}ms` }}
+                  >
+                    <Link
+                      href={item.path}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center justify-between px-6 py-3.5 text-sm tracking-widest font-medium transition-colors ${
+                        item.isSale ? 'text-ds-error' : 'text-ds-text hover:text-ds-gold'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                    {'dropdownItems' in item && item.dropdownItems?.map((sub) => (
+                      <Link
+                        key={sub.path}
+                        href={sub.path}
+                        onClick={() => setMobileOpen(false)}
+                        className="block px-10 py-2 text-[12px] text-ds-text-secondary hover:text-ds-gold"
+                      >
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                ))
+              )}
             </nav>
           </div>
         </div>

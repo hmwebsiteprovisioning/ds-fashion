@@ -85,7 +85,7 @@ export default function CategoryTiles() {
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {tiles.map((tile) => (
-          <Link key={tile.id} href={tile.path} className="group relative overflow-hidden aspect-[3/4] block">
+          <Link key={tile.id} href={tile.path} className="group relative overflow-hidden aspect-[3/4] block active:scale-[0.98] md:active:scale-100 transition-all duration-300">
             <img
               src={tile.image}
               alt={tile.label}

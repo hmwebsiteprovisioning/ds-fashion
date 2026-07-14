@@ -15,21 +15,21 @@ export default function Footer() {
   return (
     <footer className="bg-ds-section border-t border-ds-border-strong mt-16">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
-          <div className="col-span-2 lg:col-span-1 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10 text-center lg:text-left">
+          <div className="col-span-1 space-y-4 flex flex-col items-center lg:items-start">
             <Link href="/">
               <Image
                 src={logoUrl}
                 alt={storeName}
-                width={120}
-                height={40}
-                className="h-8 w-auto object-contain mb-3"
+                width={160}
+                height={54}
+                className="h-12 w-auto object-contain mb-3"
               />
             </Link>
             <p className="text-[12px] text-ds-text-secondary leading-relaxed max-w-[180px]">
               Луксозен облик с внимание към детайла и страст към качеството.
             </p>
-            <div className="flex items-center gap-4 pt-1">
+            <div className="flex items-center justify-center lg:justify-start gap-4 pt-1">
               <a href="#" aria-label="Instagram" className="text-ds-text-secondary hover:text-ds-gold transition-colors">
                 <Instagram size={17} />
               </a>
@@ -71,21 +71,21 @@ export default function Footer() {
 
           <div className="space-y-3">
             <h4 className="text-[11px] font-bold tracking-widest uppercase text-ds-text mb-4">КЛИЕНТСКА ПОДДРЪЖКА</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center lg:items-start">
               {settings?.telephonenumber && (
-                <a href={`tel:${settings.telephonenumber}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-2 block">
+                <a href={`tel:${settings.telephonenumber}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center justify-center lg:justify-start gap-2 block">
                   📞 {settings.telephonenumber}
                 </a>
               )}
               {!settings?.telephonenumber && (
-                <span className="text-[12px] text-ds-text-secondary block">📞 0899 123 456</span>
+                <span className="text-[12px] text-ds-text-secondary flex items-center justify-center lg:justify-start gap-2 block">📞 0899 123 456</span>
               )}
               {settings?.email && (
-                <a href={`mailto:${settings.email}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors block">
+                <a href={`mailto:${settings.email}`} className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center justify-center lg:justify-start gap-2 block">
                   ✉ {settings.email}
                 </a>
               )}
-              <span className="text-[12px] text-ds-text-secondary block">📍 София, България</span>
+              <span className="text-[12px] text-ds-text-secondary flex items-center justify-center lg:justify-start gap-2 block">📍 София, България</span>
             </div>
           </div>
         </div>

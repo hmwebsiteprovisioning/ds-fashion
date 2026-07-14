@@ -44,7 +44,7 @@ export default function CategoryPillsNav() {
             <Link
               key={pill.id}
               href={pill.href}
-              className="px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors duration-200"
+              className="px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-200 active:scale-95"
               style={{
                 backgroundColor: isActive ? theme.colors.buttonPrimary : theme.colors.secondary,
                 color: isActive ? '#ffffff' : theme.colors.text,

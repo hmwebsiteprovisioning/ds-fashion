@@ -18,6 +18,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onAddToCart, isFavorited: _isFavorited }: ProductCardProps) {
   const [wished, setWished] = useState(false);
+  const [isPopping, setIsPopping] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   const handleAdd = (e: React.MouseEvent) => {
@@ -40,7 +41,7 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
   const isNew = !!(p.isNew ?? p.isnew);
 
   return (
-    <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col">
+    <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col active:scale-[0.98] md:active:scale-100 transition-all duration-300">
       <Link href={`/products/${productId}`} className="relative block aspect-[3/4] overflow-hidden bg-ds-image">
         <img
           src={rawImages[0]}
@@ -67,8 +68,16 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
         )}
 
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWished(!wished); }}
-          className="absolute top-3 right-3 p-1.5 rounded-full border border-ds-border transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setWished(!wished);
+            setIsPopping(true);
+          }}
+          onAnimationEnd={() => setIsPopping(false)}
+          className={`absolute top-3 right-3 p-1.5 rounded-full border border-ds-border transition-colors ${
+            isPopping ? 'animate-heart-pop' : ''
+          }`}
           style={{ backgroundColor: DS.wishlistBg }}
           aria-label="Добави в любими"
         >

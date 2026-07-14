@@ -2,26 +2,128 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Heart, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { Heart, Minus, Plus, ShoppingBag, Truck, ChevronDown, ChevronUp, Share2, Star } from 'lucide-react';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
-import TrustBar from '@/components/TrustBar';
 import { toStorefrontProduct, type StorefrontProduct } from '@/lib/storefront-products';
 import { rfTypePath } from '@/lib/rf-product-type-routes';
 import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/price-formatter';
+import { useLanguage } from '@/context/LanguageContext';
+import { useRouter } from 'next/navigation';
+
+const pageTranslations = {
+  en: {
+    loading: 'Loading...',
+    productNotFound: 'Product not found',
+    backToStore: 'Back to store',
+    home: 'Home',
+    category: 'Category',
+    new: 'NEW',
+    sale: 'SALE',
+    color: 'Color',
+    size: 'Size',
+    quantity: 'Quantity',
+    addToCart: 'ADD TO CART',
+    buyNow: 'BUY NOW',
+    relatedProducts: 'More from DS-Fashion',
+    shippingCalculated: 'Shipping calculated at checkout',
+    addAddress: 'Add address',
+    save: 'Save',
+    share: 'Share',
+    refundPolicy: 'Refund Policy',
+    reviews: 'Reviews',
+    viewMore: 'View more',
+    viewLess: 'View less',
+    addedToWishlist: 'Added to wishlist!',
+    removedFromWishlist: 'Removed from wishlist!',
+    linkCopied: 'Share link copied!',
+    colorLabel: 'Color',
+    sizeLabel: 'Size',
+    refundText: 'We offer a 30-day refund policy. Return items must be unworn, unwashed, and in their original packaging.',
+  },
+  bg: {
+    loading: 'Зареждане...',
+    productNotFound: 'Продуктът не е намерен',
+    backToStore: 'Към магазина',
+    home: 'Начало',
+    category: 'Категория',
+    new: 'НОВО',
+    sale: 'SALE',
+    color: 'Цвят',
+    size: 'Размер',
+    quantity: 'Количество',
+    addToCart: 'ДОБАВИ В КОЛИЧКАТА',
+    buyNow: 'КУПИ СЕГА',
+    relatedProducts: 'Подобни продукти',
+    shippingCalculated: 'Изчисляване на доставката при плащане',
+    addAddress: 'Добави адрес',
+    save: 'Запази',
+    share: 'Сподели',
+    refundPolicy: 'Условия за връщане',
+    reviews: 'Отзиви',
+    viewMore: 'Виж повече',
+    viewLess: 'Виж по-малко',
+    addedToWishlist: 'Добавено в любими!',
+    removedFromWishlist: 'Премахнато от любими!',
+    linkCopied: 'Връзката е копирана!',
+    colorLabel: 'Цвят',
+    sizeLabel: 'Размер',
+    refundText: 'Предлагаме 30-дневен срок за връщане. Върнатите артикули трябва да бъдат некоригирани, неносени и в оригиналната си опаковка.',
+  }
+};
+
+const mockRelatedProducts = [
+  {
+    id: 'mock-1',
+    name: 'Dreamscape Trouser',
+    price: 148.0,
+    images: ['https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=400&h=500&q=80'],
+    isOnSale: true
+  },
+  {
+    id: 'mock-2',
+    name: 'Match Point Tennis Skirt',
+    price: 78.0,
+    images: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=400&h=500&q=80'],
+    isOnSale: false
+  },
+  {
+    id: 'mock-3',
+    name: 'Airlift High-Waist Leggings',
+    price: 118.0,
+    images: ['https://images.unsplash.com/photo-1506152983158-b4a74a01c721?auto=format&fit=crop&w=400&h=500&q=80'],
+    isOnSale: false
+  },
+  {
+    id: 'mock-4',
+    name: 'Classic White Shirt',
+    price: 98.0,
+    images: ['https://images.unsplash.com/photo-1604176354204-9268737828e4?auto=format&fit=crop&w=400&h=500&q=80'],
+    isOnSale: true
+  }
+];
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
+  const { language } = useLanguage();
+  const t = pageTranslations[language];
+  const { addItem, openCart } = useCart();
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [product, setProduct] = useState<StorefrontProduct | null>(null);
-  const [related, setRelated] = useState<StorefrontProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [mainImg, setMainImg] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [wished, setWished] = useState(false);
-  const { addItem, openCart } = useCart();
+
+  // Accordions and toasts
+  const [description, setDescription] = useState<string>('');
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [isRefundExpanded, setIsRefundExpanded] = useState(false);
+  const [shareToast, setShareToast] = useState<string | null>(null);
 
   const handleSetIsAdmin = (v: boolean) => {
     setIsAdmin(v);
@@ -42,6 +144,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             ).filter(Boolean),
           });
           setProduct(sf);
+          setDescription(data.product.description || '');
           if (sf.sizes[0]) setSelectedSize(sf.sizes[0]);
         } else {
           setProduct(null);
@@ -49,21 +152,17 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
-
-    fetch(`/api/products/${id}/related`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setRelated((data.products || []).map(toStorefrontProduct).slice(0, 5));
-        }
-      })
-      .catch(() => setRelated([]));
   }, [id]);
 
   if (loading) {
     return (
       <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
-        <div className="min-h-[50vh] flex items-center justify-center text-ds-text-muted">Зареждане...</div>
+        <div className="min-h-[50vh] flex items-center justify-center text-ds-text-secondary font-medium">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ds-gold" />
+            <span>{t.loading}</span>
+          </div>
+        </div>
       </PublicPageLayout>
     );
   }
@@ -72,110 +171,306 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     return (
       <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
         <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 text-ds-text-muted">
-          <p>Продуктът не е намерен</p>
-          <Link href="/products" className="text-ds-gold hover:underline">Към магазина</Link>
+          <p>{t.productNotFound}</p>
+          <Link href="/products" className="text-ds-gold hover:underline font-semibold">{t.backToStore}</Link>
         </div>
       </PublicPageLayout>
     );
   }
 
   const categoryPath = product.rfproducttypeid ? rfTypePath(product.rfproducttypeid) : '/products';
+  const nameParts = product.name.split(' ');
+  const brandName = nameParts[0] || 'DS-Fashion';
+  const modelName = nameParts.slice(1).join(' ') || product.name;
+  const currentPrice = product.price;
 
-  const handleAddToCart = () => {
+  const triggerFlyToCart = (startEl: HTMLElement) => {
+    const destEl = document.getElementById('header-cart-icon');
+    if (!destEl) return;
+
+    const startRect = startEl.getBoundingClientRect();
+    const destRect = destEl.getBoundingClientRect();
+
+    const flyer = document.createElement('div');
+    flyer.className = 'fixed z-[9999] pointer-events-none flex items-center justify-center bg-[#1E1B18] text-white rounded-full w-11 h-11 shadow-lg transition-all duration-[1000ms] ease-[cubic-bezier(0.2,0.8,0.2,1)]';
+    
+    const startX = startRect.left + startRect.width / 2 - 22;
+    const startY = startRect.top + startRect.height / 2 - 22;
+    flyer.style.left = `${startX}px`;
+    flyer.style.top = `${startY}px`;
+    flyer.style.transform = 'scale(1)';
+    
+    flyer.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <path d="M16 10a4 4 0 0 1-8 0"></path>
+      </svg>
+    `;
+
+    document.body.appendChild(flyer);
+
+    requestAnimationFrame(() => {
+      const destX = destRect.left + destRect.width / 2 - 22;
+      const destY = destRect.top + destRect.height / 2 - 22;
+      
+      flyer.style.left = `${destX}px`;
+      flyer.style.top = `${destY}px`;
+      flyer.style.transform = 'scale(0.3) rotate(360deg)';
+      flyer.style.opacity = '0.1';
+    });
+
+    setTimeout(() => {
+      flyer.remove();
+      destEl.classList.add('animate-cart-bounce-scale');
+      setTimeout(() => {
+        destEl.classList.remove('animate-cart-bounce-scale');
+      }, 450);
+    }, 950);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    triggerFlyToCart(e.currentTarget);
+
     addItem({
       id: product.id,
       name: product.name,
-      brand: '',
-      model: product.name,
+      brand: brandName,
+      model: modelName,
       color: product.colors[0]?.name || '',
-      price: product.price,
+      price: currentPrice,
       imageUrl: product.images[0],
       category: 'clothes',
       size: selectedSize || undefined,
       quantity: qty,
     });
-    openCart();
+    
+    setTimeout(() => {
+      openCart();
+    }, 1000);
+  };
+
+  const legacyCopyFallback = () => {
+    const textArea = document.createElement('textarea');
+    textArea.value = window.location.href;
+    textArea.style.position = 'fixed';
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        setShareToast(t.linkCopied);
+        setTimeout(() => setShareToast(null), 3000);
+      }
+    } catch (copyErr) {
+      document.body.removeChild(textArea);
+      console.error('Legacy copy fallback failed:', copyErr);
+    }
+  };
+
+  const fallbackCopy = () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(window.location.href)
+          .then(() => {
+            setShareToast(t.linkCopied);
+            setTimeout(() => setShareToast(null), 3000);
+          })
+          .catch(() => legacyCopyFallback());
+      } else {
+        legacyCopyFallback();
+      }
+    } catch (err) {
+      legacyCopyFallback();
+    }
+  };
+
+  const handleShare = () => {
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} on our store!`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData)
+        .then(() => {
+          console.log('Shared successfully');
+        })
+        .catch((err) => {
+          console.warn('Native sharing failed/cancelled:', err);
+          // Only trigger fallback if the user didn't intentionally abort the action
+          if (err.name !== 'AbortError') {
+            fallbackCopy();
+          }
+        });
+    } else {
+      if (typeof window !== 'undefined' && window.location.protocol === 'http:' && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        console.warn('Web Share API is disabled on iOS over HTTP. Serving HTTPS via "next dev --experimental-https" is required for native Share Sheet testing.');
+      }
+      fallbackCopy();
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    setWished(!wished);
+    setShareToast(wished ? t.removedFromWishlist : t.addedToWishlist);
+    setTimeout(() => setShareToast(null), 3000);
   };
 
   return (
     <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
-      <div className="bg-ds-main min-h-screen">
+      <div className="bg-ds-main min-h-screen transition-colors duration-300">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-1.5 text-[11px] text-ds-text-muted mb-6 flex-wrap">
-            <Link href="/" className="hover:text-ds-gold">Начало</Link>
+          
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-1.5 text-[11px] text-ds-text-secondary/70 mb-6 flex-wrap tracking-wider uppercase font-medium">
+            <Link href="/" className="hover:text-ds-gold transition-colors">{t.home}</Link>
             <span>/</span>
-            <Link href={categoryPath} className="hover:text-ds-gold">Категория</Link>
+            <Link href={categoryPath} className="hover:text-ds-gold transition-colors">{t.category}</Link>
             <span>/</span>
-            <span className="text-ds-text">{product.name}</span>
+            <span className="text-ds-text font-bold">{product.name}</span>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 bg-ds-card border border-ds-border p-6 sm:p-8">
-            <div className="flex gap-3">
-              <div className="hidden sm:flex flex-col gap-2 w-[72px] shrink-0">
+          {/* Main Grid Wrapper */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-12">
+            
+            {/* Left Column - Product Images */}
+            <div className="lg:col-span-7">
+              
+              {/* Mobile Swipeable Image Carousel (peeking next image) */}
+              <div 
+                className="flex md:hidden gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 w-full"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
                 {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setMainImg(i)}
-                    className={`aspect-square overflow-hidden border-2 transition-colors ${
-                      mainImg === i ? 'border-ds-gold' : 'border-ds-border hover:border-ds-gold'
-                    }`}
+                  <div 
+                    key={i} 
+                    className={`${
+                      product.images.length > 1 ? 'w-[82vw] sm:w-[86vw]' : 'w-full'
+                    } aspect-[4/5] bg-white rounded-3xl border border-ds-border/30 overflow-hidden flex items-center justify-center p-4 shrink-0 snap-center shadow-sm`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
+                    <img 
+                      src={img} 
+                      alt="" 
+                      className="max-h-full max-w-full object-contain rounded-2xl" 
+                    />
+                  </div>
                 ))}
               </div>
-              <div className="relative flex-1 aspect-[4/5] overflow-hidden bg-ds-image border border-ds-border">
-                <img src={product.images[mainImg]} alt={product.name} className="w-full h-full object-cover" />
-                {product.isNew && (
-                  <span className="absolute top-4 left-4 bg-ds-info text-ds-gold border border-ds-border text-[10px] font-bold tracking-widest px-3 py-1.5 uppercase">НОВО</span>
+
+              {/* Desktop gallery: Vertical thumbnails + Main active image */}
+              <div className="hidden md:flex flex-row gap-4 flex-1">
+                {product.images.length > 1 && (
+                  <div className="flex flex-col gap-3 w-[76px] shrink-0">
+                    {product.images.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setMainImg(i)}
+                        className={`w-[72px] h-[72px] rounded-2xl overflow-hidden border-2 transition-all duration-200 shrink-0 ${
+                          mainImg === i 
+                            ? 'border-ds-text scale-95 shadow-md ring-2 ring-ds-text/10' 
+                            : 'border-ds-border/40 hover:border-ds-text/30'
+                        }`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
                 )}
-                {product.isOnSale && (
-                  <span className="absolute top-4 left-4 bg-ds-error text-white text-[10px] font-bold tracking-widest px-3 py-1.5 uppercase">SALE</span>
-                )}
+
+                <div className="relative flex-1 aspect-square bg-white rounded-3xl border border-ds-border/30 overflow-hidden flex items-center justify-center p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+                  <img 
+                    src={product.images[mainImg]} 
+                    alt={product.name} 
+                    className="max-h-full max-w-full object-contain rounded-2xl transition-transform duration-500 hover:scale-105" 
+                  />
+                  
+                  {/* Badges */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                    {product.isNew && (
+                      <span className="bg-ds-gold text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
+                        {t.new}
+                      </span>
+                    )}
+                    {product.isOnSale && (
+                      <span className="bg-ds-error text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
+                        {t.sale}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
+
             </div>
 
-            <div>
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="font-serif-display text-2xl sm:text-3xl text-ds-text leading-tight">{product.name}</h1>
-                <button onClick={() => setWished(!wished)} className="p-2 border border-ds-border rounded-full shrink-0">
-                  <Heart size={20} fill={wished ? '#B98236' : 'none'} stroke="#B98236" />
-                </button>
+            {/* Right Column - Product Details */}
+            <div className="lg:col-span-5 flex flex-col space-y-6">
+              
+              {/* Title */}
+              <div>
+                <h1 className="font-serif-display text-2xl sm:text-3xl text-ds-text leading-tight tracking-tight capitalize">
+                  {product.name}
+                </h1>
               </div>
 
-              <div className="flex items-baseline gap-3 mt-4 flex-wrap">
-                {formatPrice(product.price, 'text-2xl font-semibold text-ds-gold')}
-                {product.isOnSale && product.compareAtPrice != null && (
-                  <span className="text-lg text-ds-text-muted line-through">{product.compareAtPrice.toFixed(2)} €</span>
-                )}
+              {/* Price & Vat */}
+              <div>
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-3xl font-extrabold text-ds-text">
+                    {formatPrice(currentPrice, '')}
+                  </span>
+                  {product.compareAtPrice != null && product.compareAtPrice > product.price && (
+                    <span className="text-lg text-ds-text-secondary/50 font-medium">
+                      {formatPrice(product.compareAtPrice, 'line-through text-ds-text-secondary/50 font-medium', 'line-through text-[11px] text-ds-text-secondary/30')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-ds-text-secondary/60 uppercase tracking-wider font-semibold mt-1">
+                  {language === 'bg' ? 'вкл. ДДС' : 'incl. VAT'}
+                </p>
               </div>
 
+              {/* Option Swatches / Colors */}
               {product.colors.length > 0 && (
-                <div className="mt-6">
-                  <p className="text-[12px] font-bold tracking-wide text-ds-text mb-2">Цвят</p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-ds-text mb-2">
+                    {t.colorLabel}: <span className="font-normal text-ds-text-secondary ml-1">{product.colors[0]?.name}</span>
+                  </p>
                   <div className="flex flex-wrap gap-2.5">
                     {product.colors.map((c) => (
                       <span
                         key={c.hex + c.name}
                         title={c.name}
-                        className="w-6 h-6 rounded-full border-2 border-ds-border"
-                        style={{ backgroundColor: c.hex }}
-                      />
+                        className="w-7 h-7 rounded-full border-2 border-ds-border shadow-sm flex items-center justify-center p-0.5"
+                      >
+                        <span className="w-full h-full rounded-full" style={{ backgroundColor: c.hex }} />
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
 
+              {/* Option Pills / Sizes */}
               {product.sizes.length > 0 && (
-                <div className="mt-6">
-                  <p className="text-[12px] font-bold tracking-wide text-ds-text mb-2">Размер</p>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-ds-text mb-2">
+                    {t.sizeLabel}: <span className="font-normal text-ds-text-secondary ml-1">{selectedSize}</span>
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((s) => (
                       <button
                         key={s}
                         onClick={() => setSelectedSize(s)}
-                        className={`text-[12px] px-4 py-2 border font-medium transition-colors ${
-                          selectedSize === s ? 'border-ds-gold bg-ds-gold text-white' : 'border-ds-border hover:border-ds-gold'
+                        className={`text-xs px-4 py-2 border-2 rounded-full font-bold transition-all duration-200 ${
+                          selectedSize === s 
+                            ? 'border-ds-text bg-ds-text text-white shadow-sm scale-95' 
+                            : 'border-ds-border/60 hover:border-ds-text/40 text-ds-text-secondary'
                         }`}
                       >
                         {s}
@@ -185,36 +480,153 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </div>
               )}
 
-              <div className="flex items-center gap-4 mt-8">
-                <div className="flex items-center border border-ds-border">
-                  <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 hover:bg-ds-main"><Minus size={16} /></button>
-                  <span className="px-4 text-sm font-medium">{qty}</span>
-                  <button onClick={() => setQty(qty + 1)} className="p-3 hover:bg-ds-main"><Plus size={16} /></button>
+              {/* Quantity Counter Pill */}
+              <div className="flex flex-col space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ds-text">
+                  {t.quantity}
+                </span>
+                <div className="inline-flex items-center border border-ds-border/60 bg-ds-info/10 rounded-full w-fit">
+                  <button 
+                    onClick={() => setQty(Math.max(1, qty - 1))} 
+                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors"
+                  >
+                    <Minus size={14} strokeWidth={2.5} />
+                  </button>
+                  <span className="px-4 text-sm font-bold text-ds-text min-w-[2rem] text-center select-none">
+                    {qty}
+                  </span>
+                  <button 
+                    onClick={() => setQty(qty + 1)} 
+                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors"
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                  </button>
                 </div>
+              </div>
+
+              {/* Primary Add to Cart Checkout Button */}
+              <div className="pt-2">
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-ds-gold hover:bg-ds-gold-dark text-white text-[12px] font-bold tracking-widest py-3.5 uppercase flex items-center justify-center gap-2"
+                  className="w-full bg-ds-text hover:bg-ds-text/90 text-white text-xs font-bold tracking-wider py-4 rounded-full transition-all duration-200 active:scale-95 shadow-md uppercase text-center flex items-center justify-center gap-2"
                 >
                   <ShoppingBag size={16} />
-                  ДОБАВИ В КОЛИЧКАТА
+                  {t.addToCart}
                 </button>
               </div>
+
+              {/* Save & Share Outlined Pill Buttons */}
+              <div className="flex gap-4">
+                <button 
+                  onClick={handleWishlistToggle}
+                  className="flex-1 border border-ds-border/85 hover:border-ds-text/30 hover:bg-ds-info/10 rounded-full py-3.5 px-6 flex items-center justify-center gap-2 text-xs font-bold text-ds-text uppercase tracking-wider transition-all duration-200"
+                >
+                  <Heart size={16} fill={wished ? '#ef4444' : 'none'} stroke={wished ? '#ef4444' : 'currentColor'} className="transition-all duration-200" />
+                  {t.save}
+                </button>
+                <button 
+                  onClick={handleShare}
+                  className="flex-1 border border-ds-border/85 hover:border-ds-text/30 hover:bg-ds-info/10 rounded-full py-3.5 px-6 flex items-center justify-center gap-2 text-xs font-bold text-ds-text uppercase tracking-wider transition-all duration-200"
+                >
+                  <Share2 size={16} />
+                  {t.share}
+                </button>
+              </div>
+
+              {/* Description Accordion */}
+              {description && (
+                <div className="border-t border-ds-border/30 pt-6">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-ds-text mb-2">
+                    {language === 'bg' ? 'Описание' : 'Description'}
+                  </h3>
+                  <p className={`text-xs text-ds-text-secondary leading-relaxed ${isDescExpanded ? '' : 'line-clamp-3'}`}>
+                    {description}
+                  </p>
+                  <button 
+                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                    className="text-[11px] text-ds-gold font-bold hover:underline mt-2 flex items-center gap-1"
+                  >
+                    {isDescExpanded ? t.viewLess : t.viewMore}
+                  </button>
+                </div>
+              )}
+
+              {/* Delivery & Returns Info Card */}
+              <div className="border border-ds-border/40 bg-ds-info/10 rounded-3xl p-4 flex flex-col space-y-3 shadow-sm">
+                <div className="flex items-center gap-2.5 text-xs text-ds-text-secondary">
+                  <Truck size={16} className="text-ds-gold shrink-0 animate-pulse" />
+                  <span>{language === 'bg' ? 'Връщанията се приемат в рамките на 14 дни' : 'Returns accepted within 14 days'}</span>
+                </div>
+                <button 
+                  onClick={() => setIsRefundExpanded(!isRefundExpanded)}
+                  className="w-full bg-white border border-ds-border/60 hover:bg-ds-info/20 text-[11px] font-bold text-ds-text py-2.5 rounded-xl transition-all"
+                >
+                  {t.refundPolicy}
+                </button>
+                {isRefundExpanded && (
+                  <p className="text-[11px] text-ds-text-secondary leading-normal pt-1 pl-1 animate-fade-in">
+                    {t.refundText}
+                  </p>
+                )}
+              </div>
+
             </div>
           </div>
 
-          {related.length > 0 && (
-            <section className="mt-12">
-              <h2 className="font-serif-display text-xl text-ds-text mb-6">Подобни продукти</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {related.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Mocked Related Products Section (Alo Yoga style) */}
+          <section className="mt-16 border-t border-ds-border/60 pt-12">
+            <h2 className="font-serif-display text-2xl text-ds-text mb-8 text-center sm:text-left">
+              {language === 'bg' ? 'Може да харесате също' : 'More from DS-Fashion'}
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+              {mockRelatedProducts.map((p) => {
+                const priceBgn = p.price * 1.95;
+                return (
+                  <Link 
+                    key={p.id}
+                    href={`/products/${id}`} // Mock link redirects back to this product page safely
+                    className="w-[180px] sm:w-[220px] shrink-0 snap-start bg-ds-card border border-ds-border/40 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="aspect-[4/5] rounded-xl overflow-hidden bg-white flex items-center justify-center p-2 mb-3 relative">
+                      <img src={p.images[0]} alt={p.name} className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                      {p.isOnSale && (
+                        <span className="absolute top-2 left-2 bg-ds-error text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase">SALE</span>
+                      )}
+                    </div>
+                    <h3 className="text-xs font-bold text-ds-text truncate uppercase tracking-wider">{p.name}</h3>
+                    <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
+                      <span className="text-xs font-extrabold text-ds-gold">€{p.price.toFixed(2)}</span>
+                      <span className="text-[10px] text-ds-text-secondary/55">({priceBgn.toFixed(2)} лв.)</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
         </div>
-        <TrustBar />
       </div>
+
+      {/* Floating Share Link Copied Toast Notification */}
+      {shareToast && (
+        <div className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom,0px))] left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-[11px] font-bold px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in flex items-center gap-2 select-none">
+          {shareToast}
+        </div>
+      )}
+
+      {/* Embedded slide-in animation rules */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        body {
+          -webkit-tap-highlight-color: transparent;
+        }
+      `}</style>
     </PublicPageLayout>
   );
 }
