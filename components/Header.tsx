@@ -123,7 +123,7 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
     }, 300);
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
-  const logoUrl = getLogoUrl(settings?.logourl);
+  const logoUrl = '/logo-no-bg.png';
   const storeName = settings?.storename || STORE_NAME;
 
   useEffect(() => {

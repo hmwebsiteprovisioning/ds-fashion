@@ -8,7 +8,7 @@ import { getLogoUrl, STORE_NAME } from '@/lib/branding';
 
 export default function Footer() {
   const { settings } = useStoreSettings();
-  const logoUrl = getLogoUrl(settings?.logourl);
+  const logoUrl = '/logo-no-bg.png';
   const storeName = settings?.storename || STORE_NAME;
   const year = new Date().getFullYear();
 
@@ -21,9 +21,9 @@ export default function Footer() {
               <Image
                 src={logoUrl}
                 alt={storeName}
-                width={160}
-                height={54}
-                className="h-12 w-auto object-contain mb-3"
+                width={220}
+                height={74}
+                className="h-24 md:h-20 w-auto object-contain mb-3"
               />
             </Link>
             <p className="text-[12px] text-ds-text-secondary leading-relaxed max-w-[180px]">
