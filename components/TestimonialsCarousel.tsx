@@ -123,7 +123,7 @@ export default function TestimonialsCarousel({ testimonials }: TestimonialsCarou
               }}
             >
               <div
-                className="relative rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl"
+                className="relative rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl"
                 style={{
                   backgroundColor: theme.colors.cardBg,
                   border: `1px solid ${theme.colors.border}`,

@@ -7,6 +7,7 @@ import type { StorefrontProduct } from '@/lib/storefront-products';
 import { DS } from '@/lib/design-tokens';
 
 import { formatPrice } from '@/lib/price-formatter';
+import { useCart } from '@/context/CartContext';
 
 type AnyProduct = StorefrontProduct | Record<string, unknown> | object;
 
@@ -17,15 +18,10 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddToCart, isFavorited: _isFavorited }: ProductCardProps) {
+  const { addItem, openCart } = useCart();
   const [wished, setWished] = useState(false);
   const [isPopping, setIsPopping] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onAddToCart) onAddToCart(product);
-  };
 
   const p = product as StorefrontProduct & Record<string, unknown>;
   const productId = String(p.id ?? p.productid ?? '');
@@ -40,8 +36,34 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
   const sizes: string[] = Array.isArray(p.sizes) ? p.sizes as string[] : [];
   const isNew = !!(p.isNew ?? p.isnew);
 
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const sizeToUse = selectedSize || (sizes.length > 0 ? sizes[0] : undefined);
+    
+    addItem({
+      id: productId,
+      name: productName,
+      brand: String(p.brand ?? ''),
+      model: String(p.model ?? ''),
+      type: p.type ? String(p.type) : undefined,
+      color: String(p.color ?? (colors[0]?.name || '')),
+      size: sizeToUse,
+      price: productPrice,
+      imageUrl: rawImages[0] || '/hero-home.png',
+      category: (p.category as 'clothes' | 'shoes' | 'accessories') || 'clothes',
+    });
+
+    openCart();
+
+    if (onAddToCart) {
+      onAddToCart(product);
+    }
+  };
+
   return (
-    <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col active:scale-[0.98] md:active:scale-100 transition-all duration-300">
+    <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col active:scale-[0.98] md:active:scale-100 transition-all duration-300 rounded-2xl overflow-hidden">
       <Link href={`/products/${productId}`} className="relative block aspect-[3/4] overflow-hidden bg-ds-image">
         <img
           src={rawImages[0]}
@@ -135,13 +157,15 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
           </div>
         )}
 
-        <button
-          onClick={handleAdd}
-          className="mt-3 w-full bg-ds-gold hover:bg-ds-gold-dark text-white text-[11px] sm:text-[12px] font-bold tracking-widest py-2.5 uppercase transition-colors flex items-center justify-center gap-2"
-        >
-          <ShoppingBag size={13} />
-          БЪРЗА ДОБАВКА
-        </button>
+        <div className="mt-auto pt-3">
+          <button
+            onClick={handleAdd}
+            className="w-full bg-ds-gold hover:bg-ds-gold-dark text-white text-[11px] sm:text-[12px] font-bold tracking-widest py-2.5 uppercase transition-colors flex items-center justify-center gap-2"
+          >
+            <ShoppingBag size={13} />
+            БЪРЗА ДОБАВКА
+          </button>
+        </div>
       </div>
     </div>
   );

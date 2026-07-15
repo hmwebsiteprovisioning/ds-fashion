@@ -75,10 +75,21 @@
   }
 
   body {
-    font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+    font-family: var(--font-sans, 'Montserrat', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
     background-color: var(--color-bg-main);
     color: var(--color-text-main);
+  }
+
+  /* Global Rounded Corners */
+  button, 
+  input, 
+  select, 
+  textarea,
+  .btn,
+  a.inline-flex.items-center.border,
+  a.inline-flex.items-center.bg-ds-gold {
+    border-radius: 9999px !important;
   }
 }
 

@@ -361,6 +361,8 @@ export async function POST(request: NextRequest) {
       isnew,
       isinspiration,
       collectionid,
+      hero_portrait_imageurl,
+      hero_landscape_imageurl,
       Variants = [],
     } = body;
     const productImages = Array.isArray(body.productImages) ? body.productImages.filter(Boolean) : [];
@@ -374,6 +376,15 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: name, producttypeid' },
         { status: 400 }
       );
+    }
+
+    if (isfeatured) {
+      if (!hero_portrait_imageurl?.trim() || !hero_landscape_imageurl?.trim()) {
+        return NextResponse.json(
+          { error: 'Featured products require both portrait and landscape images.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate that producttypeid is a leaf category (has no children)
@@ -422,6 +433,8 @@ export async function POST(request: NextRequest) {
         isnew: !!isnew,
         isinspiration: !!isinspiration,
         collectionid: collectionid || null,
+        hero_portrait_imageurl: hero_portrait_imageurl || null,
+        hero_landscape_imageurl: hero_landscape_imageurl || null,
         updatedat: new Date().toISOString()
       })
       .select()

@@ -11,6 +11,8 @@ import { useCart } from '@/context/CartContext';
 import { formatPrice } from '@/lib/price-formatter';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { useStoreSettings } from '@/context/StoreSettingsContext';
+import { STORE_NAME } from '@/lib/branding';
 
 const pageTranslations = {
   en: {
@@ -110,6 +112,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const { language } = useLanguage();
   const t = pageTranslations[language];
   const { addItem, openCart } = useCart();
+  const { settings } = useStoreSettings();
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [product, setProduct] = useState<StorefrontProduct | null>(null);
@@ -153,6 +156,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (product) {
+      document.title = `${product.name} - ${settings?.storename || STORE_NAME}`;
+    } else if (!loading) {
+      document.title = t.productNotFound;
+    }
+  }, [product, loading, t.productNotFound, settings?.storename]);
 
   if (loading) {
     return (

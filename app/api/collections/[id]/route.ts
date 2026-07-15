@@ -13,7 +13,19 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, slug, description, imageurl, sortorder, isactive } = body;
+    const { name, slug, description, imageurl, sortorder, isactive, showonindex } = body;
+
+    if (showonindex) {
+      const { count, error: countError } = await supabaseAdmin
+        .from('collections')
+        .select('*', { count: 'exact', head: true })
+        .eq('showonindex', true)
+        .neq('collectionid', id);
+
+      if (!countError && count !== null && count >= 3) {
+        return NextResponse.json({ error: 'Maximum of 3 collections can be visible on the index page.' }, { status: 400 });
+      }
+    }
 
     const { data, error } = await supabaseAdmin
       .from('collections')
@@ -24,6 +36,7 @@ export async function PUT(
         ...(imageurl !== undefined && { imageurl }),
         ...(sortorder !== undefined && { sortorder }),
         ...(isactive !== undefined && { isactive }),
+        ...(showonindex !== undefined && { showonindex }),
         updatedat: new Date().toISOString(),
       })
       .eq('collectionid', id)

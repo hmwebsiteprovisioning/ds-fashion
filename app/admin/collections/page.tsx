@@ -16,6 +16,7 @@ type Collection = {
   imageurl?: string | null;
   sortorder: number;
   isactive: boolean;
+  showonindex: boolean;
 };
 
 export default function CollectionsPage() {
@@ -31,7 +32,8 @@ export default function CollectionsPage() {
     description: '',
     imageurl: '',
     sortorder: 0,
-    isactive: true
+    isactive: true,
+    showonindex: false
   });
   const [saving, setSaving] = useState(false);
 
@@ -111,7 +113,8 @@ export default function CollectionsPage() {
       description: '',
       imageurl: '',
       sortorder: 0,
-      isactive: true
+      isactive: true,
+      showonindex: false
     });
     setShowModal(true);
   };
@@ -124,7 +127,8 @@ export default function CollectionsPage() {
       description: c.description || '',
       imageurl: c.imageurl || '',
       sortorder: c.sortorder || 0,
-      isactive: c.isactive
+      isactive: c.isactive,
+      showonindex: c.showonindex || false
     });
     setShowModal(true);
   };
@@ -147,7 +151,7 @@ export default function CollectionsPage() {
       const data = await res.json();
       if (data.success) {
         setShowModal(false);
-        setForm({ name: '', slug: '', description: '', imageurl: '', sortorder: 0, isactive: true });
+        setForm({ name: '', slug: '', description: '', imageurl: '', sortorder: 0, isactive: true, showonindex: false });
         setEditingCollection(null);
         load();
       } else {
@@ -200,7 +204,14 @@ export default function CollectionsPage() {
                       </div>
                     )}
                     <div>
-                      <p className="font-medium text-gray-900">{c.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-950">{c.name}</p>
+                        {c.showonindex && (
+                          <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full border border-amber-200 font-semibold">
+                            {language === 'bg' ? 'Начална' : 'Index'}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">/collections/{c.slug}</p>
                     </div>
                   </div>
@@ -298,6 +309,40 @@ export default function CollectionsPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
               rows={3}
             />
+          </div>
+          <div className="flex items-center gap-2 py-1">
+            <input
+              type="checkbox"
+              id="isactive"
+              checked={form.isactive}
+              onChange={(e) => setForm({ ...form, isactive: e.target.checked })}
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="isactive" className="text-sm font-medium select-none">
+              {language === 'bg' ? 'Активна колекция' : 'Active collection'}
+            </label>
+          </div>
+          <div className="flex flex-col gap-1 py-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="showonindex"
+                checked={form.showonindex}
+                disabled={collections.filter(c => c.showonindex && c.collectionid !== editingCollection?.collectionid).length >= 3 && !form.showonindex}
+                onChange={(e) => setForm({ ...form, showonindex: e.target.checked })}
+                className="rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
+              />
+              <label htmlFor="showonindex" className="text-sm font-medium select-none">
+                {language === 'bg' ? 'Покажи на началната страница' : 'Show on index page'}
+              </label>
+            </div>
+            {collections.filter(c => c.showonindex && c.collectionid !== editingCollection?.collectionid).length >= 3 && !form.showonindex && (
+              <p className="text-xs text-amber-600">
+                {language === 'bg' 
+                  ? 'Максимум 3 колекции могат да бъдат показани на началната страница.' 
+                  : 'Maximum of 3 collections can be visible on the index page.'}
+              </p>
+            )}
           </div>
           <button type="submit" disabled={saving} className="w-full bg-primary text-white py-2.5 rounded-lg transition-colors hover:bg-primary-hover active:scale-98">
             {saving ? '...' : (editingCollection ? (language === 'bg' ? 'Запази' : 'Save') : (language === 'bg' ? 'Създай' : 'Create'))}

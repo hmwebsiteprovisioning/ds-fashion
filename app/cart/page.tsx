@@ -10,11 +10,13 @@ import { useCart } from '@/context/CartContext';
 import { fetchStorefrontProducts } from '@/lib/storefront-products';
 import { formatPrice } from '@/lib/price-formatter';
 import type { StorefrontProduct } from '@/lib/storefront-products';
+import { useStoreSettings } from '@/context/StoreSettingsContext';
 
 export default function CartPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const { items, updateQuantity, removeItem, totalPrice } = useCart();
+  const { settings } = useStoreSettings();
   const [crossSell, setCrossSell] = useState<StorefrontProduct[]>([]);
   const handleSetIsAdmin = (v: boolean) => { setIsAdmin(v); localStorage.setItem('isAdmin', v.toString()); };
 
@@ -31,7 +33,9 @@ export default function CartPage() {
   };
 
   const subtotal = totalPrice;
-  const delivery = subtotal >= 100 ? 0 : 9.90;
+  const freeThreshold = settings?.free_delivery_threshold ?? 100;
+  const deliveryCost = settings?.delivery_standard_price ?? 9.90;
+  const delivery = subtotal >= freeThreshold ? 0 : deliveryCost;
   const discount = appliedCoupon === 'SAVE10' ? subtotal * 0.10 : 0;
   const total = subtotal + delivery - discount;
 
@@ -177,9 +181,9 @@ export default function CartPage() {
                   </button>
 
                   {/* Trust row */}
-                  <div className="space-y-2.5 mt-4 pt-4 border-t border-[#f0ebe3]">
+                  <div className="space-y-3 pt-6 border-t border-[#f0ebe3]">
                     {[
-                      { Icon: Truck, text: 'Безплатна доставка над 100 лв.' },
+                      { Icon: Truck, text: `Безплатна доставка над ${freeThreshold} лв.` },
                       { Icon: Shield, text: 'Сигурно плащане 100% защита' },
                       { Icon: RotateCcw, text: 'Лесно връщане до 14 дни' },
                     ].map(({ Icon, text }) => (

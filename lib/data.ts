@@ -15,6 +15,8 @@ export interface Product {
   description?: string;
   subtitle?: string; // Product subtitle (e.g., "Close fit", "Loose fit")
   isfeatured?: boolean; // Whether the product is featured on the home page
+  hero_portrait_imageurl?: string | null;
+  hero_landscape_imageurl?: string | null;
   /** When true, product is hidden from the shop (admin only). */
   isdisabled?: boolean;
   // New fields for product type system

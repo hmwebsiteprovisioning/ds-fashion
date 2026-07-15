@@ -311,6 +311,9 @@ export async function GET(
       subtitle: product.subtitle || '', // Add subtitle field
       producttypeid: product.producttypeid,
       isdisabled: !!(product as { isdisabled?: boolean }).isdisabled,
+      isfeatured: !!product.isfeatured,
+      hero_portrait_imageurl: product.hero_portrait_imageurl,
+      hero_landscape_imageurl: product.hero_landscape_imageurl,
       ProductType: product.ProductType,
       Variants: variantsWithImages || [],
       variants: variantsWithImages || [], // Add lowercase version for compatibility
@@ -371,6 +374,8 @@ export async function PUT(
       isnew,
       isinspiration,
       collectionid,
+      hero_portrait_imageurl,
+      hero_landscape_imageurl,
       Variants = [],
     } = body;
     const productImages = Array.isArray(body.productImages) ? body.productImages.filter(Boolean) : [];
@@ -378,6 +383,15 @@ export async function PUT(
 
     // Ensure SKUs are unique before creating variants
     const uniqueVariants = await ensureUniqueSKUs(Variants, supabase);
+
+    if (isfeatured) {
+      if (!hero_portrait_imageurl?.trim() || !hero_landscape_imageurl?.trim()) {
+        return NextResponse.json(
+          { error: 'Featured products require both portrait and landscape images.' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Validate that producttypeid is a leaf category (has no children) if producttypeid is being updated
     if (producttypeid) {
@@ -418,6 +432,8 @@ export async function PUT(
         isnew: !!isnew,
         isinspiration: !!isinspiration,
         collectionid: collectionid || null,
+        hero_portrait_imageurl: hero_portrait_imageurl || null,
+        hero_landscape_imageurl: hero_landscape_imageurl || null,
         updatedat: new Date().toISOString()
       })
       .eq('productid', id)

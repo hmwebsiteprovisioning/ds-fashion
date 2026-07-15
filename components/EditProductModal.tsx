@@ -75,6 +75,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
       visible: true,
       images: [],
       isfeatured: false,
+      hero_portrait_imageurl: '',
+      hero_landscape_imageurl: '',
       productTypeID: '',
       propertyValues: {}
     }
@@ -422,6 +424,15 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.isfeatured) {
+      if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
+        alert(language === 'bg' 
+          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.' 
+          : 'Featured products require both a portrait and a landscape image for the Hero section.');
+        return;
+      }
+    }
 
     console.log('🔍 DEBUG EditProductModal: Submitting form');
     console.log('  Selected property values (IDs):', selectedPropertyValues);
@@ -1309,10 +1320,54 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             <p className="text-xs transition-colors duration-300 mt-1 ml-8"
                style={{ color: theme.colors.textSecondary }}>
               {language === 'bg'
-                ? 'Максимум 4 избрани продукта ще се покажат на началната страница'
-                : 'Maximum 4 featured products will be displayed on the home page'
+                ? 'Максимум 5 избрани продукта ще се покажат в Hero секцията на началната страница'
+                : 'Maximum 5 featured products will be displayed in the Hero section of the home page'
               }
             </p>
+
+            {formData.isfeatured && (
+              <div className="ml-8 mt-3 space-y-4 border-l-2 border-primary/20 pl-4 py-1">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
+                    {language === 'bg' ? 'Вертикално изображение (Portrait - Hero) *' : 'Portrait Image (Hero) *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="https://example.com/portrait.jpg"
+                    value={formData.hero_portrait_imageurl || ''}
+                    onChange={(e) => setFormData({ ...formData, hero_portrait_imageurl: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
+                    style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
+                  />
+                  {formData.hero_portrait_imageurl && (
+                    <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
+                      <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
+                    {language === 'bg' ? 'Хоризонтално изображение (Landscape - Hero) *' : 'Landscape Image (Hero) *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="https://example.com/landscape.jpg"
+                    value={formData.hero_landscape_imageurl || ''}
+                    onChange={(e) => setFormData({ ...formData, hero_landscape_imageurl: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
+                    style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
+                  />
+                  {formData.hero_landscape_imageurl && (
+                    <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
+                      <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Related Products Section (Only for existing products) */}

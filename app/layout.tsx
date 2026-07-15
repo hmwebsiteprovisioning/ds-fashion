@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DM_Serif_Display, Inter } from 'next/font/google'
+import { DM_Serif_Display, Montserrat } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
 import { STORE_NAME, DEFAULT_LOGO_PATH } from '@/lib/branding'
@@ -11,7 +11,7 @@ const serifDisplay = DM_Serif_Display({
   display: 'swap',
 })
 
-const inter = Inter({
+const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-sans',
   display: 'swap',
@@ -108,7 +108,7 @@ export default function RootLayout({
 
   return (
     <html lang="bg" suppressHydrationWarning>
-      <body className={`${serifDisplay.variable} ${inter.variable} antialiased`}>
+      <body className={`${serifDisplay.variable} ${montserrat.variable} antialiased`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdScript }}

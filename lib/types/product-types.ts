@@ -53,6 +53,8 @@ export interface Product {
   producttypeid: string;
   rfproducttypeid?: number | null;
   isfeatured?: boolean;
+  hero_portrait_imageurl?: string | null;
+  hero_landscape_imageurl?: string | null;
   /** When true, product is hidden from the customer-facing storefront. */
   isdisabled?: boolean;
   createdat: string;

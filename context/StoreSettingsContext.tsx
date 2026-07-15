@@ -36,6 +36,13 @@ interface StoreSettings {
   forherimage?: string | null;
   accessoriesimage?: string | null;
   saleimage?: string | null;
+  delivery_office_price?: number;
+  delivery_express_price?: number;
+  delivery_standard_price?: number;
+  free_delivery_threshold?: number;
+  allow_card_payment?: boolean;
+  allow_cod_payment?: boolean;
+  allow_bank_payment?: boolean;
 }
 
 interface StoreSettingsContextType {

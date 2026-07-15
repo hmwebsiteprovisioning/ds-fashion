@@ -85,7 +85,7 @@ export default function CategoryTiles() {
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {tiles.map((tile) => (
-          <Link key={tile.id} href={tile.path} className="group relative overflow-hidden aspect-[3/4] block active:scale-[0.98] md:active:scale-100 transition-all duration-300">
+          <Link key={tile.id} href={tile.path} className="group relative overflow-hidden aspect-[3/4] block active:scale-[0.98] md:active:scale-100 transition-all duration-300 rounded-2xl">
             <img
               src={tile.image}
               alt={tile.label}
@@ -97,15 +97,6 @@ export default function CategoryTiles() {
             />
             <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
               <p className="text-white font-bold tracking-widest text-sm sm:text-base">{tile.label}</p>
-              <span
-                className="inline-block mt-2 text-white text-[11px] sm:text-xs px-3 py-1 border transition-colors group-hover:bg-ds-gold group-hover:border-ds-gold"
-                style={{
-                  borderColor: DS.categoryBtnBorder,
-                  backgroundColor: DS.categoryBtnBg,
-                }}
-              >
-                {tile.sub}
-              </span>
             </div>
           </Link>
         ))}

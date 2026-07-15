@@ -43,10 +43,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, slug, description, imageurl, sortorder, isactive } = body;
+    const { name, slug, description, imageurl, sortorder, isactive, showonindex } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    }
+
+    if (showonindex) {
+      const { count, error: countError } = await supabaseAdmin
+        .from('collections')
+        .select('*', { count: 'exact', head: true })
+        .eq('showonindex', true);
+
+      if (!countError && count !== null && count >= 3) {
+        return NextResponse.json({ error: 'Maximum of 3 collections can be visible on the index page.' }, { status: 400 });
+      }
     }
 
     const finalSlug = (slug?.trim() || slugify(name)).toLowerCase();
@@ -60,6 +71,7 @@ export async function POST(request: NextRequest) {
         imageurl: imageurl || null,
         sortorder: sortorder ?? 0,
         isactive: isactive ?? true,
+        showonindex: showonindex ?? false,
         updatedat: new Date().toISOString(),
       })
       .select()

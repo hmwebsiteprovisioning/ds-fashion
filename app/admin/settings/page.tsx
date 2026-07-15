@@ -47,6 +47,13 @@ interface StoreSettings {
   forherimage?: string | null;
   accessoriesimage?: string | null;
   saleimage?: string | null;
+  delivery_office_price?: number;
+  delivery_standard_price?: number;
+  delivery_express_price?: number;
+  free_delivery_threshold?: number;
+  allow_card_payment?: boolean;
+  allow_cod_payment?: boolean;
+  allow_bank_payment?: boolean;
 }
 
 export default function AdminSettingsPage() {
@@ -122,7 +129,7 @@ export default function AdminSettingsPage() {
             forhimlabel: 'За Него',
             forherlabel: 'За Нея',
             accessorieslabel: 'Аксесоари',
-            salelabel: 'SALE',
+            salelabel: 'Разпродажба',
             forhimimage: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=900&q=85',
             forherimage: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&q=85',
             accessoriesimage: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=85',
@@ -309,8 +316,8 @@ export default function AdminSettingsPage() {
       const result = await uploadFile('hero-images', fileName, file);
 
       if (result.success && result.url) {
-        setSettings(prev => prev ? { 
-          ...prev, 
+        setSettings(prev => prev ? {
+          ...prev,
           heroimageurl: result.url,
           heroimagefocusx: 50,
           heroimagefocusy: 50
@@ -372,7 +379,7 @@ export default function AdminSettingsPage() {
     const validFiles: File[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       // Validate file type
       if (!file.type.startsWith('image/')) {
         alert(`${file.name}: ${t.pleaseSelectImage || 'Please select an image file'}`);
@@ -434,8 +441,8 @@ export default function AdminSettingsPage() {
       if (uploadedTestimonials.length > 0) {
         setTestimonials(prev => [...prev, ...uploadedTestimonials].sort((a, b) => a.sortorder - b.sortorder));
         if (uploadedTestimonials.length < validFiles.length) {
-          alert(language === 'bg' 
-            ? `Качени са ${uploadedTestimonials.length} от ${validFiles.length} изображения` 
+          alert(language === 'bg'
+            ? `Качени са ${uploadedTestimonials.length} от ${validFiles.length} изображения`
             : `Uploaded ${uploadedTestimonials.length} of ${validFiles.length} images`);
         }
       } else {
@@ -492,7 +499,7 @@ export default function AdminSettingsPage() {
     try {
       // Update all affected testimonials
       await Promise.all(
-        updates.map(t => 
+        updates.map(t =>
           fetch(`/api/testimonials/${t.testimonialid}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -525,8 +532,8 @@ export default function AdminSettingsPage() {
 
   const handleFocusChange = (x: number, y: number) => {
     if (!settings) return;
-    setSettings(prev => prev ? { 
-      ...prev, 
+    setSettings(prev => prev ? {
+      ...prev,
       heroimagefocusx: x,
       heroimagefocusy: y
     } : null);
@@ -567,6 +574,7 @@ export default function AdminSettingsPage() {
     { id: 'banner', label: language === 'bg' ? 'Банер' : 'Banner' },
     { id: 'social', label: language === 'bg' ? 'Социални мрежи' : 'Social Media' },
     { id: 'testimonials', label: language === 'bg' ? 'Отзиви' : 'Testimonials' },
+    { id: 'checkout', label: language === 'bg' ? 'Доставка & Плащане' : 'Delivery & Payments' },
   ];
 
   if (isLoading) {
@@ -622,7 +630,7 @@ export default function AdminSettingsPage() {
       />
 
       <div className="max-w-4xl mx-auto space-y-8">
-          {activeTab === 'general' && (
+        {activeTab === 'general' && (
           <div
             className="p-6 rounded-lg"
             style={{
@@ -667,18 +675,18 @@ export default function AdminSettingsPage() {
                 />
                 <div className="mt-1 flex justify-between items-center">
                   <p className="text-xs" style={{ color: theme.colors.textSecondary }}>
-                    {language === 'bg' 
+                    {language === 'bg'
                       ? 'Ограничение: максимум 25 символа (за да се побере на 2 реда на мобилни устройства)'
                       : 'Limit: 25 characters (to fit on 2 lines on mobile devices)'}
                   </p>
-                  <span 
+                  <span
                     className="text-xs font-medium"
-                    style={{ 
-                      color: settings.storename.length > 35 
-                        ? '#ef4444' 
-                        : settings.storename.length > 30 
-                        ? '#f59e0b'
-                        : theme.colors.textSecondary 
+                    style={{
+                      color: settings.storename.length > 35
+                        ? '#ef4444'
+                        : settings.storename.length > 30
+                          ? '#f59e0b'
+                          : theme.colors.textSecondary
                     }}
                   >
                     {settings.storename.length}/35
@@ -1005,7 +1013,7 @@ export default function AdminSettingsPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Focus Point Editor */}
                 {settings.heroimageurl && (
                   <div className="mt-6">
@@ -1019,8 +1027,8 @@ export default function AdminSettingsPage() {
                       className="text-sm mb-4"
                       style={{ color: theme.colors.textSecondary }}
                     >
-                      {language === 'bg' 
-                        ? 'Кликнете върху изображението, за да зададете точката на фокус. Важната област ще остане видима на всички размери на екрана.' 
+                      {language === 'bg'
+                        ? 'Кликнете върху изображението, за да зададете точката на фокус. Важната област ще остане видима на всички размери на екрана.'
                         : 'Click on the image to set the focus point. The important area will remain visible on all screen sizes.'}
                     </p>
                     <HeroImageFocusEditor
@@ -1034,9 +1042,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
-          )}
+        )}
 
-          {activeTab === 'appearance' && (
+        {activeTab === 'appearance' && (
           <div
             id="settings-appearance"
             className="p-6 rounded-lg"
@@ -1083,7 +1091,7 @@ export default function AdminSettingsPage() {
                 >
                   {language === 'bg' ? 'Навигационни менюта (Етикети)' : 'Navigation Menu Labels'}
                 </h3>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* For Her */}
                   <div>
@@ -1183,7 +1191,7 @@ export default function AdminSettingsPage() {
                 >
                   {language === 'bg' ? 'Изображения за категориите (Банери)' : 'Category Page Banner Images'}
                 </h3>
-                
+
                 <div className="space-y-6">
                   {/* For Her Image */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
@@ -1364,9 +1372,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
-          )}
+        )}
 
-          {activeTab === 'banner' && (
+        {activeTab === 'banner' && (
           <div
             id="settings-banner"
             className="p-6 rounded-lg"
@@ -1441,9 +1449,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
-          )}
+        )}
 
-          {activeTab === 'social' && (
+        {activeTab === 'social' && (
           <div
             id="settings-social-media"
             className="p-6 rounded-lg"
@@ -1622,9 +1630,9 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
-          )}
+        )}
 
-          {activeTab === 'testimonials' && (
+        {activeTab === 'testimonials' && (
           <div
             id="settings-testimonials"
             className="p-6 rounded-lg"
@@ -1772,7 +1780,114 @@ export default function AdminSettingsPage() {
               )}
             </div>
           </div>
-          )}
+        )}
+
+        {activeTab === 'checkout' && (
+          <div
+            className="p-6 rounded-lg"
+            style={{
+              backgroundColor: theme.colors.cardBg,
+              border: `1px solid ${theme.colors.border}`
+            }}
+          >
+            <h2 className="text-xl font-semibold mb-6" style={{ color: theme.colors.text }}>
+              {language === 'bg' ? 'Настройки на доставка' : 'Delivery Settings'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Цена за доставка до офис (лв.)' : 'Office Delivery Price (BGN)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={settings.delivery_office_price ?? 4.90}
+                  onChange={(e) => handleSettingChange('delivery_office_price', parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 rounded-md border"
+                  style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Цена за стандартна доставка (лв.)' : 'Standard Delivery Price (BGN)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={settings.delivery_standard_price ?? 0.00}
+                  onChange={(e) => handleSettingChange('delivery_standard_price', parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 rounded-md border"
+                  style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Цена за експресна доставка (лв.)' : 'Express Delivery Price (BGN)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={settings.delivery_express_price ?? 9.90}
+                  onChange={(e) => handleSettingChange('delivery_express_price', parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 rounded-md border"
+                  style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Безплатна доставка над (лв.)' : 'Free Delivery Threshold (BGN)'}
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  value={settings.free_delivery_threshold ?? 100}
+                  onChange={(e) => handleSettingChange('free_delivery_threshold', parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 rounded-md border"
+                  style={{ backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }}
+                />
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold mb-6 mt-8" style={{ color: theme.colors.text }}>
+              {language === 'bg' ? 'Методи на плащане' : 'Payment Methods'}
+            </h2>
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.allow_card_payment ?? true}
+                  onChange={(e) => handleSettingChange('allow_card_payment', e.target.checked)}
+                  className="w-5 h-5 accent-ds-gold"
+                />
+                <span style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Плащане с карта' : 'Card Payment'}
+                </span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.allow_cod_payment ?? true}
+                  onChange={(e) => handleSettingChange('allow_cod_payment', e.target.checked)}
+                  className="w-5 h-5 accent-ds-gold"
+                />
+                <span style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Наложен платеж' : 'Cash on Delivery'}
+                </span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.allow_bank_payment ?? true}
+                  onChange={(e) => handleSettingChange('allow_bank_payment', e.target.checked)}
+                  className="w-5 h-5 accent-ds-gold"
+                />
+                <span style={{ color: theme.colors.text }}>
+                  {language === 'bg' ? 'Банков превод' : 'Bank Transfer'}
+                </span>
+              </label>
+            </div>
+          </div>
+        )}
       </div>
     </AdminPage>
   );

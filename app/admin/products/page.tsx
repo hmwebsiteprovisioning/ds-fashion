@@ -106,6 +106,8 @@ export default function ProductsPage() {
     isnew: false,
     isinspiration: false,
     collectionid: '' as string,
+    hero_portrait_imageurl: '',
+    hero_landscape_imageurl: '',
     propertyvalues: {} as Record<string, string>
   });
   const [collections, setCollections] = useState<Array<{ collectionid: string; name: string }>>([]);
@@ -120,6 +122,7 @@ export default function ProductsPage() {
   const [mediaFiles, setMediaFiles] = useState<Array<{name: string, path: string, url: string}>>([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<'product' | null>(null);
+  const [mediaTargetForHero, setMediaTargetForHero] = useState<'portrait' | 'landscape' | null>(null);
   const [showVariantImageModal, setShowVariantImageModal] = useState(false);
   const [variantImageTargetIndex, setVariantImageTargetIndex] = useState<number | null>(null);
   const [showApplyImageToAllModal, setShowApplyImageToAllModal] = useState(false);
@@ -231,6 +234,14 @@ export default function ProductsPage() {
   // Open media modal for product images
   const openMediaModalForProduct = () => {
     setMediaTarget('product');
+    setMediaTargetForHero(null);
+    setShowMediaModal(true);
+    loadMediaFiles();
+  };
+
+  const openMediaModalForHero = (target: 'portrait' | 'landscape') => {
+    setMediaTargetForHero(target);
+    setMediaTarget(null);
     setShowMediaModal(true);
     loadMediaFiles();
   };
@@ -265,10 +276,15 @@ export default function ProductsPage() {
 
     if (mediaTarget === 'product') {
       addProductImages([imageUrl]);
+    } else if (mediaTargetForHero === 'portrait') {
+      setFormData(prev => ({ ...prev, hero_portrait_imageurl: imageUrl }));
+    } else if (mediaTargetForHero === 'landscape') {
+      setFormData(prev => ({ ...prev, hero_landscape_imageurl: imageUrl }));
     }
 
     setShowMediaModal(false);
     setMediaTarget(null);
+    setMediaTargetForHero(null);
   };
 
   const handleSelectVariantImage = (imageUrl: string) => {
@@ -456,6 +472,15 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (formData.isfeatured) {
+      if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
+        alert(language === 'bg' 
+          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.' 
+          : 'Featured products require both a portrait and a landscape image for the Hero section.');
+        return;
+      }
+    }
+
     if (variants.length === 0) {
       alert(language === 'bg' ? 'Моля, генерирайте поне един вариант' : 'Please generate at least one variant');
       return;
@@ -519,6 +544,8 @@ export default function ProductsPage() {
         isnew: formData.isnew || false,
         isinspiration: formData.isinspiration || false,
         collectionid: formData.collectionid || null,
+        hero_portrait_imageurl: formData.hero_portrait_imageurl || null,
+        hero_landscape_imageurl: formData.hero_landscape_imageurl || null,
         Variants: variants,
         productImages
       };
@@ -541,7 +568,7 @@ export default function ProductsPage() {
         setTimeout(() => {
           setShowModal(false);
           setShowCompleteAnimation(false);
-          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
+          setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', hero_portrait_imageurl: '', hero_landscape_imageurl: '', propertyvalues: {} });
           setEditingProduct(null);
           setVariants([]);
           setVariantDisplayValues({});
@@ -588,6 +615,8 @@ export default function ProductsPage() {
           isnew: fullProduct.isnew || false,
           isinspiration: fullProduct.isinspiration || false,
           collectionid: fullProduct.collectionid || '',
+          hero_portrait_imageurl: fullProduct.hero_portrait_imageurl || '',
+          hero_landscape_imageurl: fullProduct.hero_landscape_imageurl || '',
           propertyvalues: {}
         });
 
@@ -1080,7 +1109,7 @@ export default function ProductsPage() {
             <button
               onClick={() => {
                 setEditingProduct(null);
-                setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
+                setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', hero_portrait_imageurl: '', hero_landscape_imageurl: '', propertyvalues: {} });
                 setProductTypeProperties([]);
                 setSelectedPropertyValues({});
                 setVariants([]);
@@ -1116,7 +1145,7 @@ export default function ProductsPage() {
                   <button
                     onClick={() => {
                       setEditingProduct(null);
-                      setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', propertyvalues: {} });
+                      setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', hero_portrait_imageurl: '', hero_landscape_imageurl: '', propertyvalues: {} });
                       setProductTypeProperties([]);
                       setSelectedPropertyValues({});
                       setVariants([]);
@@ -1580,10 +1609,70 @@ export default function ProductsPage() {
                           {language === 'bg' ? 'Избран продукт (показва се на началната страница)' : 'Featured Product (displayed on home page)'}
                         </span>
                         <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg' ? 'Максимум 4 избрани продукта ще се покажат на началната страница' : 'Maximum 4 featured products will be displayed on the home page'}
+                          {language === 'bg' ? 'Максимум 5 избрани продукта ще се покажат в Hero секцията на началната страница' : 'Maximum 5 featured products will be displayed in the Hero section of the home page'}
                         </p>
                       </div>
                     </label>
+
+                    {formData.isfeatured && (
+                      <div className="ml-6 mt-3 space-y-4 border-l-2 border-primary/20 pl-4 py-1">
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
+                            {language === 'bg' ? 'Вертикално изображение (Portrait - Hero)' : 'Portrait Image (Hero)'} <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              placeholder="https://example.com/portrait.jpg"
+                              value={formData.hero_portrait_imageurl || ''}
+                              onChange={(e) => setFormData({ ...formData, hero_portrait_imageurl: e.target.value })}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => openMediaModalForHero('portrait')}
+                              className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                            >
+                              {language === 'bg' ? 'Избери' : 'Select'}
+                            </button>
+                          </div>
+                          {formData.hero_portrait_imageurl && (
+                            <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
+                              <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
+                            {language === 'bg' ? 'Хоризонтално изображение (Landscape - Hero)' : 'Landscape Image (Hero)'} <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              placeholder="https://example.com/landscape.jpg"
+                              value={formData.hero_landscape_imageurl || ''}
+                              onChange={(e) => setFormData({ ...formData, hero_landscape_imageurl: e.target.value })}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => openMediaModalForHero('landscape')}
+                              className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                            >
+                              {language === 'bg' ? 'Избери' : 'Select'}
+                            </button>
+                          </div>
+                          {formData.hero_landscape_imageurl && (
+                            <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
+                              <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>

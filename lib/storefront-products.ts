@@ -16,6 +16,8 @@ export type StorefrontProduct = {
   producttypeid?: string;
   productTypeName?: string;
   createdat?: string;
+  hero_portrait_imageurl?: string | null;
+  hero_landscape_imageurl?: string | null;
 };
 
 const COLOR_KEYS = ['color', 'colour', 'цвят', 'Color', 'Colour', 'Цвят'];
@@ -90,6 +92,8 @@ export function toStorefrontProduct(apiProduct: any): StorefrontProduct {
     producttypeid: apiProduct.producttypeid || apiProduct.productTypeID,
     productTypeName: apiProduct.type || apiProduct.product_types?.name,
     createdat: apiProduct.createdat,
+    hero_portrait_imageurl: apiProduct.hero_portrait_imageurl,
+    hero_landscape_imageurl: apiProduct.hero_landscape_imageurl,
   };
 }
 
