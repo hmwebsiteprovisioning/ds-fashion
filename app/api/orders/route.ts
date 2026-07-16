@@ -5,11 +5,14 @@ import { sendCustomerOrderEmail, sendAdminOrderEmail } from '@/lib/email';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { generateUniqueOrderId } from '@/lib/order-id';
 
-import { validateStock, reduceStock, createOrder, type OrderData } from '@/lib/orders';
+import { validateStock, reduceStock, createOrder, resolveOrderItems, type OrderData } from '@/lib/orders';
 
 export async function POST(request: NextRequest) {
   try {
     const orderData: OrderData = await request.json();
+
+    // Resolve any product IDs to their corresponding variant IDs before processing
+    orderData.items = await resolveOrderItems(orderData.items);
 
     // Validate stock availability before creating order
     const stockValidation = await validateStock(orderData.items);
@@ -17,7 +20,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Stock validation failed:', stockValidation.insufficientStock);
       return NextResponse.json({
         success: false,
-        error: 'Insufficient stock',
+        error: 'Недостатъчно количество в наличност',
         insufficientStock: stockValidation.insufficientStock
       }, { status: 400 });
     }
@@ -203,15 +206,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId,
-      message: 'Order placed successfully'
+      message: 'Поръчката е направена успешно'
     });
 
   } catch (error) {
     console.error('Order processing error:', error);
     return NextResponse.json({
       success: false,
-      error: 'Failed to process order',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Неуспешно обработване на поръчката',
+      details: error instanceof Error ? error.message : 'Неизвестна грешка'
     }, { status: 500 });
   }
 }

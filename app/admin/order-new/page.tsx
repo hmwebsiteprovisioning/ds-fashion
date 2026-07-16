@@ -73,20 +73,14 @@ function sortVariantsForPicker(list: StockVariant[]): StockVariant[] {
 
 function stockWarningBg(language: string, available: number, lineQty: number): string | null {
   if (available < 0) {
-    return language === 'bg'
-      ? 'Внимание: този артикул в момента няма наличност. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: no stock. You can continue if delivery is expected.';
+    return 'Внимание: този артикул в момента няма наличност. Можеш да продължиш, ако очакваш доставка.';
   }
   if (available < lineQty) {
-    return language === 'bg'
-      ? 'Внимание: няма достатъчна наличност за този артикул/размер. Можеш да продължиш, ако очакваш доставка.'
-      : 'Warning: insufficient stock. You can continue if delivery is expected.';
+    return 'Внимание: няма достатъчна наличност за този артикул/размер. Можеш да продължиш, ако очакваш доставка.';
   }
   const after = available - lineQty;
   if (after === 1) {
-    return language === 'bg'
-      ? 'Внимание: след тази поръчка ще остане само 1 бройка от този артикул.'
-      : 'Warning: only 1 piece will remain after this order.';
+    return 'Внимание: след тази поръчка ще остане само 1 бройка от този артикул.';
   }
   return null;
 }

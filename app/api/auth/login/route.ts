@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Login validation failed:', validationResult.error.flatten())
       return NextResponse.json(
         { 
-          error: 'Invalid email or password format',
+          error: 'Невалиден формат на имейл или парола',
           details: validationResult.error.flatten().fieldErrors
         },
         { 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       
     if (fetchError || !user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Невалиден имейл или парола' },
         { 
           status: 401,
           headers: rateLimit.headers
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Невалиден имейл или парола' },
         { 
           status: 401,
           headers: rateLimit.headers
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     // Return user data (without password)
     return NextResponse.json({
-      message: 'Login successful',
+      message: 'Успешно влизане',
       user: {
         id: user.userid,
         name: user.name,
@@ -89,14 +89,14 @@ export async function POST(request: NextRequest) {
         locationCoordinates: user.locationcoordinates || '',
         addressInstructions: user.addressinstructions || '',
         created_at: user.created_at,
-        preferredDeliveryType: user.preferred_delivery_type || null,
-        preferredEcontOfficeId: user.preferred_econt_office_id || null,
-        preferredCity: user.preferred_city || null,
-        preferredStreet: user.preferred_street || null,
-        preferredStreetNumber: user.preferred_street_number || null,
-        preferredEntrance: user.preferred_entrance || null,
-        preferredFloor: user.preferred_floor || null,
-        preferredApartment: user.preferred_apartment || null
+        preferredDeliveryType: user.preferred_delivery_type || undefined,
+        preferredEcontOfficeId: user.preferred_econt_office_id || undefined,
+        preferredCity: user.preferred_city || undefined,
+        preferredStreet: user.preferred_street || undefined,
+        preferredStreetNumber: user.preferred_street_number || undefined,
+        preferredEntrance: user.preferred_entrance || undefined,
+        preferredFloor: user.preferred_floor || undefined,
+        preferredApartment: user.preferred_apartment || undefined
       }
     }, {
       headers: rateLimit.headers
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

@@ -37,7 +37,7 @@ export async function GET(
 
     if (orderError || !order) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: 'Поръчката не е намерена' },
         { status: 404 }
       );
     }
@@ -46,7 +46,7 @@ export async function GET(
     const itemsWithDetails = await Promise.all(
       (order.order_items || []).map(async (item: any) => {
         let productInfo = {
-          name: 'Unknown Product',
+          name: 'Неизвестен продукт',
           brand: undefined as string | undefined,
           model: undefined as string | undefined,
           color: undefined as string | undefined,
@@ -84,7 +84,7 @@ export async function GET(
               const productName = Array.isArray(products)
                 ? products[0]?.name
                 : products?.name;
-              productInfo.name = productName || variant.sku || 'Unknown Product';
+              productInfo.name = productName || variant.sku || 'Неизвестен продукт';
 
               // Get first image
               const images = Array.isArray(products)
@@ -129,7 +129,7 @@ export async function GET(
               .single();
 
             if (product) {
-              productInfo.name = product.name || 'Unknown Product';
+              productInfo.name = product.name || 'Неизвестен продукт';
               const images = product.product_images || [];
               if (images && images.length > 0) {
                 const sortedImages = images.sort((a: any, b: any) => 
@@ -175,7 +175,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch order:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     );
   }

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'Изисква се потребителско име' },
         { status: 400 }
       )
     }
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     if (favoritesError) {
       console.error('Error fetching favorites:', favoritesError)
       return NextResponse.json(
-        { error: 'Failed to fetch favorites' },
+        { error: 'Неуспешно извличане на любимите' },
         { status: 500 }
       )
     }
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Favorites API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !productId) {
       return NextResponse.json(
-        { error: 'User ID and Product ID are required' },
+        { error: 'Изискват се потребителско име и идентификатор на продукта' },
         { status: 400 }
       )
     }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
       console.error('Error checking favorite:', checkError)
       return NextResponse.json(
-        { error: 'Failed to check favorite status' },
+        { error: 'Неуспешна проверка на статуса на любими' },
         { status: 500 }
       )
     }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       if (deleteError) {
         console.error('Error removing favorite:', deleteError)
         return NextResponse.json(
-          { error: 'Failed to remove favorite' },
+          { error: 'Неуспешно премахване от любими' },
           { status: 500 }
         )
       }
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         isFavorited: false,
-        message: 'Favorite removed'
+        message: 'Премахнато от любими'
       })
     } else {
       // Add favorite
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       if (insertError) {
         console.error('Error adding favorite:', insertError)
         return NextResponse.json(
-          { error: 'Failed to add favorite' },
+          { error: 'Неуспешно добавяне в любими' },
           { status: 500 }
         )
       }
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         isFavorited: true,
-        message: 'Favorite added',
+        message: 'Добавено в любими',
         favorite: newFavorite
       })
     }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Toggle favorite API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

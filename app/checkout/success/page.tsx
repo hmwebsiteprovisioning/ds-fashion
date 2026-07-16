@@ -119,9 +119,7 @@ function CheckoutSuccessContent() {
             attempts++;
             setTimeout(pollStatus, 2000); // Poll every 2 seconds
           } else {
-            setError(language === 'bg' 
-              ? 'Възникна забавяне при обработката на плащането. Моля, проверете имейла си за потвърждение.' 
-              : 'Payment verification is taking longer than expected. Please check your email for confirmation.');
+            setError('Възникна забавяне при обработката на плащането. Моля, проверете имейла си за потвърждение.');
             setIsLoading(false);
             setVerifyingPayment(false);
           }
@@ -131,7 +129,7 @@ function CheckoutSuccessContent() {
             attempts++;
             setTimeout(pollStatus, 2000);
           } else {
-            setError(language === 'bg' ? 'Грешка при проверка на плащането.' : 'Error verifying payment.');
+            setError('Грешка при проверка на плащането.');
             setIsLoading(false);
             setVerifyingPayment(false);
           }
@@ -158,18 +156,18 @@ function CheckoutSuccessContent() {
       const response = await fetch(`/api/orders/${id}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch order details');
+        throw new Error('Неуспешно извличане на детайлите за поръчката');
       }
 
       const data = await response.json();
       if (data.success && data.order) {
         setOrder(data.order);
       } else {
-        throw new Error('Invalid order data');
+        throw new Error('Невалидни данни за поръчката');
       }
     } catch (err) {
       console.error('Error fetching order:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load order details');
+      setError(err instanceof Error ? err.message : 'Неуспешно зареждане на детайлите за поръчката');
     } finally {
       setIsLoading(false);
     }
@@ -254,7 +252,7 @@ function CheckoutSuccessContent() {
         <Header isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
+            <p className="text-red-600 mb-4">{error || 'Поръчката не е намерена'}</p>
             <button
               onClick={() => router.push('/')}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -590,74 +588,7 @@ function CheckoutSuccessContent() {
             </div>
           </div>
 
-          {/* Order Status Timeline */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <Package size={24} style={{ color: theme.colors.primary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Поръчката е получена' : 'Order Received'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Обработва се' : 'Processing'}
-              </p>
-            </div>
 
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300 opacity-75"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <Truck size={24} style={{ color: theme.colors.textSecondary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'В транзит' : 'In Transit'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Подготвя се за изпращане' : 'Preparing for shipment'}
-              </p>
-            </div>
-
-            <div 
-              className="rounded-lg p-4 text-center transition-colors duration-300 opacity-75"
-              style={{
-                backgroundColor: theme.colors.cardBg,
-                border: `1px solid ${theme.colors.border}`
-              }}
-            >
-              <MapPin size={24} style={{ color: theme.colors.textSecondary }} className="mx-auto mb-2" />
-              <h4 
-                className="font-medium mb-1 transition-colors duration-300"
-                style={{ color: theme.colors.text }}
-              >
-                {language === 'bg' ? 'Доставена' : 'Delivered'}
-              </h4>
-              <p 
-                className="text-xs transition-colors duration-300"
-                style={{ color: theme.colors.textSecondary }}
-              >
-                {language === 'bg' ? 'Очаква се 2-3 дни' : 'Estimated 2-3 days'}
-              </p>
-            </div>
-          </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4">

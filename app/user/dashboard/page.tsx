@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, Package, Lock, Edit3, LogOut, RefreshCw, Truck, MapPin, X, Heart } from 'lucide-react'
+import { User, Package, Lock, Edit3, LogOut, RefreshCw, Truck, MapPin, X, Heart, ArrowUpRight } from 'lucide-react'
 import styles from './dashboard.module.css'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
@@ -14,6 +14,7 @@ import ProductCard from '@/components/ProductCard'
 import type { CityOption } from '@/store/checkoutStore'
 import type { EcontOfficesData, EcontOffice } from '@/types/econt'
 import { Product } from '@/lib/data'
+import { formatPrice } from '@/lib/price-formatter'
 
 // Favorites List Component
 function FavoritesList({ userId, language }: { userId: string; language: string }) {
@@ -102,6 +103,13 @@ interface Order {
   status: string
   deliveryType: string
   deliveryNotes?: string
+  econtOffice?: string | null
+  deliveryStreet?: string | null
+  deliveryStreetNumber?: string | null
+  deliveryEntrance?: string | null
+  deliveryFloor?: string | null
+  deliveryApartment?: string | null
+  city?: string | null
   items: Array<{
     productId: number
     variantId: number | null
@@ -128,6 +136,7 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isClosingModal, setIsClosingModal] = useState(false)
   
   // Profile edit states
   const [isEditingProfile, setIsEditingProfile] = useState(false)
@@ -378,8 +387,12 @@ export default function DashboardPage() {
 
   // Close modal
   const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedOrder(null)
+    setIsClosingModal(true)
+    setTimeout(() => {
+      setIsModalOpen(false)
+      setIsClosingModal(false)
+      setSelectedOrder(null)
+    }, 280) // slightly less than 300ms to ensure the animation transitions cleanly before unmounting
   }
 
   // Handle Escape key to close modal
@@ -388,8 +401,7 @@ export default function DashboardPage() {
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsModalOpen(false)
-        setSelectedOrder(null)
+        handleCloseModal()
       }
     }
 
@@ -666,6 +678,9 @@ export default function DashboardPage() {
                       className={styles.orderCard}
                       onClick={() => handleOrderClick(order)}
                     >
+                      <div className={styles.expandIconWrapper} title={language === 'bg' ? 'Преглед на поръчката' : 'View order details'}>
+                        <ArrowUpRight size={16} />
+                      </div>
                       <div className={styles.orderHeader}>
                         <div>
                           <h3>
@@ -689,7 +704,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                         <div className={styles.orderTotal}>
-                          {order.totalAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                          {formatPrice(order.totalAmount)}
                         </div>
                       </div>
                       <div className={styles.orderItems}>
@@ -697,7 +712,7 @@ export default function DashboardPage() {
                           <div key={index} className={styles.orderItem}>
                             <span className={styles.itemName}>{item.name}</span>
                             <span className={styles.itemQuantity}>x{item.quantity}</span>
-                            <span className={styles.itemPrice}>{item.totalPrice.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                            <span className={styles.itemPrice}>{formatPrice(item.totalPrice, 'font-semibold', 'text-[10px] text-gray-500')}</span>
                           </div>
                         ))}
                         {order.items.length > 3 && (
@@ -1202,9 +1217,9 @@ export default function DashboardPage() {
       <CartDrawer />
 
       {/* Order Details Modal */}
-      {isModalOpen && selectedOrder && (
-        <div className={styles.modalOverlay} onClick={handleCloseModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      {(isModalOpen || isClosingModal) && selectedOrder && (
+        <div className={`${styles.modalOverlay} ${isClosingModal ? styles.closing : ''}`} onClick={handleCloseModal}>
+          <div className={`${styles.modalContent} ${isClosingModal ? styles.closing : ''}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>
                 {language === 'bg' ? 'Детайли на поръчка #' : 'Order Details #'}{selectedOrder.orderId}
@@ -1244,13 +1259,47 @@ export default function DashboardPage() {
                   <span className={styles.modalLabel}>{language === 'bg' ? 'Тип доставка:' : 'Delivery Type:'}</span>
                   <span className={styles.modalValue}>
                     {selectedOrder.deliveryType === 'office' 
-                      ? (language === 'bg' ? 'Офис' : 'Office')
-                      : selectedOrder.deliveryType === 'address'
-                      ? (language === 'bg' ? 'Адрес' : 'Address')
-                      : (language === 'bg' ? 'Еконтомат' : 'Econtomat')}
+                      ? (language === 'bg' ? 'Офис на Еконт' : 'Econt Office')
+                      : selectedOrder.deliveryType === 'econtomat'
+                      ? (language === 'bg' ? 'Еконтомат' : 'Econtomat')
+                      : selectedOrder.deliveryType === 'express'
+                      ? (language === 'bg' ? 'Експресна (до адрес)' : 'Express (to address)')
+                      : (language === 'bg' ? 'Стандартна (до адрес)' : 'Standard (to address)')}
                   </span>
                 </div>
-                {selectedOrder.deliveryNotes && (
+
+                {(selectedOrder.deliveryType === 'office' || selectedOrder.deliveryType === 'econtomat') && selectedOrder.econtOffice && (
+                  <div className={styles.modalInfoRow}>
+                    <span className={styles.modalLabel}>
+                      {selectedOrder.deliveryType === 'office'
+                        ? (language === 'bg' ? 'Офис на Еконт:' : 'Econt Office:')
+                        : (language === 'bg' ? 'Адрес на Еконтомат:' : 'Econtomat Address:')}
+                    </span>
+                    <span className={styles.modalValue}>{selectedOrder.econtOffice}</span>
+                  </div>
+                )}
+
+                {(selectedOrder.deliveryType === 'standard' || selectedOrder.deliveryType === 'express' || selectedOrder.deliveryType === 'address') && 
+                 (selectedOrder.city || selectedOrder.deliveryStreet || selectedOrder.deliveryStreetNumber) && (
+                  <div className={styles.modalInfoRow}>
+                    <span className={styles.modalLabel}>{language === 'bg' ? 'Адрес за доставка:' : 'Delivery Address:'}</span>
+                    <span className={styles.modalValue}>
+                      {[
+                        selectedOrder.city,
+                        selectedOrder.deliveryStreet && `${language === 'bg' ? 'ул.' : 'str.'} ${selectedOrder.deliveryStreet}`,
+                        selectedOrder.deliveryStreetNumber && `${language === 'bg' ? '№' : 'No.'} ${selectedOrder.deliveryStreetNumber}`,
+                        selectedOrder.deliveryEntrance && `${language === 'bg' ? 'вх.' : 'ent.'} ${selectedOrder.deliveryEntrance}`,
+                        selectedOrder.deliveryFloor && `${language === 'bg' ? 'ет.' : 'fl.'} ${selectedOrder.deliveryFloor}`,
+                        selectedOrder.deliveryApartment && `${language === 'bg' ? 'ап.' : 'apt.'} ${selectedOrder.deliveryApartment}`,
+                      ].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
+                )}
+
+                {selectedOrder.deliveryNotes && 
+                 selectedOrder.deliveryNotes.trim() !== 'Пощенски код:' && 
+                 selectedOrder.deliveryNotes.trim() !== 'Пощенски код: ' && 
+                 selectedOrder.deliveryNotes.trim() !== 'Пощенски код' && (
                   <div className={styles.modalInfoRow}>
                     <span className={styles.modalLabel}>{language === 'bg' ? 'Бележки:' : 'Notes:'}</span>
                     <span className={styles.modalValue}>{selectedOrder.deliveryNotes}</span>
@@ -1284,10 +1333,10 @@ export default function DashboardPage() {
                           {language === 'bg' ? 'Количество:' : 'Quantity:'} {item.quantity}
                         </span>
                         <span className={styles.modalItemPrice}>
-                          {item.price.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'} {language === 'bg' ? 'x' : 'each'}
+                          {formatPrice(item.price, 'font-semibold', 'text-[10px] text-gray-500')} {language === 'bg' ? 'х' : 'each'}
                         </span>
                         <span className={styles.modalItemTotal}>
-                          {item.totalPrice.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                          {formatPrice(item.totalPrice, 'font-semibold', 'text-[10px] text-gray-500')}
                         </span>
                       </div>
                     </div>
@@ -1301,24 +1350,24 @@ export default function DashboardPage() {
                   <div className={styles.modalSummaryRow}>
                     <span>{language === 'bg' ? 'Междинна сума:' : 'Subtotal:'}</span>
                     <span>
-                      {(selectedOrder.totalAmount - selectedOrder.deliveryCost - (selectedOrder.discountAmount || 0)).toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                      {formatPrice(selectedOrder.totalAmount - selectedOrder.deliveryCost - (selectedOrder.discountAmount || 0))}
                     </span>
                   </div>
                   {selectedOrder.discountAmount > 0 && (
                     <div className={styles.modalSummaryRow}>
                       <span>{language === 'bg' ? 'Отстъпка:' : 'Discount:'}</span>
                       <span style={{ color: 'hsl(var(--success))' }}>
-                        -{selectedOrder.discountAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}
+                        -{formatPrice(selectedOrder.discountAmount, 'text-green-600 font-semibold')}
                       </span>
                     </div>
                   )}
                   <div className={styles.modalSummaryRow}>
                     <span>{language === 'bg' ? 'Доставка:' : 'Delivery:'}</span>
-                    <span>{selectedOrder.deliveryCost.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                    <span>{formatPrice(selectedOrder.deliveryCost)}</span>
                   </div>
                   <div className={styles.modalSummaryRowTotal}>
                     <span>{language === 'bg' ? 'Общо:' : 'Total:'}</span>
-                    <span>{selectedOrder.totalAmount.toFixed(2)} {language === 'bg' ? 'лв.' : 'BGN'}</span>
+                    <span>{formatPrice(selectedOrder.totalAmount, 'font-bold text-ds-gold text-lg')}</span>
                   </div>
                 </div>
               </div>

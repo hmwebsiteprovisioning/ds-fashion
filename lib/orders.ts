@@ -25,6 +25,7 @@ export interface OrderData {
     id: string | number;
     quantity: number;
     size?: string;
+    color?: string;
     price?: number;
   }>;
   totals: {
@@ -59,13 +60,26 @@ export async function validateStock(items: OrderData['items']): Promise<{ valid:
           .single();
 
         if (error || !variant) {
+          // If not found in product_variants, check if it is a valid product ID
+          const { data: product } = await supabase
+            .from('products')
+            .select('productid')
+            .eq('productid', variantId)
+            .single();
+
+          if (product) {
+            // It's a product ID (no variants). Skip stock check since products table doesn't track quantity.
+            console.log(`Skipping stock check for product ${item.id} (no variants in DB)`);
+            continue;
+          }
+
           console.error('Error checking variant stock:', error);
           insufficientStock.push({ 
             id: item.id, 
             variantId: variantId,
             requested: item.quantity, 
             available: 0,
-            reason: 'Variant not found'
+            reason: 'Вариантът не е намерен'
           });
           continue;
         }
@@ -79,7 +93,7 @@ export async function validateStock(items: OrderData['items']): Promise<{ valid:
               variantId: variantId,
               requested: item.quantity,
               available: availableQuantity,
-              reason: 'Insufficient stock'
+              reason: 'Недостатъчна наличност'
             });
           }
         }
@@ -92,7 +106,7 @@ export async function validateStock(items: OrderData['items']): Promise<{ valid:
         id: item.id, 
         requested: item.quantity, 
         available: 0,
-        reason: 'Validation error'
+        reason: 'Грешка при валидиране'
       });
     }
   }
@@ -119,6 +133,19 @@ export async function reduceStock(items: OrderData['items']): Promise<void> {
           .single();
 
         if (fetchError || !variant) {
+          // If not found in product_variants, check if it is a valid product ID
+          const { data: product } = await supabase
+            .from('products')
+            .select('productid')
+            .eq('productid', variantId)
+            .single();
+
+          if (product) {
+            // It's a product ID (no variants). Skip stock reduction.
+            console.log(`Skipping stock reduction for product ${item.id} (no variants in DB)`);
+            continue;
+          }
+
           console.error('Error fetching variant for stock reduction:', fetchError);
           throw new Error(`Failed to fetch variant ${variantId} for stock reduction`);
         }
@@ -312,4 +339,129 @@ export async function createOrder(
   }
 
   return orderId;
+}
+
+async function resolveVariantId(
+  productId: string, 
+  size?: string, 
+  color?: string
+): Promise<{ productVariantId: string; price: number | null } | null> {
+  const supabase = supabaseAdmin;
+  
+  const { data: variants, error } = await supabase
+    .from('product_variants')
+    .select(`
+      productvariantid,
+      price,
+      product_variant_property_values (
+        value,
+        propertyid
+      )
+    `)
+    .eq('productid', productId);
+
+  if (error || !variants || variants.length === 0) {
+    return null;
+  }
+
+  const targetSize = size?.trim().toLowerCase();
+  const targetColor = color?.trim().toLowerCase();
+
+  // Size & Color property IDs from DB
+  const sizePropertyId = '0616f167-014d-492d-8865-6d6b0bae308a';
+  const colorPropertyId = '67674148-33dd-4609-9074-6701b75438e0';
+
+  // 1. Try to match both size and color
+  for (const variant of variants) {
+    const propValues = (variant.product_variant_property_values as any[]) || [];
+    let matchesSize = !targetSize;
+    let matchesColor = !targetColor;
+
+    for (const pv of propValues) {
+      if (pv.propertyid === sizePropertyId && targetSize) {
+        if (pv.value?.trim().toLowerCase() === targetSize) {
+          matchesSize = true;
+        }
+      }
+      if (pv.propertyid === colorPropertyId && targetColor) {
+        if (pv.value?.trim().toLowerCase() === targetColor) {
+          matchesColor = true;
+        }
+      }
+    }
+
+    if (matchesSize && matchesColor) {
+      return {
+        productVariantId: variant.productvariantid,
+        price: variant.price
+      };
+    }
+  }
+
+  // 2. Fallback: match size only
+  if (targetSize) {
+    for (const variant of variants) {
+      const propValues = (variant.product_variant_property_values as any[]) || [];
+      let matchesSize = false;
+
+      for (const pv of propValues) {
+        if (pv.propertyid === sizePropertyId) {
+          if (pv.value?.trim().toLowerCase() === targetSize) {
+            matchesSize = true;
+          }
+        }
+      }
+
+      if (matchesSize) {
+        return {
+          productVariantId: variant.productvariantid,
+          price: variant.price
+        };
+      }
+    }
+  }
+
+  // 3. Fallback: just return the first variant if nothing matched
+  return {
+    productVariantId: variants[0].productvariantid,
+    price: variants[0].price
+  };
+}
+
+export async function resolveOrderItems(items: OrderData['items']): Promise<OrderData['items']> {
+  const resolvedItems = [];
+  for (const item of items) {
+    const resolvedItem = { ...item };
+    const idStr = String(item.id);
+    
+    // Check if it's a variant ID
+    const { data: variant } = await supabaseAdmin
+      .from('product_variants')
+      .select('productvariantid')
+      .eq('productvariantid', idStr)
+      .single();
+
+    if (variant) {
+      resolvedItem.id = variant.productvariantid;
+    } else {
+      // Check if it's a product ID
+      const { data: product } = await supabaseAdmin
+        .from('products')
+        .select('productid')
+        .eq('productid', idStr)
+        .single();
+
+      if (product) {
+        const resolved = await resolveVariantId(product.productid, item.size, item.color);
+        if (resolved) {
+          resolvedItem.id = resolved.productVariantId;
+          if (resolved.price) {
+            resolvedItem.price = resolved.price;
+          }
+        }
+      }
+    }
+    resolvedItems.push(resolvedItem);
+  }
+  return resolvedItems;
 }

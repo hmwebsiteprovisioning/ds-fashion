@@ -62,22 +62,22 @@ function ResetPasswordContent() {
     }
 
     if (!passwordData.password) {
-      setError(language === 'bg' ? 'Моля, въведете нова парола' : 'Please enter a new password')
+      setError('Моля, въведете нова парола')
       return
     }
 
     if (passwordData.password.length < 8) {
-      setError(t.passwordTooShort)
+      setError('Паролата трябва да е поне 8 символа')
       return
     }
 
     if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(passwordData.password)) {
-      setError(t.passwordMustContain)
+      setError('Паролата трябва да съдържа поне една буква и една цифра')
       return
     }
 
     if (passwordData.password !== passwordData.confirmPassword) {
-      setError(t.passwordsDoNotMatch)
+      setError('Паролите не съвпадат')
       return
     }
 
@@ -98,29 +98,45 @@ function ResetPasswordContent() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Translate error messages
-        let errorMessage = data.error || (language === 'bg' ? 'Грешка при възстановяването' : 'Error resetting password')
-        if (errorMessage === 'Invalid or expired token' || errorMessage === 'Token not found' || errorMessage === 'Token expired') {
-          errorMessage = language === 'bg' ? 'Невалиден или изтекъл токен. Моля, заявете нова заявка за възстановяване на парола.' : 'Invalid or expired token. Please request a new password reset.'
-        } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
-        } else if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
-          errorMessage = language === 'bg' ? 'Невалидни данни' : 'Invalid data'
+        // Extract error message
+        let errorMessage = '';
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            errorMessage = data.error.message || data.error.code || 'Грешка при възстановяването на паролата';
+          } else {
+            errorMessage = data.error;
+          }
+        } else {
+          errorMessage = 'Грешка при възстановяването на паролата';
         }
+
+        // Translate English error messages if any
+        if (errorMessage === 'Invalid or expired token' || errorMessage === 'Token not found' || errorMessage === 'Token expired' || errorMessage.includes('reset token')) {
+          errorMessage = 'Невалиден или изтекъл токен. Моля, заявете нов линк за възстановяване на парола.';
+        } else if (errorMessage === 'Internal server error' || errorMessage.includes('Internal server error')) {
+          errorMessage = 'Вътрешна грешка на сървъра. Моля, опитайте отново.';
+        } else if (errorMessage.toLowerCase().includes('invalid')) {
+          errorMessage = 'Невалидни данни';
+        } else if (errorMessage === 'Failed to reset password') {
+          errorMessage = 'Неуспешна промяна на паролата';
+        } else if (errorMessage === 'Too many requests. Please try again later.') {
+          errorMessage = 'Твърде много заявки. Моля, опитайте отново по-късно.';
+        }
+
         throw new Error(errorMessage)
       }
 
-      setSuccess(t.passwordResetSuccess)
+      setSuccess(t.passwordResetSuccess || 'Паролата е възстановена успешно! Пренасочване към вход...')
       
       setTimeout(() => {
         router.push('/user')
       }, 2000)
 
     } catch (err: any) {
-      // Translate error messages
-      let errorMessage = err.message || (language === 'bg' ? 'Грешка при възстановяването' : 'Error resetting password')
+      // Translate catch block error messages
+      let errorMessage = err.message || 'Грешка при възстановяването на паролата'
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'Възникна грешка. Моля, опитайте отново.'
       }
       setError(errorMessage)
     } finally {

@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      errors.push(language === 'bg' ? 'Невалиден формат на имейл адреса' : 'Invalid email format')
+      errors.push('Невалиден формат на имейл адреса')
     }
 
     return {
@@ -69,13 +69,13 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     
     if (!resetData.email) {
-      setError(language === 'bg' ? 'Моля, въведете имейл адреса си' : 'Please enter your email address')
+      setError('Моля, въведете имейл адреса си')
       return
     }
 
     const emailValidation = validateEmail(resetData.email)
     if (!emailValidation.isValid) {
-      setError(language === 'bg' ? 'Моля, въведете валиден имейл адрес' : 'Please enter a valid email address')
+      setError('Моля, въведете валиден имейл адрес')
       return
     }
 
@@ -93,26 +93,48 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Translate error messages
-        let errorMessage = data.error || (language === 'bg' ? 'Грешка при изпращането на заявката' : 'Error sending request')
-        if (errorMessage === 'User not found' || errorMessage === 'Email not found') {
-          errorMessage = language === 'bg' ? 'Потребител с този имейл адрес не е намерен' : 'User with this email address not found'
-        } else if (errorMessage === 'Internal server error') {
-          errorMessage = language === 'bg' ? 'Вътрешна грешка на сървъра. Моля, опитайте отново.' : 'Internal server error. Please try again.'
-        } else if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
-          errorMessage = language === 'bg' ? 'Невалиден имейл адрес' : 'Invalid email address'
+        // Extract error message
+        let errorMessage = '';
+        if (data.error) {
+          if (typeof data.error === 'object') {
+            errorMessage = data.error.message || data.error.code || 'Грешка при изпращането на заявката';
+          } else {
+            errorMessage = data.error;
+          }
+        } else {
+          errorMessage = 'Грешка при изпращането на заявката';
         }
+
+        // Translate English error messages if any
+        if (errorMessage === 'User not found' || errorMessage === 'Email not found' || errorMessage === 'User with this email address not found') {
+          errorMessage = 'Потребител с този имейл адрес не е намерен';
+        } else if (errorMessage === 'Internal server error' || errorMessage.includes('Internal server error')) {
+          errorMessage = 'Вътрешна грешка на сървъра. Моля, опитайте отново.';
+        } else if (errorMessage.toLowerCase().includes('invalid')) {
+          errorMessage = 'Невалиден имейл адрес';
+        } else if (errorMessage === 'Failed to process request') {
+          errorMessage = 'Неуспешно обработване на заявката';
+        } else if (errorMessage === 'Failed to send email') {
+          errorMessage = 'Неуспешно изпращане на имейл';
+        } else if (errorMessage === 'Too many requests. Please try again later.') {
+          errorMessage = 'Твърде много заявки. Моля, опитайте отново по-късно.';
+        }
+
         throw new Error(errorMessage)
       }
 
-      setSuccess(data.message || t.passwordResetSent)
+      let successMessage = data.message;
+      if (!successMessage || successMessage.includes('If the email exists') || successMessage.includes('exists')) {
+        successMessage = 'Ако имейлът съществува, ще получите линк за възстановяване на паролата';
+      }
+      setSuccess(successMessage)
       setResetData({ email: '' })
 
     } catch (err: any) {
-      // Translate error messages
-      let errorMessage = err.message || (language === 'bg' ? 'Грешка при изпращането на заявката' : 'Error sending request')
+      // Translate catch block error messages
+      let errorMessage = err.message || 'Грешка при изпращането на заявката'
       if (errorMessage === 'Internal server error' || errorMessage.includes('fetch')) {
-        errorMessage = language === 'bg' ? 'Възникна грешка. Моля, опитайте отново.' : 'An error occurred. Please try again.'
+        errorMessage = 'Възникна грешка. Моля, опитайте отново.'
       }
       setError(errorMessage)
     } finally {

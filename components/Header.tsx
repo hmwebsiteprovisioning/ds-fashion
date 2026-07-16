@@ -204,25 +204,18 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
     <>
       <header className="sticky top-0 z-50 bg-ds-card border-b border-ds-border">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16 sm:h-[72px] relative">
-            <div className="flex items-center gap-3 flex-1">
-              <button
-                className="lg:hidden p-1.5"
-                onClick={() => setMobileOpen(true)}
-                aria-label="Menu"
-              >
-                <Menu size={22} className="text-ds-text" />
-              </button>
-              <button
-                onClick={() => setShowSearch(true)}
-                className="hidden lg:flex items-center gap-2 text-ds-text-secondary text-sm hover:text-ds-text transition-colors"
-                aria-label="Търсене"
-              >
-                <Search size={18} />
-                <span>Търсене</span>
-              </button>
-            </div>
 
+          {/* ── Mobile row (unchanged) ─────────────────────────────── */}
+          <div className="flex items-center h-16 sm:h-[72px] relative lg:hidden">
+            <button
+              className="p-1.5"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Menu"
+            >
+              <Menu size={22} className="text-ds-text" />
+            </button>
+
+            {/* Mobile centred logo */}
             <Link
               href="/"
               className="absolute left-1/2 -translate-x-1/2 flex items-center"
@@ -230,14 +223,15 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               <Image
                 src={logoUrl}
                 alt={storeName}
-                width={120}
+                width={60}
                 height={40}
-                className="h-8 sm:h-9 w-auto object-contain"
+                className="object-contain"
                 priority
               />
             </Link>
 
-            <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end">
+            {/* Mobile action icons */}
+            <div className="flex items-center gap-1 ml-auto">
               <Link
                 href={isAuthenticated && user ? '/user/dashboard' : '/user'}
                 className="p-2 hover:text-ds-gold transition-colors text-ds-text"
@@ -254,13 +248,8 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               </Link>
               <button
                 id="header-cart-icon"
-                onClick={(e) => {
-                  e.preventDefault();
-                  openCart();
-                }}
-                className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${
-                  cartBouncing ? 'animate-cart-bounce' : ''
-                }`}
+                onClick={(e) => { e.preventDefault(); openCart(); }}
+                className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${cartBouncing ? 'animate-cart-bounce' : ''}`}
                 onAnimationEnd={() => setCartBouncing(false)}
                 aria-label="Количка"
               >
@@ -274,67 +263,132 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
             </div>
           </div>
 
-          <nav ref={dropdownRef} className="hidden lg:flex items-center justify-center gap-8 pb-3">
-            {navItems.map((item) => (
-              <div key={item.id} className="relative">
-                {item.hasDropdown && 'dropdownItems' in item && item.dropdownItems?.length ? (
-                  <>
-                    <button
-                      onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+          {/* ── Desktop grid: 3 cols × 2 rows ──────────────────────── */}
+          {/*
+            Col 1 (auto) | Col 2 (1fr) | Col 3 (auto)
+            Row 1: Logo  | Search      | Icons
+            Row 2: Logo  | Nav         | Icons
+          */}
+          <div className="hidden lg:grid grid-cols-[auto_1fr_auto] grid-rows-2 py-1.5">
+
+            {/* Col 1, rows 1-2 — Logo */}
+            <div className="row-span-2 flex items-center pr-6">
+              <Link href="/" className="flex items-center">
+                <Image
+                  src={logoUrl}
+                  alt={storeName}
+                  width={95}
+                  height={25}
+                  className="object-contain"
+                  priority
+                />
+              </Link>
+            </div>
+
+            {/* Col 2, row 1 — Search bar */}
+            <div className="flex items-center justify-center py-1.5">
+              <button
+                onClick={() => setShowSearch(true)}
+                className="w-full max-w-md flex items-center gap-2.5 px-4 py-2 rounded-full bg-ds-main border border-ds-border text-ds-text-secondary text-sm hover:text-ds-text hover:border-ds-gold/50 transition-all duration-200 shadow-sm"
+                aria-label="Търсене"
+              >
+                <Search size={16} className="text-ds-text-secondary" />
+                <span>{language === 'bg' ? 'Търсене на продукти...' : 'Search products...'}</span>
+              </button>
+            </div>
+
+            {/* Col 3, rows 1-2 — Action icons */}
+            <div className="row-span-2 flex items-center gap-1 pl-6">
+              <Link
+                href={isAuthenticated && user ? '/user/dashboard' : '/user'}
+                className="p-2 hover:text-ds-gold transition-colors text-ds-text"
+                aria-label="Акаунт"
+              >
+                <User size={20} />
+              </Link>
+              <Link
+                href={isAuthenticated ? '/user/dashboard?tab=favorites' : '/user'}
+                className="p-2 hover:text-ds-gold transition-colors text-ds-text"
+                aria-label="Любими"
+              >
+                <Heart size={20} />
+              </Link>
+              <button
+                id="header-cart-icon"
+                onClick={(e) => { e.preventDefault(); openCart(); }}
+                className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${cartBouncing ? 'animate-cart-bounce' : ''}`}
+                onAnimationEnd={() => setCartBouncing(false)}
+                aria-label="Количка"
+              >
+                <ShoppingBag size={20} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-ds-gold text-white text-[10px] rounded-full h-[18px] min-w-[18px] px-1 flex items-center justify-center font-semibold">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Col 2, row 2 — Nav items */}
+            <nav ref={dropdownRef} className="flex items-center justify-center gap-8 pb-[3px]">
+              {navItems.map((item) => (
+                <div key={item.id} className="relative">
+                  {item.hasDropdown && 'dropdownItems' in item && item.dropdownItems?.length ? (
+                    <>
+                      <button
+                        onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+                        className={`flex items-center gap-0.5 text-[13px] tracking-widest font-medium transition-colors hover:text-ds-gold ${item.isSale ? 'text-ds-error hover:text-ds-error/80' : 'text-ds-text'}`}
+                      >
+                        {item.label}
+                        <ChevronDown size={12} className="mt-0.5" />
+                      </button>
+                      {openDropdown === item.id && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[180px] bg-ds-card border border-ds-border shadow-lg py-2 z-50">
+                          {item.dropdownItems.map((sub) => (
+                            <Link
+                              key={sub.path}
+                              href={sub.path}
+                              onClick={() => setOpenDropdown(null)}
+                              className="block px-4 py-2 text-[12px] text-ds-text hover:text-ds-gold hover:bg-ds-main transition-colors"
+                            >
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      href={item.path}
                       className={`flex items-center gap-0.5 text-[13px] tracking-widest font-medium transition-colors hover:text-ds-gold ${
-                        item.isSale ? 'text-ds-error hover:text-ds-error/80' : 'text-ds-text'
+                        item.isSale
+                          ? 'text-ds-error hover:text-ds-error/80'
+                          : isActive(item.path)
+                          ? 'text-ds-gold border-b border-ds-gold'
+                          : 'text-ds-text'
                       }`}
                     >
                       {item.label}
-                      <ChevronDown size={12} className="mt-0.5" />
-                    </button>
-                    {openDropdown === item.id && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 min-w-[180px] bg-ds-card border border-ds-border shadow-lg py-2 z-50">
-                        {item.dropdownItems.map((sub) => (
-                          <Link
-                            key={sub.path}
-                            href={sub.path}
-                            onClick={() => setOpenDropdown(null)}
-                            className="block px-4 py-2 text-[12px] text-ds-text hover:text-ds-gold hover:bg-ds-main transition-colors"
-                          >
-                            {sub.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <Link
-                    href={item.path}
-                    className={`flex items-center gap-0.5 text-[13px] tracking-widest font-medium transition-colors hover:text-ds-gold ${
-                      item.isSale
-                        ? 'text-ds-error hover:text-ds-error/80'
-                        : isActive(item.path)
-                        ? 'text-ds-gold border-b border-ds-gold'
-                        : 'text-ds-text'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </div>
-            ))}
-          </nav>
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </nav>
+          </div>
+
         </div>
       </header>
 
       {shouldRenderMobile && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div 
-            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-              mobileAnimateState === 'open' ? 'opacity-100' : 'opacity-0'
-            }`} 
-            onClick={() => { setMobileOpen(false); setSearchQuery(''); }} 
+          <div
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${mobileAnimateState === 'open' ? 'opacity-100' : 'opacity-0'
+              }`}
+            onClick={() => { setMobileOpen(false); setSearchQuery(''); }}
           />
-          <div 
-            className={`absolute left-0 top-0 h-full w-72 bg-ds-card flex flex-col transition-transform duration-300 ease-in-out ${
-              mobileAnimateState === 'open' ? 'translate-x-0' : '-translate-x-full'
-            }`}
+          <div
+            className={`absolute left-0 top-0 h-full w-72 bg-ds-card flex flex-col transition-transform duration-300 ease-in-out ${mobileAnimateState === 'open' ? 'translate-x-0' : '-translate-x-full'
+              }`}
           >
             <div className="flex items-center justify-between p-5 border-b border-ds-border">
               <span className="font-serif-display text-lg text-ds-text">{storeName}</span>
@@ -492,9 +546,8 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
                     <Link
                       href={item.path}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center justify-between px-6 py-3.5 text-sm tracking-widest font-medium transition-colors ${
-                        item.isSale ? 'text-ds-error' : 'text-ds-text hover:text-ds-gold'
-                      }`}
+                      className={`flex items-center justify-between px-6 py-3.5 text-sm tracking-widest font-medium transition-colors ${item.isSale ? 'text-ds-error' : 'text-ds-text hover:text-ds-gold'
+                        }`}
                     >
                       {item.label}
                     </Link>
@@ -519,7 +572,7 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
       {showSearch && (
         <div className="fixed inset-0 z-[100] bg-black/45 backdrop-blur-xs flex flex-col justify-start">
           <div className="absolute inset-0" onClick={() => setShowSearch(false)} />
-          
+
           <div className="relative bg-ds-card border-b border-ds-border shadow-2xl w-full max-h-[85vh] flex flex-col z-10 animate-slide-down">
             <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-5">
               <div className="flex items-center gap-4 border-b border-ds-border pb-3">

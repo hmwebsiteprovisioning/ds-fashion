@@ -167,7 +167,7 @@ export function createRateLimitResponse(headers: Record<string, string>) {
     JSON.stringify({
       error: {
         code: 'RATE_LIMIT_EXCEEDED',
-        message: 'Too many requests. Please try again later.',
+        message: 'Твърде много заявки. Моля, опитайте отново по-късно.',
         retryAfter: headers['Retry-After'] ? parseInt(headers['Retry-After']) : undefined
       }
     }),

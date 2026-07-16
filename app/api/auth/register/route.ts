@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Register validation failed:', validationResult.error.flatten())
       return NextResponse.json(
         { 
-          error: 'Invalid input format',
+          error: 'Невалиден формат на данните',
           details: validationResult.error.flatten().fieldErrors
         },
         { 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (allErrors.length > 0) {
       return NextResponse.json(
         { 
-          error: 'Validation failed',
+          error: 'Неуспешна валидация',
           details: allErrors
         },
         { 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email address already in use' },
+        { error: 'Имейл адресът вече се използва' },
         { 
           status: 409,
           headers: rateLimit.headers
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (insertError || !newUser) {
       console.error('Registration error:', insertError)
       return NextResponse.json(
-        { error: 'Failed to create account' },
+        { error: 'Неуспешно създаване на профил' },
         { 
           status: 500,
           headers: rateLimit.headers
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Return success response (without password)
     return NextResponse.json({
-      message: 'User registered successfully',
+      message: 'Потребителят е регистриран успешно',
       user: {
         id: newUser.userid,
         name: newUser.name,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

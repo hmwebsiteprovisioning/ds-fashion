@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Forgot password validation failed:', validationResult.error.flatten())
       return NextResponse.json(
         { 
-          error: 'Invalid email format',
+          error: 'Невалиден формат на имейл',
           details: validationResult.error.flatten().fieldErrors
         },
         { 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (fetchError || !user) {
       // Don't reveal if user exists or not for security
       return NextResponse.json({
-        message: 'If the email exists, you will receive a password reset link'
+        message: 'Ако имейлът съществува, ще получите линк за възстановяване на паролата'
       }, {
         headers: rateLimit.headers
       })
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Error storing reset token:', updateError)
       return NextResponse.json(
-        { error: 'Failed to process request' },
+        { error: 'Неуспешно обработване на заявката' },
         { 
           status: 500,
           headers: rateLimit.headers
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('Failed to send password reset email:', emailError)
       return NextResponse.json(
-        { error: 'Failed to send email' },
+        { error: 'Неуспешно изпращане на имейл' },
         { 
           status: 500,
           headers: rateLimit.headers
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: 'If the email exists, you will receive a password reset link'
+      message: 'Ако имейлът съществува, ще получите линк за възстановяване на паролата'
     }, {
       headers: rateLimit.headers
     })
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Forgot password error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

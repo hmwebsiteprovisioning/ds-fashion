@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Reset password validation failed:', validationResult.error.flatten())
       return NextResponse.json(
         { 
-          error: 'Invalid input format',
+          error: 'Невалиден формат на входните данни',
           details: validationResult.error.flatten().fieldErrors
         },
         { status: 400 }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     if (fetchError || !user) {
       return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
+        { error: 'Невалиден или изтекъл токен за възстановяване' },
         { status: 400 }
       )
     }
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Check if token is expired
     if (!user.reset_token_expiry) {
       return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
+        { error: 'Невалиден или изтекъл токен за възстановяване' },
         { status: 400 }
       )
     }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     
     if (now > tokenExpiry) {
       return NextResponse.json(
-        { error: 'Reset token has expired. Please request a new link' },
+        { error: 'Токенът за възстановяване е изтекъл. Моля, заявете нов линк' },
         { status: 400 }
       )
     }
@@ -71,19 +71,19 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Error updating password:', updateError)
       return NextResponse.json(
-        { error: 'Failed to reset password' },
+        { error: 'Неуспешна промяна на паролата' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
-      message: 'Password reset successfully'
+      message: 'Паролата е променена успешно'
     })
 
   } catch (error) {
     console.error('Reset password error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

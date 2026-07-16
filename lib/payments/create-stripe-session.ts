@@ -4,7 +4,7 @@ import {
   attachStripeSessionToPendingCheckout,
   createPendingCheckout,
 } from './pending-checkout';
-import type { OrderData } from '@/lib/orders';
+import { resolveOrderItems, type OrderData } from '@/lib/orders';
 
 function eurToStripeCents(totalEur: number): number {
   return Math.round(totalEur * 100);
@@ -14,6 +14,9 @@ export async function createStripeCheckoutSession(
   input: OrderData,
   locale: 'bg' | 'en' = 'bg'
 ): Promise<{ sessionId: string; url: string }> {
+  // Resolve product IDs to variant IDs
+  input.items = await resolveOrderItems(input.items);
+
   // 1. Create the pending checkout database record
   const pending = await createPendingCheckout(input);
 

@@ -11,6 +11,7 @@ import { STORE_NAME } from '@/lib/branding';
 import { getLogoUrl } from '@/lib/branding';
 import { useStoreSettings } from '@/context/StoreSettingsContext';
 import Image from 'next/image';
+import { useAuth } from '@/context/AuthContext';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -23,12 +24,47 @@ const STEPS = [
 
 // Options will be generated dynamically inside the component
 
+function translateError(error: string): string {
+  if (!error) return '';
+  const errorMap: Record<string, string> = {
+    'insufficient stock': 'Недостатъчно количество в наличност. Някои артикули в количката ви вече не са налични.',
+    'failed to place order': 'Неуспешно изпращане на поръчката. Моля, опитайте отново.',
+    'stripe payment initialization failed': 'Неуспешно инициализиране на плащането със Stripe. Моля, опитайте отново.',
+    'failed to process order': 'Неуспешно обработване на поръчката. Моля, опитайте отново.',
+    'internal server error': 'Вътрешна грешка на сървъра. Моля, опитайте отново по-късно.',
+    'stripe payments are not configured': 'Плащанията със Stripe не са конфигурирани на този сървър.',
+    'missing required order details': 'Липсват задължителни данни за поръчката.',
+    'failed to validate stock': 'Неуспешно валидиране на наличността на артикулите.',
+    'network error': 'Грешка в мрежата. Моля, проверете връзката си и опитайте отново.',
+    'failed to fetch': 'Грешка при връзка със сървъра. Моля, опитайте отново.'
+  };
+
+  const normalized = error.toLowerCase().trim().replace(/[.,]$/, '');
+  if (errorMap[normalized]) return errorMap[normalized];
+
+  if (normalized.includes('declined') || normalized.includes('отказана')) {
+    return 'Картата ви беше отказана. Моля, опитайте с друга карта.';
+  }
+  if (normalized.includes('expired') || normalized.includes('изтекла')) {
+    return 'Картата ви е изтекла. Моля, проверете срока на валидност.';
+  }
+  if (normalized.includes('incorrect') || normalized.includes('невалиден')) {
+    return 'Невалиден номер на картата. Моля, проверете данните.';
+  }
+  if (normalized.includes('stock') || normalized.includes('наличност')) {
+    return 'Недостатъчно количество в наличност. Някои артикули в количката ви вече не са налични.';
+  }
+
+  return error;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCart();
   const { settings } = useStoreSettings();
   const logoUrl = getLogoUrl(settings?.logourl);
   const storeName = settings?.storename || STORE_NAME;
+  const { user, isAuthenticated } = useAuth();
 
   const [step, setStep] = useState<Step>(1);
   const [delivery, setDelivery] = useState('standard');
@@ -43,6 +79,84 @@ export default function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [econtData, setEcontData] = useState<EcontOfficesData | null>(null);
+
+  // Auto-fill form fields when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const nameParts = user.name ? user.name.split(' ') : ['', ''];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Map preferredDeliveryType to checkout delivery value
+      let preferredDelivery = delivery;
+      if (user.preferredDeliveryType) {
+        if (user.preferredDeliveryType === 'office') {
+          preferredDelivery = 'office';
+        } else if (user.preferredDeliveryType === 'address') {
+          preferredDelivery = 'standard';
+        }
+      }
+
+      // Build address string if address is preferred
+      let addressString = '';
+      if (user.preferredStreet) {
+        addressString = `ул. ${user.preferredStreet}`;
+        if (user.preferredStreetNumber) addressString += ` №${user.preferredStreetNumber}`;
+        if (user.preferredEntrance) addressString += `, вх. ${user.preferredEntrance}`;
+        if (user.preferredFloor) addressString += `, ет. ${user.preferredFloor}`;
+        if (user.preferredApartment) addressString += `, ап. ${user.preferredApartment}`;
+      } else if (user.locationText) {
+        addressString = user.locationText;
+      }
+
+      setForm(prev => {
+        return {
+          ...prev,
+          firstName: prev.firstName || firstName,
+          lastName: prev.lastName || lastName,
+          email: prev.email || user.email || '',
+          phone: prev.phone || user.phone || '',
+          city: prev.city || user.preferredCity || '',
+          address: prev.address || addressString,
+        };
+      });
+
+      if (preferredDelivery !== delivery) {
+        setDelivery(preferredDelivery);
+      }
+    }
+  }, [isAuthenticated, user]);
+
+  // Load Econt offices data proactively if user is authenticated and prefers office delivery
+  useEffect(() => {
+    if (isAuthenticated && user?.preferredDeliveryType === 'office' && !econtData) {
+      fetch('/data/econt-offices.json')
+        .then(r => r.json())
+        .then(data => setEcontData(data))
+        .catch(err => console.error('Failed to load Econt offices for auto-fill:', err));
+    }
+  }, [isAuthenticated, user, econtData]);
+
+  // Match preferred Econt office once econtData is loaded
+  useEffect(() => {
+    if (isAuthenticated && user?.preferredEcontOfficeId && econtData && !form.econtOffice) {
+      let officeString = '';
+      for (const city in econtData.officesByCity) {
+        const office = econtData.officesByCity[city].find(o => o.id === user.preferredEcontOfficeId);
+        if (office) {
+          officeString = `${office.city}, ${office.name} (${office.address})`;
+          break;
+        }
+      }
+      if (officeString) {
+        setForm(prev => ({
+          ...prev,
+          econtOffice: officeString
+        }));
+      }
+    }
+  }, [isAuthenticated, user, econtData, form.econtOffice]);
 
   const DELIVERY_OPTIONS = useMemo(() => [
     { id: 'standard', label: 'Стандартна доставка', sub: '2–3 работни дни', price: settings?.delivery_standard_price ?? 0, icon: <Truck className="text-black w-5 h-5" /> },
@@ -81,7 +195,6 @@ export default function CheckoutPage() {
   
   const total = subtotal + deliveryCost;
 
-  const [econtData, setEcontData] = useState<EcontOfficesData | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const officeDropdownRef = useRef<HTMLDivElement>(null);
@@ -187,6 +300,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         price: item.price,
         size: item.size || '',
+        color: (item as any).color || '',
         name: item.name
       })),
       totals: {
@@ -210,7 +324,7 @@ export default function CheckoutPage() {
           clearCart();
           router.push(`/checkout/success?orderId=${data.orderId}`);
         } else {
-          setErrorMsg(data.error || 'Failed to place order.');
+          setErrorMsg(translateError(data.error || 'failed to place order'));
         }
       } else if (payment === 'card') {
         // Card Online via Stripe Checkout
@@ -230,7 +344,7 @@ export default function CheckoutPage() {
           clearCart(); // Clear cart before redirecting
           window.location.href = data.data.url;
         } else {
-          setErrorMsg(data.error || 'Stripe payment initialization failed.');
+          setErrorMsg(translateError(data.error || 'stripe payment initialization failed'));
         }
       } else {
         setErrorMsg('Избраният метод на плащане не е поддържан в момента.');

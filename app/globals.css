@@ -91,6 +91,19 @@
   a.inline-flex.items-center.bg-ds-gold {
     border-radius: 9999px !important;
   }
+
+  /* Mitigate rounded corners by adding horizontal padding to text fields globally */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="file"]):not(.bg-transparent):not([class*="pl-"]),
+  select:not([class*="pl-"]),
+  textarea:not([class*="pl-"]) {
+    padding-left: 1.25rem !important; /* 20px */
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="file"]):not(.bg-transparent):not([class*="pr-"]),
+  select:not([class*="pr-"]),
+  textarea:not([class*="pr-"]) {
+    padding-right: 1.25rem !important; /* 20px */
+  }
 }
 
 @layer utilities {

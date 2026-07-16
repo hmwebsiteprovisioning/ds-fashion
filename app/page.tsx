@@ -161,7 +161,7 @@ export default function Home() {
               className="absolute inset-0 w-full h-full object-cover opacity-60"
             />
             <div className="relative z-10 px-8 sm:px-14 py-12 max-w-xl">
-              <p className="text-[11px] font-bold tracking-widest uppercase text-ds-gold mb-3">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-black mb-3">
                 {language === 'bg' ? 'ВДЪХНОВЕНИЕ' : 'INSPIRATION'}
               </p>
               <h2 className="font-serif-display text-3xl sm:text-4xl text-white leading-[1.1] mb-4 text-left">

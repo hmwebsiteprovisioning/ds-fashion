@@ -85,6 +85,12 @@ export async function GET(request: NextRequest) {
         customerid,
         deliverytype,
         deliverynotes,
+        econtoffice,
+        deliverystreet,
+        deliverystreetnumber,
+        deliveryentrance,
+        deliveryfloor,
+        deliveryapartment,
         subtotal,
         deliverycost,
         discountamount,
@@ -92,6 +98,9 @@ export async function GET(request: NextRequest) {
         status,
         createdat,
         updatedat,
+        customers (
+          city
+        ),
         order_items (
           orderitemid,
           productid,
@@ -170,6 +179,13 @@ export async function GET(request: NextRequest) {
         status: order.status || 'pending',
         deliveryType: order.deliverytype,
         deliveryNotes: order.deliverynotes,
+        econtOffice: order.econtoffice,
+        deliveryStreet: order.deliverystreet,
+        deliveryStreetNumber: order.deliverystreetnumber,
+        deliveryEntrance: order.deliveryentrance,
+        deliveryFloor: order.deliveryfloor,
+        deliveryApartment: order.deliveryapartment,
+        city: (Array.isArray(order.customers) ? order.customers[0]?.city : order.customers?.city) || null,
         items: items
       }
     })

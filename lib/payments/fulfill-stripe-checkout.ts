@@ -5,7 +5,7 @@ import {
   getPendingCheckoutByStripeSession,
   markPendingCheckoutCompleted,
 } from './pending-checkout';
-import { validateStock, reduceStock, createOrder, type OrderData } from '@/lib/orders';
+import { validateStock, reduceStock, createOrder, resolveOrderItems, type OrderData } from '@/lib/orders';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sendCustomerOrderEmail, sendAdminOrderEmail } from '@/lib/email';
 
@@ -58,6 +58,9 @@ export async function fulfillStripeCheckout(
     console.error(`❌ Could not resolve pending checkout payload for session: ${stripeSessionId}`);
     return null;
   }
+
+  // Resolve product IDs to variant IDs
+  pending.payload.items = await resolveOrderItems(pending.payload.items);
 
   // 3. Guard: If checkout status was already completed
   if (pending.status === 'completed' && pending.orderId) {

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !productIds || !Array.isArray(productIds) || productIds.length === 0) {
       return NextResponse.json(
-        { error: 'User ID and Product IDs array are required' },
+        { error: 'Изискват се потребителско име и списък с идентификатори на продукти' },
         { status: 400 }
       )
     }
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (checkError) {
       console.error('Error checking favorites:', checkError)
       return NextResponse.json(
-        { error: 'Failed to check favorite status' },
+        { error: 'Неуспешна проверка на статуса на любими' },
         { status: 500 }
       )
     }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Check favorites batch API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Вътрешна грешка на сървъра' },
       { status: 500 }
     )
   }

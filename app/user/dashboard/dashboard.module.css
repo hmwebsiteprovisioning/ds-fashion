@@ -4,10 +4,15 @@
   min-height: 100vh;
   background: hsl(var(--background));
   padding: 20px;
-  /* Override primary color to blue for user pages */
-  --primary: 217 91% 60%;
+  /* Override variables to match DS-Fashion gold branding */
+  --primary: 35 55% 47%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 217 91% 55%;
+  --primary-hover: 35 55% 40%;
+  --background: 35 40% 95%;
+  --foreground: 30 11% 11%;
+  --surface: 40 100% 99%;
+  --border: 32 30% 84%;
+  --muted-foreground: 30 8% 40%;
 }
 
 .container {
@@ -70,9 +75,9 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: hsl(var(--danger));
-  color: hsl(var(--danger-foreground));
-  border: none;
+  background: transparent;
+  color: hsl(var(--foreground));
+  border: 2px solid hsl(var(--border));
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
@@ -81,7 +86,7 @@
 }
 
 .logoutBtn:hover {
-  background: hsl(var(--danger) / 0.9);
+  background: hsl(var(--border) / 0.3);
   transform: translateY(-2px);
 }
 
@@ -376,6 +381,28 @@
   transform: translateY(0);
 }
 
+.expandIconWrapper {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% !important;
+  background: hsl(var(--border) / 0.5);
+  color: hsl(var(--muted-foreground));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.orderCard:hover .expandIconWrapper {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  transform: scale(1.08);
+}
+
 .orderHeader {
   display: flex;
   justify-content: space-between;
@@ -383,6 +410,7 @@
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 2px solid hsl(var(--border));
+  padding-right: 36px;
 }
 
 .orderHeader h3 {
@@ -407,8 +435,8 @@
 .statusBadge {
   display: inline-block;
   padding: 4px 12px;
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
   border-radius: 6px;
   font-weight: 600;
   text-transform: capitalize;
@@ -518,6 +546,20 @@
   z-index: 1000;
   padding: 20px;
   backdrop-filter: blur(4px);
+  /* Override variables to match DS-Fashion gold branding */
+  --primary: 35 55% 47%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 35 55% 40%;
+  --background: 35 40% 95%;
+  --foreground: 30 11% 11%;
+  --surface: 40 100% 99%;
+  --border: 32 30% 84%;
+  --muted-foreground: 30 8% 40%;
+  animation: modalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.modalOverlay.closing {
+  animation: modalFadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .modalContent {
@@ -530,7 +572,33 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.modalContent.closing {
+  animation: modalSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
 }
 
 @keyframes modalSlideIn {
@@ -544,13 +612,24 @@
   }
 }
 
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  border-bottom: 2px solid #2563eb;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-bottom: 2px solid hsl(var(--primary));
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%);
   border-radius: 18px 18px 0 0;
 }
 
@@ -598,10 +677,10 @@
 .modalSectionTitle {
   font-size: 18px;
   font-weight: 700;
-  color: #2563eb;
+  color: hsl(var(--primary));
   margin: 0 0 12px 0;
   padding-bottom: 8px;
-  border-bottom: 2px solid #2563eb;
+  border-bottom: 2px solid hsl(var(--primary));
 }
 
 .modalInfoRow {
@@ -673,15 +752,15 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  background: rgba(37, 99, 235, 0.1);
-  border: 1px solid rgba(37, 99, 235, 0.3);
+  background: hsl(var(--primary) / 0.1);
+  border: 1px solid hsl(var(--primary) / 0.3);
   border-radius: 6px;
   font-size: 12px;
 }
 
 .modalPropertyName {
   font-weight: 600;
-  color: #2563eb;
+  color: hsl(var(--primary));
 }
 
 .modalPropertyValue {
@@ -711,7 +790,7 @@
 .modalItemTotal {
   font-size: 16px;
   font-weight: 700;
-  color: #2563eb;
+  color: hsl(var(--primary));
 }
 
 .modalSummary {
@@ -738,29 +817,29 @@
   align-items: center;
   font-size: 20px;
   font-weight: 700;
-  color: #2563eb;
+  color: hsl(var(--primary));
   padding-top: 12px;
-  border-top: 2px solid #2563eb;
+  border-top: 2px solid hsl(var(--primary));
   margin-top: 4px;
 }
 
 .modalFooter {
   padding: 24px;
-  border-top: 2px solid #2563eb;
+  border-top: 2px solid hsl(var(--primary));
   display: flex;
   justify-content: flex-end;
-  background: rgba(37, 99, 235, 0.05);
+  background: hsl(var(--primary) / 0.05);
 }
 
 .modalFooter .primaryBtn {
-  background: linear-gradient(90deg, #2563eb, #1e40af);
-  color: #ffffff;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 8px 20px hsl(var(--primary) / 0.45);
 }
 
 .modalFooter .primaryBtn:hover:not(:disabled) {
-  background: linear-gradient(90deg, #1e40af, #1e3a8a);
-  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
+  background: linear-gradient(90deg, hsl(var(--primary-hover)), hsl(var(--primary) / 0.9));
+  box-shadow: 0 12px 28px hsl(var(--primary) / 0.6);
 }
 
 /* Mobile Responsive */
@@ -858,7 +937,11 @@
     max-width: 100%;
     max-height: 95vh;
     border-radius: 18px 18px 0 0;
-    animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .modalContent.closing {
+    animation: modalSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   @keyframes modalSlideUp {
@@ -869,6 +952,17 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes modalSlideDown {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(100%);
     }
   }
 
