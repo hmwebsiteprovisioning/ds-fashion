@@ -6,6 +6,7 @@ import { Minus, Plus, Trash2, Heart, Truck, Shield, RotateCcw } from 'lucide-rea
 import { useRouter } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 import { useCart } from '@/context/CartContext';
 import { fetchStorefrontProducts } from '@/lib/storefront-products';
 import { formatPrice } from '@/lib/price-formatter';
@@ -18,10 +19,14 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, totalPrice } = useCart();
   const { settings } = useStoreSettings();
   const [crossSell, setCrossSell] = useState<StorefrontProduct[]>([]);
+  const [isCrossSellLoading, setIsCrossSellLoading] = useState(true);
   const handleSetIsAdmin = (v: boolean) => { setIsAdmin(v); localStorage.setItem('isAdmin', v.toString()); };
 
   useEffect(() => {
-    fetchStorefrontProducts({ limit: 4 }).then(setCrossSell).catch(() => setCrossSell([]));
+    fetchStorefrontProducts({ limit: 4 })
+      .then(setCrossSell)
+      .catch(() => setCrossSell([]))
+      .finally(() => setIsCrossSellLoading(false));
   }, []);
   const [coupon, setCoupon] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
@@ -201,11 +206,19 @@ export default function CartPage() {
           {/* Cross-sell */}
           <section className="mt-12">
             <h2 className="font-serif-display text-2xl text-ds-text mb-6">Може да харесаш още</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              {crossSell.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            {isCrossSellLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : crossSell.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                {crossSell.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

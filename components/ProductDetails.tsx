@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
 import { translations } from '@/lib/translations';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Heart, Share2, Plus, Minus } from 'lucide-react';
@@ -13,6 +14,7 @@ import Image from 'next/image';
 import QuickLoginModal from './QuickLoginModal';
 import FomoBadge, { type FomoMessage } from './FomoBadge';
 import ProductCard from './ProductCard';
+import ProductCardSkeleton from './ProductCardSkeleton';
 import {
   LOW_STOCK_MAX,
   findSameSizeAlternatives,
@@ -65,8 +67,11 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
   const { language } = useLanguage();
   const { addItem, openCart } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { isFavorited: getIsFavorited, toggleFavorite } = useFavorites();
   const router = useRouter();
   const t = translations[language];
+  const productId = product.id || product.productid;
+  const isFavorited = getIsFavorited(String(productId || ''));
 
   // State for variant selection
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -76,7 +81,6 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
   const [propertyNameMap, setPropertyNameMap] = useState<Record<string, string>>({}); // Maps lowercase keys to original property names
 
   // State for favorites and share
-  const [isFavorited, setIsFavorited] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
@@ -85,32 +89,9 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(1);
 
-  // Check if product is favorited and get favorite count on mount
+  // Get favorite count on mount
   useEffect(() => {
-    const productId = product.id || product.productid
-    
-    // Check favorite status if authenticated
-    if (isAuthenticated && user && productId) {
-      const checkFavorite = async () => {
-        try {
-          const response = await fetch('/api/favorites/check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              productId: productId
-            })
-          })
-          const data = await response.json()
-          if (data.success) {
-            setIsFavorited(data.isFavorited)
-          }
-        } catch (error) {
-          console.error('Error checking favorite:', error)
-        }
-      }
-      checkFavorite()
-    }
+    const productId = product.id || product.productid;
 
     // Get favorite count (public, no auth required)
     const fetchFavoriteCount = async () => {
@@ -496,18 +477,8 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
     const productId = product.id || product.productid
 
     try {
-      const response = await fetch('/api/favorites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          productId: String(productId || '')
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        setIsFavorited(data.isFavorited)
+      const success = await toggleFavorite(String(productId || ''));
+      if (success) {
         // Update favorite count
         const countResponse = await fetch(`/api/products/${productId}/favorite-count`)
         const countData = await countResponse.json()
@@ -923,9 +894,9 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
             {t.sameSizeAlternatives.replace('{size}', selectedSizeValue)}
           </h3>
           {loadingAlternatives ? (
-            <div className="flex items-center gap-2 text-sm" style={{ color: theme.colors.textSecondary }}>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400" />
-              {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
             </div>
           ) : sameSizeAlternatives.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1018,28 +989,6 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
         productId={String(product.id || product.productid || '')}
         onLoginSuccess={() => {
           setShowLoginModal(false)
-          // Refresh favorite status after login
-          if (isAuthenticated && user) {
-            const checkFavorite = async () => {
-              try {
-                const response = await fetch('/api/favorites/check', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              productId: String(product.id || product.productid || '')
-            })
-                })
-                const data = await response.json()
-                if (data.success) {
-                  setIsFavorited(data.isFavorited)
-                }
-              } catch (error) {
-                console.error('Error checking favorite:', error)
-              }
-            }
-            checkFavorite()
-          }
         }}
       />
      

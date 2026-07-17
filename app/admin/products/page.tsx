@@ -116,10 +116,10 @@ export default function ProductsPage() {
   const [originalPropertyValues, setOriginalPropertyValues] = useState<Record<string, string[]>>({});
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantDisplayValues, setVariantDisplayValues] = useState<Record<string, { price?: string; quantity?: string }>>({});
-  const [rfProductTypes, setRfProductTypes] = useState<Array<{rfproducttypeid: number, name: string}>>([]);
+  const [rfProductTypes, setRfProductTypes] = useState<Array<{ rfproducttypeid: number, name: string }>>([]);
   const [filteredProductTypes, setFilteredProductTypes] = useState<ProductType[]>([]);
   const [showMediaModal, setShowMediaModal] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<Array<{name: string, path: string, url: string}>>([]);
+  const [mediaFiles, setMediaFiles] = useState<Array<{ name: string, path: string, url: string }>>([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<'product' | null>(null);
   const [mediaTargetForHero, setMediaTargetForHero] = useState<'portrait' | 'landscape' | null>(null);
@@ -303,7 +303,7 @@ export default function ProductsPage() {
   // Filter product types based on selected main category
   useEffect(() => {
     if (formData.rfproducttypeid) {
-      const filtered = productTypes.filter(pt => 
+      const filtered = productTypes.filter(pt =>
         pt.rfproducttypeid === formData.rfproducttypeid || !pt.rfproducttypeid
       );
       setFilteredProductTypes(filtered);
@@ -380,7 +380,7 @@ export default function ProductsPage() {
       const result = await response.json();
       if (result.success && result.properties) {
         const properties = result.properties.map((p: any) => p.properties).filter(Boolean);
-        
+
         // Load values for each property
         const propertiesWithValues = await Promise.all(
           properties.map(async (prop: Property) => {
@@ -402,7 +402,7 @@ export default function ProductsPage() {
             };
           })
         );
-        
+
         return propertiesWithValues;
       }
     } catch (error) {
@@ -430,7 +430,7 @@ export default function ProductsPage() {
     try {
       // Get the next display order
       const maxDisplayOrder = property?.values?.reduce((max, v) => Math.max(max, v.displayorder || 0), 0) || 0;
-      
+
       const response = await fetch(`/api/properties/${propertyId}/values`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -441,21 +441,21 @@ export default function ProductsPage() {
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Reload properties for the product type to get the new value
         if (formData.producttypeid) {
           const updatedProps = await loadPropertiesForProductType(formData.producttypeid);
           setProductTypeProperties(updatedProps);
         }
-        
+
         // Automatically select the newly added value
         const currentValues = selectedPropertyValues[propertyId] || [];
         setSelectedPropertyValues({
           ...selectedPropertyValues,
           [propertyId]: [...currentValues, newValue]
         });
-        
+
         // Clear the input
         setNewPropertyValues(prev => ({ ...prev, [propertyId]: '' }));
       } else {
@@ -471,11 +471,11 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.isfeatured) {
       if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
-        alert(language === 'bg' 
-          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.' 
+        alert(language === 'bg'
+          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.'
           : 'Featured products require both a portrait and a landscape image for the Hero section.');
         return;
       }
@@ -528,7 +528,7 @@ export default function ProductsPage() {
     setValidationErrors({});
 
     try {
-      const url = editingProduct 
+      const url = editingProduct
         ? `/api/products/${editingProduct.productid}`
         : '/api/products';
       const method = editingProduct ? 'PUT' : 'POST';
@@ -559,11 +559,11 @@ export default function ProductsPage() {
 
       const result = await response.json();
       console.log('API response:', result);
-      
+
       if (result.success) {
         // Show complete animation
         setShowCompleteAnimation(true);
-        
+
         // Close modal and reset after animation completes
         setTimeout(() => {
           setShowModal(false);
@@ -591,7 +591,7 @@ export default function ProductsPage() {
   const handleEdit = async (product: Product) => {
     setEditingProduct(product);
     setValidationErrors({});
-    
+
     // Fetch full product details including variants
     try {
       const authHeaders = await adminAuthHeaders();
@@ -599,11 +599,11 @@ export default function ProductsPage() {
         headers: authHeaders,
       });
       const result = await response.json();
-      
+
       if (result.success && result.product) {
         const fullProduct = result.product;
         console.log('Loaded product for editing:', fullProduct);
-        
+
         setFormData({
           name: fullProduct.name,
           sku: fullProduct.sku || '',
@@ -631,7 +631,7 @@ export default function ProductsPage() {
         if (fullProduct.producttypeid) {
           const props = await loadPropertiesForProductType(fullProduct.producttypeid);
           setProductTypeProperties(props);
-          
+
           // Load existing variants if they exist
           if (fullProduct.Variants && fullProduct.Variants.length > 0) {
             const loadedVariants: Variant[] = fullProduct.Variants.map((v: any) => ({
@@ -649,9 +649,9 @@ export default function ProductsPage() {
                 value: pv.value
               }))
             }));
-            
+
             setVariants(loadedVariants);
-            
+
             // Set selected property values from existing variants
             // Only select values that actually exist in variants
             const selected: Record<string, string[]> = {};
@@ -685,7 +685,7 @@ export default function ProductsPage() {
       alert('Failed to load product details');
       return;
     }
-    
+
     setShowModal(true);
   };
 
@@ -704,7 +704,7 @@ export default function ProductsPage() {
       if (result.success) {
         // Show complete animation
         setShowDeleteCompleteAnimation(true);
-        
+
         // Close modal and reset after animation completes
         setTimeout(() => {
           setShowDeleteModal(false);
@@ -814,7 +814,7 @@ export default function ProductsPage() {
       } else {
         // Show complete animation
         setShowBulkDeleteCompleteAnimation(true);
-        
+
         // Close modal and reset after animation completes
         setTimeout(() => {
           setSelectedProductIds([]);
@@ -934,7 +934,7 @@ export default function ProductsPage() {
   const handleNumericInput = (value: string, isDecimal: boolean = false) => {
     // Allow empty string
     if (value === '') return '';
-    
+
     // For decimal (price), allow numbers and one dot
     if (isDecimal) {
       // Filter to only allow digits and dots
@@ -955,12 +955,12 @@ export default function ProductsPage() {
   const formatNumericValue = (value: number, variantIndex: number, field: 'price' | 'quantity'): string => {
     const key = `variant_${variantIndex}`;
     const displayValue = variantDisplayValues[key]?.[field];
-    
+
     // If there's a stored display value (for incomplete inputs like "."), use it
     if (displayValue !== undefined) {
       return displayValue;
     }
-    
+
     // Otherwise, format the numeric value
     return value === 0 ? '' : value.toString();
   };
@@ -988,9 +988,9 @@ export default function ProductsPage() {
     ];
 
     // Validate file type - check MIME type or file extension
-    const isValidType = supportedFormats.includes(file.type.toLowerCase()) || 
-                       file.type.startsWith('image/') ||
-                       /\.(jpg|jpeg|png|gif|webp|avif|heic|heif|svg|bmp|tiff?)$/i.test(file.name);
+    const isValidType = supportedFormats.includes(file.type.toLowerCase()) ||
+      file.type.startsWith('image/') ||
+      /\.(jpg|jpeg|png|gif|webp|avif|heic|heif|svg|bmp|tiff?)$/i.test(file.name);
 
     if (!isValidType) {
       alert('Please upload a valid image file (JPG, PNG, GIF, WebP, AVIF, HEIC, etc.)');
@@ -1114,7 +1114,7 @@ export default function ProductsPage() {
                 setSelectedPropertyValues({});
                 setVariants([]);
                 setVariantDisplayValues({});
-              setProductImages([]);
+                setProductImages([]);
                 setValidationErrors({});
                 setShowModal(true);
               }}
@@ -1133,218 +1133,218 @@ export default function ProductsPage() {
           </div>
         ) : (
           <>
-          <Section
-            title={language === 'bg' ? 'Списък с артикули' : 'Items List'}
-            description={language === 'bg' ? 'Управлявайте артикулите и техните варианти' : 'Manage items and their variants'}
-          >
-            {filteredProducts.length === 0 ? (
-              <EmptyState
-                title={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Няма артикули' : 'Няма артикули от този тип' : selectedProductTypeFilter === 'all' ? 'No Items' : 'No items of this type'}
-                description={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Създайте първия продукт, за да започнете да продавате.' : 'Няма артикули, отговарящи на избрания филтър.' : selectedProductTypeFilter === 'all' ? 'Create your first product to start selling.' : 'No items match the selected filter.'}
-                action={
-                  <button
-                    onClick={() => {
-                      setEditingProduct(null);
-                      setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', hero_portrait_imageurl: '', hero_landscape_imageurl: '', propertyvalues: {} });
-                      setProductTypeProperties([]);
-                      setSelectedPropertyValues({});
-                      setVariants([]);
-                      setProductImages([]);
-        setVariantDisplayValues({});
-                      setValidationErrors({});
-                      setShowModal(true);
-                    }}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t.addProduct}
-                  </button>
-                }
-                icon={Package}
-              />
-            ) : (
-              <SectionSurface tone="soft" padding="md">
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-hidden">
-                  <DataTableShell
-                    searchValue={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    searchPlaceholder={language === 'bg' ? 'Търси артикули...' : 'Search items...'}
-                    toolbar={
-                      products.length > 0 ? (
-                        <select
-                          value={selectedProductTypeFilter}
-                          onChange={(e) => setSelectedProductTypeFilter(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-                        >
-                          <option value="all">
-                            {language === 'bg' ? 'Всички типове' : 'All types'}
-                          </option>
-                          {productTypes.map((type) => (
-                            <option key={type.producttypeid} value={type.producttypeid}>
-                              {type.name}
+            <Section
+              title={language === 'bg' ? 'Списък с артикули' : 'Items List'}
+              description={language === 'bg' ? 'Управлявайте артикулите и техните варианти' : 'Manage items and their variants'}
+            >
+              {filteredProducts.length === 0 ? (
+                <EmptyState
+                  title={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Няма артикули' : 'Няма артикули от този тип' : selectedProductTypeFilter === 'all' ? 'No Items' : 'No items of this type'}
+                  description={language === 'bg' ? selectedProductTypeFilter === 'all' ? 'Създайте първия продукт, за да започнете да продавате.' : 'Няма артикули, отговарящи на избрания филтър.' : selectedProductTypeFilter === 'all' ? 'Create your first product to start selling.' : 'No items match the selected filter.'}
+                  action={
+                    <button
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setFormData({ name: '', sku: '', description: '', rfproducttypeid: 1, producttypeid: '', isfeatured: false, isdisabled: false, isnew: false, isinspiration: false, collectionid: '', hero_portrait_imageurl: '', hero_landscape_imageurl: '', propertyvalues: {} });
+                        setProductTypeProperties([]);
+                        setSelectedPropertyValues({});
+                        setVariants([]);
+                        setProductImages([]);
+                        setVariantDisplayValues({});
+                        setValidationErrors({});
+                        setShowModal(true);
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t.addProduct}
+                    </button>
+                  }
+                  icon={Package}
+                />
+              ) : (
+                <SectionSurface tone="soft" padding="md">
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-hidden">
+                    <DataTableShell
+                      searchValue={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      searchPlaceholder={language === 'bg' ? 'Търси артикули...' : 'Search items...'}
+                      toolbar={
+                        products.length > 0 ? (
+                          <select
+                            value={selectedProductTypeFilter}
+                            onChange={(e) => setSelectedProductTypeFilter(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                          >
+                            <option value="all">
+                              {language === 'bg' ? 'Всички типове' : 'All types'}
                             </option>
-                          ))}
-                        </select>
-                      ) : undefined
-                    }
-                  >
-                    <TableHeader>
-                      <TableHeaderRow>
-                        <TableHeaderCell align="center">
-                          <input
-                            type="checkbox"
-                            checked={allSelectedOnPage}
-                            onChange={toggleSelectAllProductsOnPage}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
-                          />
-                        </TableHeaderCell>
-                        <TableHeaderCell>{t.name}</TableHeaderCell>
-                        <TableHeaderCell>{t.productType}</TableHeaderCell>
-                        <TableHeaderCell align="center">
-                          {language === 'bg' ? 'Магазин' : 'Shop'}
-                        </TableHeaderCell>
-                        <TableHeaderCell align="right">{t.actions}</TableHeaderCell>
-                      </TableHeaderRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentProducts.map((product) => (
-                        <TableRow key={product.productid}>
-                          <TableCell align="center">
+                            {productTypes.map((type) => (
+                              <option key={type.producttypeid} value={type.producttypeid}>
+                                {type.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : undefined
+                      }
+                    >
+                      <TableHeader>
+                        <TableHeaderRow>
+                          <TableHeaderCell align="center">
+                            <input
+                              type="checkbox"
+                              checked={allSelectedOnPage}
+                              onChange={toggleSelectAllProductsOnPage}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              aria-label={language === 'bg' ? 'Избери всички' : 'Select all'}
+                            />
+                          </TableHeaderCell>
+                          <TableHeaderCell>{t.name}</TableHeaderCell>
+                          <TableHeaderCell>{t.productType}</TableHeaderCell>
+                          <TableHeaderCell align="center">
+                            {language === 'bg' ? 'Магазин' : 'Shop'}
+                          </TableHeaderCell>
+                          <TableHeaderCell align="right">{t.actions}</TableHeaderCell>
+                        </TableHeaderRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentProducts.map((product) => (
+                          <TableRow key={product.productid}>
+                            <TableCell align="center">
+                              <input
+                                type="checkbox"
+                                checked={selectedProductIds.includes(product.productid)}
+                                onChange={() => toggleProductSelection(product.productid)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                aria-label={language === 'bg' ? 'Избери продукт' : 'Select product'}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="truncate max-w-xs font-medium">{product.name}</div>
+                            </TableCell>
+                            <TableCell>
+                              {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
+                            </TableCell>
+                            <TableCell align="center">
+                              {product.isdisabled ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200">
+                                  {language === 'bg' ? 'Скрит' : 'Hidden'}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
+                                  {language === 'bg' ? 'Видим' : 'Live'}
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell align="right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
+                                  className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors touch-manipulation"
+                                  title={language === 'bg' ? 'Преглед' : 'View'}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(product)}
+                                  className="p-1.5 sm:p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded transition-colors touch-manipulation"
+                                  title={t.edit}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(product)}
+                                  className="p-1.5 sm:p-2 text-danger hover:text-danger-text hover:bg-danger-bg rounded transition-colors touch-manipulation"
+                                  title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </DataTableShell>
+                  </div>
+                </SectionSurface>
+              )}
+            </Section>
+
+            {/* Mobile/Tablet Card Layout */}
+            {filteredProducts.length > 0 && (
+              <Section className="md:hidden">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2 text-xs text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={allSelectedOnPage}
+                      onChange={toggleSelectAllProductsOnPage}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    {language === 'bg' ? 'Избери всички на страницата' : 'Select all on page'}
+                  </label>
+                </div>
+                <div className="space-y-3">
+                  {currentProducts.map((product) => (
+                    <div key={product.productid} className="bg-white p-3 sm:p-4 rounded-lg shadow border">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start gap-2">
                             <input
                               type="checkbox"
                               checked={selectedProductIds.includes(product.productid)}
                               onChange={() => toggleProductSelection(product.productid)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               aria-label={language === 'bg' ? 'Избери продукт' : 'Select product'}
                             />
-                          </TableCell>
-                          <TableCell>
-                            <div className="truncate max-w-xs font-medium">{product.name}</div>
-                          </TableCell>
-                          <TableCell>
-                            {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            {product.isdisabled ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 border border-amber-200">
-                                {language === 'bg' ? 'Скрит' : 'Hidden'}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
-                                {language === 'bg' ? 'Видим' : 'Live'}
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell align="right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
-                                className="p-1.5 sm:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors touch-manipulation"
-                                title={language === 'bg' ? 'Преглед' : 'View'}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(product)}
-                                className="p-1.5 sm:p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded transition-colors touch-manipulation"
-                                title={t.edit}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(product)}
-                                className="p-1.5 sm:p-2 text-danger hover:text-danger-text hover:bg-danger-bg rounded transition-colors touch-manipulation"
-                                title={language === 'bg' ? 'Изтрий' : 'Delete'}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </DataTableShell>
+                            <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-1 truncate">{product.name}</h3>
+                          </div>
+                          <div className="space-y-1 text-xs sm:text-sm text-gray-500">
+                            <p>
+                              <span className="font-medium">{t.productType}:</span> {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
+                            </p>
+                            <p>
+                              <span className="font-medium">{language === 'bg' ? 'Магазин' : 'Shop'}:</span>{' '}
+                              {product.isdisabled ? (
+                                <span className="text-amber-800">{language === 'bg' ? 'Скрит от клиентите' : 'Hidden from customers'}</span>
+                              ) : (
+                                <span className="text-emerald-800">{language === 'bg' ? 'Видим' : 'Visible'}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
+                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100 rounded transition-colors touch-manipulation"
+                            title={language === 'bg' ? 'Преглед' : 'View'}
+                          >
+                            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 active:bg-indigo-100 rounded transition-colors touch-manipulation"
+                            title={t.edit}
+                          >
+                            <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(product)}
+                            className="p-2 text-danger hover:text-danger-text hover:bg-danger-bg active:bg-danger-bg/80 rounded transition-colors touch-manipulation"
+                            title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                          >
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </SectionSurface>
+              </Section>
             )}
-          </Section>
 
-          {/* Mobile/Tablet Card Layout */}
-          {filteredProducts.length > 0 && (
-            <Section className="md:hidden">
-              <div className="flex items-center justify-between mb-2">
-                <label className="flex items-center gap-2 text-xs text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={allSelectedOnPage}
-                    onChange={toggleSelectAllProductsOnPage}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  {language === 'bg' ? 'Избери всички на страницата' : 'Select all on page'}
-                </label>
-              </div>
-              <div className="space-y-3">
-              {currentProducts.map((product) => (
-                <div key={product.productid} className="bg-white p-3 sm:p-4 rounded-lg shadow border">
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedProductIds.includes(product.productid)}
-                          onChange={() => toggleProductSelection(product.productid)}
-                          className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          aria-label={language === 'bg' ? 'Избери продукт' : 'Select product'}
-                        />
-                        <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-1 truncate">{product.name}</h3>
-                      </div>
-                      <div className="space-y-1 text-xs sm:text-sm text-gray-500">
-                        <p>
-                          <span className="font-medium">{t.productType}:</span> {productTypes.find(pt => pt.producttypeid === product.producttypeid)?.name || '-'}
-                        </p>
-                        <p>
-                          <span className="font-medium">{language === 'bg' ? 'Магазин' : 'Shop'}:</span>{' '}
-                          {product.isdisabled ? (
-                            <span className="text-amber-800">{language === 'bg' ? 'Скрит от клиентите' : 'Hidden from customers'}</span>
-                          ) : (
-                            <span className="text-emerald-800">{language === 'bg' ? 'Видим' : 'Visible'}</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => window.open(`/products/${product.productid}`, '_blank', 'noopener,noreferrer')}
-                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:bg-gray-100 rounded transition-colors touch-manipulation"
-                        title={language === 'bg' ? 'Преглед' : 'View'}
-                      >
-                        <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 active:bg-indigo-100 rounded transition-colors touch-manipulation"
-                        title={t.edit}
-                      >
-                        <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(product)}
-                        className="p-2 text-danger hover:text-danger-text hover:bg-danger-bg active:bg-danger-bg/80 rounded transition-colors touch-manipulation"
-                        title={language === 'bg' ? 'Изтрий' : 'Delete'}
-                      >
-                        <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              </div>
-            </Section>
-          )}
-
-          {/* Pagination */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="bg-white px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200">
                 {/* Mobile: Simple Prev/Next */}
@@ -1399,11 +1399,10 @@ export default function ProductsPage() {
                               <button
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`relative inline-flex items-center px-3 sm:px-4 py-2 border text-sm font-medium transition-colors touch-manipulation ${
-                                  currentPage === page
-                                    ? 'z-10 bg-primary/10 border-primary text-primary'
-                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 active:bg-gray-100'
-                                }`}
+                                className={`relative inline-flex items-center px-3 sm:px-4 py-2 border text-sm font-medium transition-colors touch-manipulation ${currentPage === page
+                                  ? 'z-10 bg-primary/10 border-primary text-primary'
+                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 active:bg-gray-100'
+                                  }`}
                               >
                                 {page}
                               </button>
@@ -1437,825 +1436,580 @@ export default function ProductsPage() {
       </AdminPage>
 
       <AdminModal
-          isOpen={showModal}
-          onClose={() => {
-            if (!showCompleteAnimation) {
-              setShowModal(false);
-              // Don't clear the data here - only clear when starting a new product
-            }
-          }}
-          title={editingProduct ? t.editProduct : t.addProduct}
-          subheader={editingProduct
-            ? (language === 'bg' ? 'Редактирайте информацията за продукта и неговите варианти' : 'Edit the product information and its variants')
-            : (language === 'bg' ? 'Създайте нов продукт с варианти и характеристики' : 'Create a new product with variants and properties')
+        isOpen={showModal}
+        onClose={() => {
+          if (!showCompleteAnimation) {
+            setShowModal(false);
+            // Don't clear the data here - only clear when starting a new product
           }
-          maxWidth="max-w-4xl"
-          minWidth={320}
-          minHeight={400}
-        >
-          <div className="relative">
-              <form onSubmit={handleSubmit}>
-                <div className={`space-y-4 transition-all duration-300 ${showCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {t.productName}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Основна категория' : 'Main Category'}
-                    </label>
-                    <select
-                      value={formData.rfproducttypeid}
-                      onChange={(e) => {
-                        const newRfProductTypeId = parseInt(e.target.value);
-                        setFormData({ 
-                          ...formData, 
-                          rfproducttypeid: newRfProductTypeId,
-                          producttypeid: '' // Reset product type when main category changes
-                        });
-                        setProductTypeProperties([]);
-                        setSelectedPropertyValues({});
-                        setVariants([]);
-        setVariantDisplayValues({});
-                      }}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      {rfProductTypes.map((rpt) => {
-                        // Translate category names
-                        const getTranslatedName = (name: string) => {
-                          if (language === 'bg') {
-                            const nameLower = name.toLowerCase();
-                            if (nameLower.includes('him') || nameLower.includes('него')) return 'За Него';
-                            if (nameLower.includes('her') || nameLower.includes('нея')) return 'За Нея';
-                            if (nameLower.includes('accessor') || nameLower.includes('аксесоар')) return 'Аксесоар';
-                          }
-                          return name;
-                        };
-                        return (
-                          <option key={rpt.rfproducttypeid} value={rpt.rfproducttypeid}>
-                            {getTranslatedName(rpt.name)}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Категория' : 'Product Type'}
-                    </label>
-                    <select
-                      value={formData.producttypeid}
-                      onChange={(e) => handleProductTypeChange(e.target.value)}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      required
-                      disabled={!formData.rfproducttypeid}
-                    >
-                      <option value="">{t.selectAProductType || 'Select a product type'}</option>
-                      {filteredProductTypes.map((pt) => (
-                        <option key={pt.producttypeid} value={pt.producttypeid}>
-                          {pt.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Описание' : 'Description'}
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Изображения на продукта' : 'Product Images'}
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
-                      {language === 'bg'
-                        ? 'Добавете няколко изображения за продукта. След това можете да изберете конкретно изображение за всеки вариант. Добавете изображения с еднакви размери за да се показват правилно'
-                        : 'Add multiple images for the product. Then choose a specific image for each variant. Add images with the same size to display properly'}
-                    </p>
-                    {productImages.length === 0 ? (
-                      <p className="text-xs text-gray-400 mb-2">
-                        {language === 'bg' ? 'Няма добавени изображения.' : 'No images added.'}
-                      </p>
-                    ) : (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {productImages.map((url, index) => (
-                          <div key={`${url}-${index}`} className="relative group">
-                            <img
-                              src={url}
-                              alt={language === 'bg' ? 'Изображение' : 'Image'}
-                              className="w-16 h-16 object-cover rounded border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeProductImage(url)}
-                              className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
-                              title={language === 'bg' ? 'Премахни изображение' : 'Remove image'}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*,.heic,.heif,.avif"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => handleProductImageUpload(e.target.files)}
+        }}
+        title={editingProduct ? t.editProduct : t.addProduct}
+        subheader={editingProduct
+          ? (language === 'bg' ? 'Редактирайте информацията за продукта и неговите варианти' : 'Edit the product information and its variants')
+          : (language === 'bg' ? 'Създайте нов продукт с варианти и характеристики' : 'Create a new product with variants and properties')
+        }
+        maxWidth="max-w-4xl"
+        minWidth={320}
+        minHeight={400}
+      >
+        <div className="relative">
+          <form onSubmit={handleSubmit}>
+            <div className={`space-y-4 transition-all duration-300 ${showCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {t.productName}
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Основна категория' : 'Main Category'}
+                </label>
+                <select
+                  value={formData.rfproducttypeid}
+                  onChange={(e) => {
+                    const newRfProductTypeId = parseInt(e.target.value);
+                    setFormData({
+                      ...formData,
+                      rfproducttypeid: newRfProductTypeId,
+                      producttypeid: '' // Reset product type when main category changes
+                    });
+                    setProductTypeProperties([]);
+                    setSelectedPropertyValues({});
+                    setVariants([]);
+                    setVariantDisplayValues({});
+                  }}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  {rfProductTypes.map((rpt) => {
+                    // Translate category names
+                    const getTranslatedName = (name: string) => {
+                      if (language === 'bg') {
+                        const nameLower = name.toLowerCase();
+                        if (nameLower.includes('him') || nameLower.includes('него')) return 'За Него';
+                        if (nameLower.includes('her') || nameLower.includes('нея')) return 'За Нея';
+                        if (nameLower.includes('accessor') || nameLower.includes('аксесоар')) return 'Аксесоар';
+                      }
+                      return name;
+                    };
+                    return (
+                      <option key={rpt.rfproducttypeid} value={rpt.rfproducttypeid}>
+                        {getTranslatedName(rpt.name)}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Категория' : 'Product Type'}
+                </label>
+                <select
+                  value={formData.producttypeid}
+                  onChange={(e) => handleProductTypeChange(e.target.value)}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  required
+                  disabled={!formData.rfproducttypeid}
+                >
+                  <option value="">{t.selectAProductType || 'Select a product type'}</option>
+                  {filteredProductTypes.map((pt) => (
+                    <option key={pt.producttypeid} value={pt.producttypeid}>
+                      {pt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Описание' : 'Description'}
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Изображения на продукта' : 'Product Images'}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  {language === 'bg'
+                    ? 'Добавете няколко изображения за продукта. След това можете да изберете конкретно изображение за всеки вариант. Добавете изображения с еднакви размери за да се показват правилно'
+                    : 'Add multiple images for the product. Then choose a specific image for each variant. Add images with the same size to display properly'}
+                </p>
+                {productImages.length === 0 ? (
+                  <p className="text-xs text-gray-400 mb-2">
+                    {language === 'bg' ? 'Няма добавени изображения.' : 'No images added.'}
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {productImages.map((url, index) => (
+                      <div key={`${url}-${index}`} className="relative group">
+                        <img
+                          src={url}
+                          alt={language === 'bg' ? 'Изображение' : 'Image'}
+                          className="w-16 h-16 object-cover rounded border"
                         />
-                        <span className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors">
-                          <Upload className="w-4 h-4" />
-                          {language === 'bg' ? 'Качи изображения' : 'Upload images'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeProductImage(url)}
+                          className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
+                          title={language === 'bg' ? 'Премахни изображение' : 'Remove image'}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*,.heic,.heif,.avif"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleProductImageUpload(e.target.files)}
+                    />
+                    <span className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      {language === 'bg' ? 'Качи изображения' : 'Upload images'}
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={openMediaModalForProduct}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    {language === 'bg' ? 'Избери от медия' : 'Select from media'}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isfeatured || false}
+                    onChange={(e) => setFormData({ ...formData, isfeatured: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 block">
+                      {language === 'bg' ? 'Избран продукт (показва се на началната страница)' : 'Featured Product (displayed on home page)'}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'bg' ? 'Максимум 5 избрани продукта ще се покажат в Hero секцията на началната страница' : 'Maximum 5 featured products will be displayed in the Hero section of the home page'}
+                    </p>
+                  </div>
+                </label>
+
+                {formData.isfeatured && (
+                  <div className="ml-6 mt-3 space-y-4 border-l-2 border-primary/20 pl-4 py-1">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
+                        {language === 'bg' ? 'Вертикално изображение (Телефон)' : 'Portrait Image (Hero)'} <span className="text-red-500">*</span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={openMediaModalForProduct}
-                        className="inline-flex items-center gap-2 px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                        {language === 'bg' ? 'Избери от медия' : 'Select from media'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openMediaModalForHero('portrait')}
+                          className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                        >
+                          {language === 'bg' ? 'Избери от медия' : 'Select from media'}
+                        </button>
+                      </div>
+                      {formData.hero_portrait_imageurl && (
+                        <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
+                          <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
+                        {language === 'bg' ? 'Хоризонтално изображение (Компютър)' : 'Landscape Image (Hero)'} <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openMediaModalForHero('landscape')}
+                          className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
+                        >
+                          {language === 'bg' ? 'Избери от медия' : 'Select from media'}
+                        </button>
+                      </div>
+                      {formData.hero_landscape_imageurl && (
+                        <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
+                          <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.isfeatured || false}
-                        onChange={(e) => setFormData({ ...formData, isfeatured: e.target.checked })}
-                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <div>
-                        <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {language === 'bg' ? 'Избран продукт (показва се на началната страница)' : 'Featured Product (displayed on home page)'}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg' ? 'Максимум 5 избрани продукта ще се покажат в Hero секцията на началната страница' : 'Maximum 5 featured products will be displayed in the Hero section of the home page'}
-                        </p>
-                      </div>
-                    </label>
+                )}
+              </div>
 
-                    {formData.isfeatured && (
-                      <div className="ml-6 mt-3 space-y-4 border-l-2 border-primary/20 pl-4 py-1">
-                        <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
-                            {language === 'bg' ? 'Вертикално изображение (Portrait - Hero)' : 'Portrait Image (Hero)'} <span className="text-red-500">*</span>
+              <div>
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isdisabled === true}
+                    onChange={(e) => setFormData({ ...formData, isdisabled: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 block">
+                      {language === 'bg'
+                        ? 'Скрий от онлайн магазина (няма наличност / неактивен)'
+                        : 'Hide from online store (out of stock / inactive)'}
+                    </span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'bg'
+                        ? 'Когато е отметнато, клиентите не виждат този артикул в магазина. Можете да го включите отново по всяко време.'
+                        : 'When checked, customers will not see this product in the shop. You can turn it back on anytime.'}
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                  {language === 'bg' ? 'Колекция' : 'Collection'}
+                </label>
+                <select
+                  value={formData.collectionid}
+                  onChange={(e) => setFormData({ ...formData, collectionid: e.target.value })}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">{language === 'bg' ? 'Без колекция' : 'No collection'}</option>
+                  {collections.map((c) => (
+                    <option key={c.collectionid} value={c.collectionid}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isnew || false}
+                    onChange={(e) => setFormData({ ...formData, isnew: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">
+                    {language === 'bg' ? 'Ново (показва се в секция НОВО)' : 'New (shown in NEW section)'}
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <label className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.isinspiration || false}
+                    onChange={(e) => setFormData({ ...formData, isinspiration: e.target.checked })}
+                    className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <span className="text-xs sm:text-sm font-medium text-gray-700">
+                    {language === 'bg' ? 'Вдъхновение (показва се в секция ВДЪХНОВЕНИЕ)' : 'Inspiration (shown in INSPIRATION section)'}
+                  </span>
+                </label>
+              </div>
+
+              {formData.producttypeid && productTypeProperties.length > 0 && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    {language === 'bg' ? 'Характеристики на вариантите' : 'Variant Properties'}
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    {language === 'bg'
+                      ? 'Изберете няколко стойности за всяка характеристика, за да генерирате варианти'
+                      : 'Select multiple values for each characteristic to generate variants'
+                    }
+                  </p>
+                  <div className="space-y-3 max-h-64 sm:max-h-none overflow-y-auto">
+                    {productTypeProperties.map((property) => (
+                      <div key={property.propertyid} className="border rounded-md p-2 sm:p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-xs font-medium text-gray-700">
+                            {property.name}
+                            {property.description && (
+                              <span className="text-gray-400 ml-1 text-xs">({property.description})</span>
+                            )}
                           </label>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              required
-                              placeholder="https://example.com/portrait.jpg"
-                              value={formData.hero_portrait_imageurl || ''}
-                              onChange={(e) => setFormData({ ...formData, hero_portrait_imageurl: e.target.value })}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => openMediaModalForHero('portrait')}
-                              className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-                            >
-                              {language === 'bg' ? 'Избери' : 'Select'}
-                            </button>
-                          </div>
-                          {formData.hero_portrait_imageurl && (
-                            <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
-                              <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
-                            </div>
-                          )}
                         </div>
+                        {property.datatype === 'select' ? (
+                          <>
+                            {property.values && property.values.length > 0 ? (
+                              <div className="mb-2">
+                                {/* Select All Checkbox */}
+                                <VariantSelectAllCheckbox
+                                  property={property}
+                                  selectedValues={selectedPropertyValues[property.propertyid] || []}
+                                  onToggle={(allSelected) => {
+                                    const activeValues = property.values
+                                      ?.filter(v => v.isactive)
+                                      .map(v => v.value) || [];
 
-                        <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
-                            {language === 'bg' ? 'Хоризонтално изображение (Landscape - Hero)' : 'Landscape Image (Hero)'} <span className="text-red-500">*</span>
-                          </label>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              required
-                              placeholder="https://example.com/landscape.jpg"
-                              value={formData.hero_landscape_imageurl || ''}
-                              onChange={(e) => setFormData({ ...formData, hero_landscape_imageurl: e.target.value })}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => openMediaModalForHero('landscape')}
-                              className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-                            >
-                              {language === 'bg' ? 'Избери' : 'Select'}
-                            </button>
-                          </div>
-                          {formData.hero_landscape_imageurl && (
-                            <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
-                              <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                                    setSelectedPropertyValues({
+                                      ...selectedPropertyValues,
+                                      [property.propertyid]: allSelected ? [] : activeValues
+                                    });
+                                  }}
+                                  language={language}
+                                />
+                              </div>
+                            ) : null}
+                            {property.values && property.values.length > 0 ? (
+                              <div className="space-y-1.5 max-h-32 sm:max-h-40 overflow-y-auto">
+                                {property.values
+                                  .filter(v => v.isactive)
+                                  .sort((a, b) => a.displayorder - b.displayorder)
+                                  .map((value) => (
+                                    <label key={value.propertyvalueid} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 px-1 rounded">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedPropertyValues[property.propertyid]?.includes(value.value) || false}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          const currentValues = selectedPropertyValues[property.propertyid] || [];
+                                          const isChecked = e.target.checked;
 
-                  <div>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.isdisabled === true}
-                        onChange={(e) => setFormData({ ...formData, isdisabled: e.target.checked })}
-                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <div>
-                        <span className="text-xs sm:text-sm font-medium text-gray-700 block">
-                          {language === 'bg'
-                            ? 'Скрий от онлайн магазина (няма наличност / неактивен)'
-                            : 'Hide from online store (out of stock / inactive)'}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {language === 'bg'
-                            ? 'Когато е отметнато, клиентите не виждат този артикул в магазина. Можете да го включите отново по всяко време.'
-                            : 'When checked, customers will not see this product in the shop. You can turn it back on anytime.'}
-                        </p>
-                      </div>
-                    </label>
-                  </div>
+                                          let newValues: string[];
+                                          if (isChecked) {
+                                            // Add the value if not already present
+                                            newValues = currentValues.includes(value.value)
+                                              ? currentValues
+                                              : [...currentValues, value.value];
+                                          } else {
+                                            // Remove the value - allow empty array
+                                            newValues = currentValues.filter(v => v !== value.value);
+                                          }
 
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      {language === 'bg' ? 'Колекция' : 'Collection'}
-                    </label>
-                    <select
-                      value={formData.collectionid}
-                      onChange={(e) => setFormData({ ...formData, collectionid: e.target.value })}
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">{language === 'bg' ? 'Без колекция' : 'No collection'}</option>
-                      {collections.map((c) => (
-                        <option key={c.collectionid} value={c.collectionid}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.isnew || false}
-                        onChange={(e) => setFormData({ ...formData, isnew: e.target.checked })}
-                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">
-                        {language === 'bg' ? 'Ново (показва се в секция НОВО)' : 'New (shown in NEW section)'}
-                      </span>
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.isinspiration || false}
-                        onChange={(e) => setFormData({ ...formData, isinspiration: e.target.checked })}
-                        className="mt-0.5 w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">
-                        {language === 'bg' ? 'Вдъхновение (показва се в секция ВДЪХНОВЕНИЕ)' : 'Inspiration (shown in INSPIRATION section)'}
-                      </span>
-                    </label>
-                  </div>
-
-                  {formData.producttypeid && productTypeProperties.length > 0 && (
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                        {language === 'bg' ? 'Характеристики на вариантите' : 'Variant Properties'}
-                      </label>
-                      <p className="text-xs text-gray-500 mb-3">
-                        {language === 'bg'
-                          ? 'Изберете няколко стойности за всяка характеристика, за да генерирате варианти'
-                          : 'Select multiple values for each characteristic to generate variants'
-                        }
-                      </p>
-                      <div className="space-y-3 max-h-64 sm:max-h-none overflow-y-auto">
-                        {productTypeProperties.map((property) => (
-                          <div key={property.propertyid} className="border rounded-md p-2 sm:p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="block text-xs font-medium text-gray-700">
-                                {property.name}
-                                {property.description && (
-                                  <span className="text-gray-400 ml-1 text-xs">({property.description})</span>
-                                )}
-                              </label>
-                            </div>
-                            {property.datatype === 'select' ? (
-                              <>
-                                {property.values && property.values.length > 0 ? (
-                                  <div className="mb-2">
-                                    {/* Select All Checkbox */}
-                                    <VariantSelectAllCheckbox
-                                      property={property}
-                                      selectedValues={selectedPropertyValues[property.propertyid] || []}
-                                      onToggle={(allSelected) => {
-                                        const activeValues = property.values
-                                          ?.filter(v => v.isactive)
-                                          .map(v => v.value) || [];
-                                        
-                                        setSelectedPropertyValues({
-                                          ...selectedPropertyValues,
-                                          [property.propertyid]: allSelected ? [] : activeValues
-                                        });
-                                      }}
-                                      language={language}
-                                    />
-                                  </div>
-                                ) : null}
-                                {property.values && property.values.length > 0 ? (
-                                  <div className="space-y-1.5 max-h-32 sm:max-h-40 overflow-y-auto">
-                                    {property.values
-                                      .filter(v => v.isactive)
-                                      .sort((a, b) => a.displayorder - b.displayorder)
-                                      .map((value) => (
-                                        <label key={value.propertyvalueid} className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-50 px-1 rounded">
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedPropertyValues[property.propertyid]?.includes(value.value) || false}
-                                            onChange={(e) => {
-                                              e.stopPropagation();
-                                              const currentValues = selectedPropertyValues[property.propertyid] || [];
-                                              const isChecked = e.target.checked;
-                                              
-                                              let newValues: string[];
-                                              if (isChecked) {
-                                                // Add the value if not already present
-                                                newValues = currentValues.includes(value.value)
-                                                  ? currentValues
-                                                  : [...currentValues, value.value];
-                                              } else {
-                                                // Remove the value - allow empty array
-                                                newValues = currentValues.filter(v => v !== value.value);
-                                              }
-                                              
-                                              setSelectedPropertyValues({
-                                                ...selectedPropertyValues,
-                                                [property.propertyid]: newValues
-                                              });
-                                            }}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
-                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                          />
-                                          <span className="text-xs sm:text-sm">{value.value}</span>
-                                        </label>
-                                      ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-gray-400 mb-2">
-                                    {language === 'bg' ? 'Няма налични стойности' : 'No values available'}
-                                  </p>
-                                )}
-                                {/* Add new value input */}
-                                <div className="mt-2 pt-2 border-t border-gray-200">
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                      type="text"
-                                      value={newPropertyValues[property.propertyid] || ''}
-                                      onChange={(e) => setNewPropertyValues(prev => ({ ...prev, [property.propertyid]: e.target.value }))}
-                                      onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                          e.preventDefault();
-                                          handleAddPropertyValue(property.propertyid);
-                                        }
-                                      }}
-                                      placeholder={language === 'bg' ? 'Добави нова стойност...' : 'Add new value...'}
-                                      className="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                                      disabled={addingPropertyValue[property.propertyid]}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAddPropertyValue(property.propertyid)}
-                                      disabled={addingPropertyValue[property.propertyid] || !newPropertyValues[property.propertyid]?.trim()}
-                                      className="px-3 py-1.5 text-xs sm:text-sm bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-opacity touch-manipulation whitespace-nowrap"
-                                    >
-                                      {addingPropertyValue[property.propertyid] ? (
-                                        <>
-                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                          <span>{language === 'bg' ? 'Добавяне...' : 'Adding...'}</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Plus className="w-3 h-3" />
-                                          <span>{language === 'bg' ? 'Добави' : 'Add'}</span>
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              </>
+                                          setSelectedPropertyValues({
+                                            ...selectedPropertyValues,
+                                            [property.propertyid]: newValues
+                                          });
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                        }}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                      />
+                                      <span className="text-xs sm:text-sm">{value.value}</span>
+                                    </label>
+                                  ))}
+                              </div>
                             ) : (
-                              <p className="text-xs text-gray-400">
-                                {t.propertyTypeNotSupportVariants}
+                              <p className="text-xs text-gray-400 mb-2">
+                                {language === 'bg' ? 'Няма налични стойности' : 'No values available'}
                               </p>
                             )}
-                          </div>
-                        ))}
-                      </div>
-                      {(() => {
-                        // Check if property values have changed from original
-                        const hasPropertyChanges = editingProduct ? (() => {
-                          const currentKeys = Object.keys(selectedPropertyValues).sort();
-                          const originalKeys = Object.keys(originalPropertyValues).sort();
-                          
-                          // Check if keys are different
-                          if (currentKeys.length !== originalKeys.length) return true;
-                          if (currentKeys.join(',') !== originalKeys.join(',')) return true;
-                          
-                          // Check if values for each property have changed
-                          for (const key of currentKeys) {
-                            const current = (selectedPropertyValues[key] || []).sort().join(',');
-                            const original = (originalPropertyValues[key] || []).sort().join(',');
-                            if (current !== original) return true;
-                          }
-                          
-                          return false;
-                        })() : false;
-                        
-                        // Determine button text
-                        let buttonText;
-                        if (!editingProduct) {
-                          // New product: "Продължи" / "Continue"
-                          buttonText = t.continue;
-                        } else {
-                          // Editing product: Always show "Регенерирай" / "Regenerate"
-                          buttonText = t.regenerateVariants;
-                        }
-                        
-                        // Disable button if editing and no property changes
-                        const isDisabled = Boolean(editingProduct) && !hasPropertyChanges;
-                        
-                        return (
-                          <button
-                            type="button"
-                            onClick={generateVariants}
-                            disabled={isDisabled}
-                            className={`mt-3 w-full px-4 py-2 text-sm sm:text-base rounded transition-opacity touch-manipulation ${
-                              isDisabled
-                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                : 'bg-success text-success-foreground hover:opacity-90 active:opacity-80'
-                            }`}
-                          >
-                            {buttonText} ({Object.values(selectedPropertyValues).reduce((acc, vals) => acc * (vals.length || 1), 1)} {t.combinations})
-                          </button>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  {variants.length > 0 && (
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                        {t.variant}s ({variants.length})
-                      </label>
-                      <div className="max-h-96 overflow-y-auto border rounded-md">
-                        {/* Desktop Variants Table */}
-                        <div className="hidden md:block overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50 sticky top-0">
-                              <tr>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.variant}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.price}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
-                                  {language === 'bg' ? 'Ориг. цена' : 'Orig. price'}
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.quantity}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.image}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.primary}</th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.actions}</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {variants.map((variant, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                  <td className="px-3 py-2 text-xs">
-                                    <div className="max-w-xs truncate">
-                                      {variant.propertyvalues.map(pv => {
-                                        const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
-                                        return `${prop?.name}: ${pv.value}`;
-                                      }).join(', ')}
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <input
-                                      type="text"
-                                      data-variant-index={index}
-                                      value={formatNumericValue(variant.price, index, 'price')}
-                                      onChange={(e) => {
-                                        const validated = handleNumericInput(e.target.value, true);
-                                        const key = `variant_${index}`;
-                                        
-                                        // Clear validation error for this field
-                                        setValidationErrors(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[index]?.price) {
-                                            delete updated[index].price;
-                                            if (Object.keys(updated[index]).length === 0) {
-                                              delete updated[index];
-                                            }
-                                          }
-                                          return updated;
-                                        });
-                                        
-                                        // Store the display value
-                                        setVariantDisplayValues(prev => ({
-                                          ...prev,
-                                          [key]: { ...prev[key], price: validated }
-                                        }));
-                                        
-                                        // Only update numeric value if it's a complete number
-                                        if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
-                                          const numValue = parseFloat(validated);
-                                          if (!isNaN(numValue)) {
-                                            updateVariant(index, 'price', numValue);
-                                          }
-                                        } else if (validated === '') {
-                                          updateVariant(index, 'price', 0);
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].price;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        // Ensure we have a valid number on blur
-                                        const value = e.target.value.trim();
-                                        const key = `variant_${index}`;
-                                        if (value === '' || value === '.') {
-                                          updateVariant(index, 'price', 0);
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].price;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
-                                        } else {
-                                          // Clear display value on blur if we have a valid number
-                                          const numValue = parseFloat(value);
-                                          if (!isNaN(numValue)) {
-                                            setVariantDisplayValues(prev => {
-                                              const updated = { ...prev };
-                                              if (updated[key]) {
-                                                delete updated[key].price;
-                                                if (Object.keys(updated[key]).length === 0) {
-                                                  delete updated[key];
-                                                }
-                                              }
-                                              return updated;
-                                            });
-                                          }
-                                        }
-                                      }}
-                                      className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${
-                                        validationErrors[index]?.price
-                                          ? 'border-red-500 focus:ring-red-500'
-                                          : 'focus:ring-blue-500'
-                                      }`}
-                                    />
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      step="0.01"
-                                      value={variant.compare_at_price ?? ''}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        updateVariant(index, 'compare_at_price', val === '' ? null : parseFloat(val));
-                                      }}
-                                      placeholder="—"
-                                      className="w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <input
-                                      type="text"
-                                      data-variant-index={index}
-                                      value={formatNumericValue(variant.quantity, index, 'quantity')}
-                                      onChange={(e) => {
-                                        const validated = handleNumericInput(e.target.value, false);
-                                        const key = `variant_${index}`;
-                                        
-                                        // Clear validation error for this field
-                                        setValidationErrors(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[index]?.quantity) {
-                                            delete updated[index].quantity;
-                                            if (Object.keys(updated[index]).length === 0) {
-                                              delete updated[index];
-                                            }
-                                          }
-                                          return updated;
-                                        });
-                                        
-                                        // Store the display value
-                                        setVariantDisplayValues(prev => ({
-                                          ...prev,
-                                          [key]: { ...prev[key], quantity: validated }
-                                        }));
-                                        
-                                        // Update numeric value
-                                        const numValue = validated === '' ? 0 : parseInt(validated) || 0;
-                                        updateVariant(index, 'quantity', numValue);
-                                        
-                                        // Clear display value if empty
-                                        if (validated === '') {
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].quantity;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
-                                        }
-                                      }}
-                                      onBlur={(e) => {
-                                        // Ensure we have a valid number on blur
-                                        const value = e.target.value.trim();
-                                        const key = `variant_${index}`;
-                                        if (value === '') {
-                                          updateVariant(index, 'quantity', 0);
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].quantity;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
-                                        } else {
-                                          // Clear display value on blur
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].quantity;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
-                                        }
-                                      }}
-                                      className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${
-                                        validationErrors[index]?.quantity
-                                          ? 'border-red-500 focus:ring-red-500'
-                                          : 'focus:ring-blue-500'
-                                      }`}
-                                    />
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    {productImages.length === 0 ? (
-                                      <span className="text-xs text-gray-400">
-                                        {language === 'bg' ? 'Добавете изображения за продукта' : 'Add product images'}
-                                      </span>
-                                    ) : (
-                                      <div className="flex items-center gap-2">
-                                        {variant.imageurl ? (
-                                          <img
-                                            src={variant.imageurl}
-                                            alt="Variant"
-                                            className="w-12 h-12 object-cover rounded border"
-                                          />
-                                        ) : (
-                                          <div className="w-12 h-12 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
-                                            <ImageIcon className="w-5 h-5 text-gray-400" />
-                                          </div>
-                                        )}
-                                        <button
-                                          type="button"
-                                          onClick={() => openVariantImagePicker(index)}
-                                          className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                                        >
-                                          {language === 'bg' ? 'Избери изображение' : 'Choose image'}
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="px-3 py-2 text-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={variant.IsPrimaryImage || false}
-                                      onChange={() => handlePrimaryImageChange(index)}
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                      title={t.setAsPrimaryImage}
-                                    />
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => deleteVariant(index)}
-                                      className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors touch-manipulation"
-                                      title={language === 'bg' ? 'Изтрий' : 'Delete'}
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        {/* Mobile Variants Cards */}
-                        <div className="md:hidden divide-y divide-gray-200">
-                          {variants.map((variant, index) => (
-                            <div key={index} className="p-3 space-y-2">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-medium text-gray-700 mb-1">
-                                    {variant.propertyvalues.map(pv => {
-                                      const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
-                                      return `${prop?.name}: ${pv.value}`;
-                                    }).join(', ')}
-                                  </p>
-                                </div>
+                            {/* Add new value input */}
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                  type="text"
+                                  value={newPropertyValues[property.propertyid] || ''}
+                                  onChange={(e) => setNewPropertyValues(prev => ({ ...prev, [property.propertyid]: e.target.value }))}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddPropertyValue(property.propertyid);
+                                    }
+                                  }}
+                                  placeholder={language === 'bg' ? 'Добави нова стойност...' : 'Add new value...'}
+                                  className="flex-1 px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                  disabled={addingPropertyValue[property.propertyid]}
+                                />
                                 <button
                                   type="button"
-                                  onClick={() => deleteVariant(index)}
-                                  className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded flex-shrink-0 transition-colors touch-manipulation"
-                                  title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                  onClick={() => handleAddPropertyValue(property.propertyid)}
+                                  disabled={addingPropertyValue[property.propertyid] || !newPropertyValues[property.propertyid]?.trim()}
+                                  className="px-3 py-1.5 text-xs sm:text-sm bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center justify-center gap-1 transition-opacity touch-manipulation whitespace-nowrap"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  {addingPropertyValue[property.propertyid] ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                      <span>{language === 'bg' ? 'Добавяне...' : 'Adding...'}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="w-3 h-3" />
+                                      <span>{language === 'bg' ? 'Добави' : 'Add'}</span>
+                                    </>
+                                  )}
                                 </button>
                               </div>
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <label className="block text-gray-500 mb-1">{t.price}</label>
-                                  <input
-                                    type="text"
-                                    data-variant-index={index}
-                                    value={formatNumericValue(variant.price, index, 'price')}
-                                    onChange={(e) => {
-                                      const validated = handleNumericInput(e.target.value, true);
-                                      const key = `variant_${index}`;
-                                        
-                                      // Clear validation error for this field
-                                      setValidationErrors(prev => {
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-400">
+                            {t.propertyTypeNotSupportVariants}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {(() => {
+                    // Check if property values have changed from original
+                    const hasPropertyChanges = editingProduct ? (() => {
+                      const currentKeys = Object.keys(selectedPropertyValues).sort();
+                      const originalKeys = Object.keys(originalPropertyValues).sort();
+
+                      // Check if keys are different
+                      if (currentKeys.length !== originalKeys.length) return true;
+                      if (currentKeys.join(',') !== originalKeys.join(',')) return true;
+
+                      // Check if values for each property have changed
+                      for (const key of currentKeys) {
+                        const current = (selectedPropertyValues[key] || []).sort().join(',');
+                        const original = (originalPropertyValues[key] || []).sort().join(',');
+                        if (current !== original) return true;
+                      }
+
+                      return false;
+                    })() : false;
+
+                    // Determine button text
+                    let buttonText;
+                    if (!editingProduct) {
+                      // New product: "Продължи" / "Continue"
+                      buttonText = t.continue;
+                    } else {
+                      // Editing product: Always show "Регенерирай" / "Regenerate"
+                      buttonText = t.regenerateVariants;
+                    }
+
+                    // Disable button if editing and no property changes
+                    const isDisabled = Boolean(editingProduct) && !hasPropertyChanges;
+
+                    return (
+                      <button
+                        type="button"
+                        onClick={generateVariants}
+                        disabled={isDisabled}
+                        className={`mt-3 w-full px-4 py-2 text-sm sm:text-base rounded transition-opacity touch-manipulation ${isDisabled
+                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                          : 'bg-success text-success-foreground hover:opacity-90 active:opacity-80'
+                          }`}
+                      >
+                        {buttonText} ({Object.values(selectedPropertyValues).reduce((acc, vals) => acc * (vals.length || 1), 1)} {t.combinations})
+                      </button>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {variants.length > 0 && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    {t.variant}s ({variants.length})
+                  </label>
+                  <div className="max-h-96 overflow-y-auto border rounded-md">
+                    {/* Desktop Variants Table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.variant}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.price}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                              {language === 'bg' ? 'Ориг. цена' : 'Orig. price'}
+                            </th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.quantity}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.image}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.primary}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t.actions}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {variants.map((variant, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-3 py-2 text-xs">
+                                <div className="max-w-xs truncate">
+                                  {variant.propertyvalues.map(pv => {
+                                    const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
+                                    return `${prop?.name}: ${pv.value}`;
+                                  }).join(', ')}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  data-variant-index={index}
+                                  value={formatNumericValue(variant.price, index, 'price')}
+                                  onChange={(e) => {
+                                    const validated = handleNumericInput(e.target.value, true);
+                                    const key = `variant_${index}`;
+
+                                    // Clear validation error for this field
+                                    setValidationErrors(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[index]?.price) {
+                                        delete updated[index].price;
+                                        if (Object.keys(updated[index]).length === 0) {
+                                          delete updated[index];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+
+                                    // Store the display value
+                                    setVariantDisplayValues(prev => ({
+                                      ...prev,
+                                      [key]: { ...prev[key], price: validated }
+                                    }));
+
+                                    // Only update numeric value if it's a complete number
+                                    if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
+                                      const numValue = parseFloat(validated);
+                                      if (!isNaN(numValue)) {
+                                        updateVariant(index, 'price', numValue);
+                                      }
+                                    } else if (validated === '') {
+                                      updateVariant(index, 'price', 0);
+                                      setVariantDisplayValues(prev => {
                                         const updated = { ...prev };
-                                        if (updated[index]?.price) {
-                                          delete updated[index].price;
-                                          if (Object.keys(updated[index]).length === 0) {
-                                            delete updated[index];
+                                        if (updated[key]) {
+                                          delete updated[key].price;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
                                           }
                                         }
                                         return updated;
                                       });
-                                        
-                                      // Store the display value
-                                      setVariantDisplayValues(prev => ({
-                                        ...prev,
-                                        [key]: { ...prev[key], price: validated }
-                                      }));
-                                        
-                                      // Only update numeric value if it's a complete number
-                                      if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
-                                        const numValue = parseFloat(validated);
-                                        if (!isNaN(numValue)) {
-                                          updateVariant(index, 'price', numValue);
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure we have a valid number on blur
+                                    const value = e.target.value.trim();
+                                    const key = `variant_${index}`;
+                                    if (value === '' || value === '.') {
+                                      updateVariant(index, 'price', 0);
+                                      setVariantDisplayValues(prev => {
+                                        const updated = { ...prev };
+                                        if (updated[key]) {
+                                          delete updated[key].price;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
+                                          }
                                         }
-                                      } else if (validated === '') {
-                                        updateVariant(index, 'price', 0);
+                                        return updated;
+                                      });
+                                    } else {
+                                      // Clear display value on blur if we have a valid number
+                                      const numValue = parseFloat(value);
+                                      if (!isNaN(numValue)) {
                                         setVariantDisplayValues(prev => {
                                           const updated = { ...prev };
                                           if (updated[key]) {
@@ -2267,386 +2021,610 @@ export default function ProductsPage() {
                                           return updated;
                                         });
                                       }
-                                    }}
-                                    onBlur={(e) => {
-                                      // Ensure we have a valid number on blur
-                                      const value = e.target.value.trim();
-                                      const key = `variant_${index}`;
-                                      if (value === '' || value === '.') {
-                                        updateVariant(index, 'price', 0);
-                                        setVariantDisplayValues(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[key]) {
-                                            delete updated[key].price;
-                                            if (Object.keys(updated[key]).length === 0) {
-                                              delete updated[key];
-                                            }
-                                          }
-                                          return updated;
-                                        });
-                                      } else {
-                                        // Clear display value on blur if we have a valid number
-                                        const numValue = parseFloat(value);
-                                        if (!isNaN(numValue)) {
-                                          setVariantDisplayValues(prev => {
-                                            const updated = { ...prev };
-                                            if (updated[key]) {
-                                              delete updated[key].price;
-                                              if (Object.keys(updated[key]).length === 0) {
-                                                delete updated[key];
-                                              }
-                                            }
-                                            return updated;
-                                          });
+                                    }
+                                  }}
+                                  className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${validationErrors[index]?.price
+                                    ? 'border-red-500 focus:ring-red-500'
+                                    : 'focus:ring-blue-500'
+                                    }`}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  value={variant.compare_at_price ?? ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateVariant(index, 'compare_at_price', val === '' ? null : parseFloat(val));
+                                  }}
+                                  placeholder="—"
+                                  className="w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  data-variant-index={index}
+                                  value={formatNumericValue(variant.quantity, index, 'quantity')}
+                                  onChange={(e) => {
+                                    const validated = handleNumericInput(e.target.value, false);
+                                    const key = `variant_${index}`;
+
+                                    // Clear validation error for this field
+                                    setValidationErrors(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[index]?.quantity) {
+                                        delete updated[index].quantity;
+                                        if (Object.keys(updated[index]).length === 0) {
+                                          delete updated[index];
                                         }
                                       }
-                                    }}
-                                    className={`w-full px-2 py-1.5 border rounded focus:outline-none focus:ring-2 text-xs ${
-                                      validationErrors[index]?.price
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'focus:ring-blue-500'
-                                    }`}
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-gray-500 mb-1">{t.quantity}</label>
-                                  <input
-                                    type="text"
-                                    data-variant-index={index}
-                                    value={formatNumericValue(variant.quantity, index, 'quantity')}
-                                    onChange={(e) => {
-                                      const validated = handleNumericInput(e.target.value, false);
-                                      const key = `variant_${index}`;
-                                        
-                                      // Clear validation error for this field
-                                      setValidationErrors(prev => {
+                                      return updated;
+                                    });
+
+                                    // Store the display value
+                                    setVariantDisplayValues(prev => ({
+                                      ...prev,
+                                      [key]: { ...prev[key], quantity: validated }
+                                    }));
+
+                                    // Update numeric value
+                                    const numValue = validated === '' ? 0 : parseInt(validated) || 0;
+                                    updateVariant(index, 'quantity', numValue);
+
+                                    // Clear display value if empty
+                                    if (validated === '') {
+                                      setVariantDisplayValues(prev => {
                                         const updated = { ...prev };
-                                        if (updated[index]?.quantity) {
-                                          delete updated[index].quantity;
-                                          if (Object.keys(updated[index]).length === 0) {
-                                            delete updated[index];
+                                        if (updated[key]) {
+                                          delete updated[key].quantity;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
                                           }
                                         }
                                         return updated;
                                       });
-                                        
-                                      // Store the display value
-                                      setVariantDisplayValues(prev => ({
-                                        ...prev,
-                                        [key]: { ...prev[key], quantity: validated }
-                                      }));
-                                        
-                                      // Update numeric value
-                                      const numValue = validated === '' ? 0 : parseInt(validated) || 0;
-                                      updateVariant(index, 'quantity', numValue);
-                                        
-                                      // Clear display value if empty
-                                      if (validated === '') {
-                                        setVariantDisplayValues(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[key]) {
-                                            delete updated[key].quantity;
-                                            if (Object.keys(updated[key]).length === 0) {
-                                              delete updated[key];
-                                            }
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    // Ensure we have a valid number on blur
+                                    const value = e.target.value.trim();
+                                    const key = `variant_${index}`;
+                                    if (value === '') {
+                                      updateVariant(index, 'quantity', 0);
+                                      setVariantDisplayValues(prev => {
+                                        const updated = { ...prev };
+                                        if (updated[key]) {
+                                          delete updated[key].quantity;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
                                           }
-                                          return updated;
-                                        });
-                                      }
-                                    }}
-                                    onBlur={(e) => {
-                                      // Ensure we have a valid number on blur
-                                      const value = e.target.value.trim();
-                                      const key = `variant_${index}`;
-                                      if (value === '') {
-                                        updateVariant(index, 'quantity', 0);
-                                        setVariantDisplayValues(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[key]) {
-                                            delete updated[key].quantity;
-                                            if (Object.keys(updated[key]).length === 0) {
-                                              delete updated[key];
-                                            }
+                                        }
+                                        return updated;
+                                      });
+                                    } else {
+                                      // Clear display value on blur
+                                      setVariantDisplayValues(prev => {
+                                        const updated = { ...prev };
+                                        if (updated[key]) {
+                                          delete updated[key].quantity;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
                                           }
-                                          return updated;
-                                        });
-                                      } else {
-                                        // Clear display value on blur
-                                        setVariantDisplayValues(prev => {
-                                          const updated = { ...prev };
-                                          if (updated[key]) {
-                                            delete updated[key].quantity;
-                                            if (Object.keys(updated[key]).length === 0) {
-                                              delete updated[key];
-                                            }
-                                          }
-                                          return updated;
-                                        });
-                                      }
-                                    }}
-                                    className={`w-full px-2 py-1.5 border rounded focus:outline-none focus:ring-2 text-xs ${
-                                      validationErrors[index]?.quantity
-                                        ? 'border-red-500 focus:ring-red-500'
-                                        : 'focus:ring-blue-500'
+                                        }
+                                        return updated;
+                                      });
+                                    }
+                                  }}
+                                  className={`w-20 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-2 ${validationErrors[index]?.quantity
+                                    ? 'border-red-500 focus:ring-red-500'
+                                    : 'focus:ring-blue-500'
                                     }`}
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-gray-500 mb-1">{t.primary}</label>
-                                  <div className="flex items-center h-[34px]">
-                                    <input
-                                      type="checkbox"
-                                      checked={variant.IsPrimaryImage || false}
-                                      onChange={() => handlePrimaryImageChange(index)}
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                      title={t.setAsPrimaryImage}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-gray-500 mb-1 text-xs">{t.image}</label>
+                                />
+                              </td>
+                              <td className="px-3 py-2">
                                 {productImages.length === 0 ? (
-                                  <p className="text-xs text-gray-400">
+                                  <span className="text-xs text-gray-400">
                                     {language === 'bg' ? 'Добавете изображения за продукта' : 'Add product images'}
-                                  </p>
+                                  </span>
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     {variant.imageurl ? (
                                       <img
                                         src={variant.imageurl}
                                         alt="Variant"
-                                        className="w-16 h-16 object-cover rounded border"
+                                        className="w-12 h-12 object-cover rounded border"
                                       />
                                     ) : (
-                                      <div className="w-16 h-16 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
-                                        <ImageIcon className="w-6 h-6 text-gray-400" />
+                                      <div className="w-12 h-12 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                                        <ImageIcon className="w-5 h-5 text-gray-400" />
                                       </div>
                                     )}
-                                    <div className="flex flex-col gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => openVariantImagePicker(index)}
-                                        className="px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                                      >
-                                        {language === 'bg' ? 'Избери изображение' : 'Choose image'}
-                                      </button>
-                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => openVariantImagePicker(index)}
+                                      className="px-3 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                                    >
+                                      {language === 'bg' ? 'Избери изображение' : 'Choose image'}
+                                    </button>
                                   </div>
                                 )}
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={variant.IsPrimaryImage || false}
+                                  onChange={() => handlePrimaryImageChange(index)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  title={t.setAsPrimaryImage}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => deleteVariant(index)}
+                                  className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors touch-manipulation"
+                                  title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Variants Cards */}
+                    <div className="md:hidden divide-y divide-gray-200">
+                      {variants.map((variant, index) => (
+                        <div key={index} className="p-3 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-gray-700 mb-1">
+                                {variant.propertyvalues.map(pv => {
+                                  const prop = productTypeProperties.find(p => p.propertyid === pv.propertyid);
+                                  return `${prop?.name}: ${pv.value}`;
+                                }).join(', ')}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => deleteVariant(index)}
+                              className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded flex-shrink-0 transition-colors touch-manipulation"
+                              title={language === 'bg' ? 'Изтрий' : 'Delete'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <label className="block text-gray-500 mb-1">{t.price}</label>
+                              <input
+                                type="text"
+                                data-variant-index={index}
+                                value={formatNumericValue(variant.price, index, 'price')}
+                                onChange={(e) => {
+                                  const validated = handleNumericInput(e.target.value, true);
+                                  const key = `variant_${index}`;
+
+                                  // Clear validation error for this field
+                                  setValidationErrors(prev => {
+                                    const updated = { ...prev };
+                                    if (updated[index]?.price) {
+                                      delete updated[index].price;
+                                      if (Object.keys(updated[index]).length === 0) {
+                                        delete updated[index];
+                                      }
+                                    }
+                                    return updated;
+                                  });
+
+                                  // Store the display value
+                                  setVariantDisplayValues(prev => ({
+                                    ...prev,
+                                    [key]: { ...prev[key], price: validated }
+                                  }));
+
+                                  // Only update numeric value if it's a complete number
+                                  if (validated !== '' && validated !== '.' && !validated.endsWith('.')) {
+                                    const numValue = parseFloat(validated);
+                                    if (!isNaN(numValue)) {
+                                      updateVariant(index, 'price', numValue);
+                                    }
+                                  } else if (validated === '') {
+                                    updateVariant(index, 'price', 0);
+                                    setVariantDisplayValues(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[key]) {
+                                        delete updated[key].price;
+                                        if (Object.keys(updated[key]).length === 0) {
+                                          delete updated[key];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  // Ensure we have a valid number on blur
+                                  const value = e.target.value.trim();
+                                  const key = `variant_${index}`;
+                                  if (value === '' || value === '.') {
+                                    updateVariant(index, 'price', 0);
+                                    setVariantDisplayValues(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[key]) {
+                                        delete updated[key].price;
+                                        if (Object.keys(updated[key]).length === 0) {
+                                          delete updated[key];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+                                  } else {
+                                    // Clear display value on blur if we have a valid number
+                                    const numValue = parseFloat(value);
+                                    if (!isNaN(numValue)) {
+                                      setVariantDisplayValues(prev => {
+                                        const updated = { ...prev };
+                                        if (updated[key]) {
+                                          delete updated[key].price;
+                                          if (Object.keys(updated[key]).length === 0) {
+                                            delete updated[key];
+                                          }
+                                        }
+                                        return updated;
+                                      });
+                                    }
+                                  }
+                                }}
+                                className={`w-full px-2 py-1.5 border rounded focus:outline-none focus:ring-2 text-xs ${validationErrors[index]?.price
+                                  ? 'border-red-500 focus:ring-red-500'
+                                  : 'focus:ring-blue-500'
+                                  }`}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-gray-500 mb-1">{t.quantity}</label>
+                              <input
+                                type="text"
+                                data-variant-index={index}
+                                value={formatNumericValue(variant.quantity, index, 'quantity')}
+                                onChange={(e) => {
+                                  const validated = handleNumericInput(e.target.value, false);
+                                  const key = `variant_${index}`;
+
+                                  // Clear validation error for this field
+                                  setValidationErrors(prev => {
+                                    const updated = { ...prev };
+                                    if (updated[index]?.quantity) {
+                                      delete updated[index].quantity;
+                                      if (Object.keys(updated[index]).length === 0) {
+                                        delete updated[index];
+                                      }
+                                    }
+                                    return updated;
+                                  });
+
+                                  // Store the display value
+                                  setVariantDisplayValues(prev => ({
+                                    ...prev,
+                                    [key]: { ...prev[key], quantity: validated }
+                                  }));
+
+                                  // Update numeric value
+                                  const numValue = validated === '' ? 0 : parseInt(validated) || 0;
+                                  updateVariant(index, 'quantity', numValue);
+
+                                  // Clear display value if empty
+                                  if (validated === '') {
+                                    setVariantDisplayValues(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[key]) {
+                                        delete updated[key].quantity;
+                                        if (Object.keys(updated[key]).length === 0) {
+                                          delete updated[key];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  // Ensure we have a valid number on blur
+                                  const value = e.target.value.trim();
+                                  const key = `variant_${index}`;
+                                  if (value === '') {
+                                    updateVariant(index, 'quantity', 0);
+                                    setVariantDisplayValues(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[key]) {
+                                        delete updated[key].quantity;
+                                        if (Object.keys(updated[key]).length === 0) {
+                                          delete updated[key];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+                                  } else {
+                                    // Clear display value on blur
+                                    setVariantDisplayValues(prev => {
+                                      const updated = { ...prev };
+                                      if (updated[key]) {
+                                        delete updated[key].quantity;
+                                        if (Object.keys(updated[key]).length === 0) {
+                                          delete updated[key];
+                                        }
+                                      }
+                                      return updated;
+                                    });
+                                  }
+                                }}
+                                className={`w-full px-2 py-1.5 border rounded focus:outline-none focus:ring-2 text-xs ${validationErrors[index]?.quantity
+                                  ? 'border-red-500 focus:ring-red-500'
+                                  : 'focus:ring-blue-500'
+                                  }`}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-gray-500 mb-1">{t.primary}</label>
+                              <div className="flex items-center h-[34px]">
+                                <input
+                                  type="checkbox"
+                                  checked={variant.IsPrimaryImage || false}
+                                  onChange={() => handlePrimaryImageChange(index)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  title={t.setAsPrimaryImage}
+                                />
                               </div>
                             </div>
-                          ))}
+                          </div>
+                          <div>
+                            <label className="block text-gray-500 mb-1 text-xs">{t.image}</label>
+                            {productImages.length === 0 ? (
+                              <p className="text-xs text-gray-400">
+                                {language === 'bg' ? 'Добавете изображения за продукта' : 'Add product images'}
+                              </p>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {variant.imageurl ? (
+                                  <img
+                                    src={variant.imageurl}
+                                    alt="Variant"
+                                    className="w-16 h-16 object-cover rounded border"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 border border-gray-300 rounded flex items-center justify-center bg-gray-50">
+                                    <ImageIcon className="w-6 h-6 text-gray-400" />
+                                  </div>
+                                )}
+                                <div className="flex flex-col gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openVariantImagePicker(index)}
+                                    className="px-3 py-2 text-xs border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                                  >
+                                    {language === 'bg' ? 'Избери изображение' : 'Choose image'}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  )}
-                    </div>
-
-                    {/* Validation Error Message */}
-                    {Object.keys(validationErrors).length > 0 && (
-                      <div 
-                        data-validation-error
-                        className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md"
-                      >
-                        <p className="text-sm text-red-800 font-medium">
-                          {language === 'bg' ? 'Моля попълнете липсващите полета' : 'Please fill in the missing fields'}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 pt-4 border-t border-gray-200 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!showCompleteAnimation) {
-                            setShowModal(false);
-                            setProductTypeProperties([]);
-                            setShowMediaModal(false);
-                            setMediaTarget(null);
-                            setSelectedPropertyValues({});
-                            setVariants([]);
-        setVariantDisplayValues({});
-                            setNewPropertyValues({});
-                            setValidationErrors({});
-                            setShowCompleteAnimation(false);
-                          }
-                        }}
-                        className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
-                      >
-                        {language === 'bg' ? 'Отказ' : 'Cancel'}
-                      </button>
-                      <button
-                        type="submit"
-                        className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
-                      >
-                        {editingProduct
-                          ? (language === 'bg' ? 'Актуализиране' : 'Update')
-                          : (language === 'bg' ? 'Създаване' : 'Create')
-                        }
-                      </button>
-                    </div>
-                  </form>
-                  
-                  {/* Complete Animation Overlay */}
-                  {showCompleteAnimation && (
-                    <div className="absolute inset-0 flex items-center justify-center z-50">
-                      <CompleteAnimation size={120} />
-                    </div>
-                  )}
-          </div>
-        </AdminModal>
-
-        {/* Media Selection Modal */}
-        <AdminModal
-          isOpen={showMediaModal}
-          onClose={() => {
-            setShowMediaModal(false);
-            setMediaTarget(null);
-          }}
-          title={language === 'bg' ? 'Избери изображение от медията' : 'Select Image from Media'}
-          subheader={language === 'bg' ? 'Изберете изображение от вашата медийна библиотека' : 'Select an image from your media library'}
-          maxWidth="max-w-4xl"
-          minWidth={320}
-          minHeight={400}
-        >
-                {loadingMedia ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-2 text-xs sm:text-sm text-gray-500">
-                      {language === 'bg' ? 'Зареждане...' : 'Loading...'}
-                    </p>
                   </div>
-                ) : mediaFiles.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">{language === 'bg' ? 'Няма налични изображения' : 'No images available'}</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
-                    {mediaFiles.map((file, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => selectImageFromMedia(file.url)}
-                        className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-500 active:border-blue-600 transition-colors group touch-manipulation"
-                      >
-                        <img
-                          src={file.url}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-50 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100">
-                            {language === 'bg' ? 'Избери' : 'Select'}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-        </AdminModal>
-
-        <AdminModal
-          isOpen={showVariantImageModal}
-          onClose={() => {
-            setShowVariantImageModal(false);
-            setVariantImageTargetIndex(null);
-          }}
-          title={language === 'bg' ? 'Избери изображение за варианта' : 'Select variant image'}
-          subheader={language === 'bg'
-            ? 'Изберете изображение само от качените за продукта'
-            : 'Choose from images uploaded for the product'}
-          maxWidth="max-w-4xl"
-          minWidth={320}
-          minHeight={360}
-        >
-          {productImages.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">
-              {language === 'bg' ? 'Няма качени изображения за този продукт.' : 'No product images uploaded yet.'}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {productImages.map((url, index) => (
-                <button
-                  key={`${url}-${index}`}
-                  type="button"
-                  onClick={() => handleSelectVariantImage(url)}
-                  className="group relative rounded border border-gray-200 overflow-hidden hover:border-blue-500 transition-colors"
-                  title={language === 'bg' ? 'Избери изображение' : 'Select image'}
-                >
-                  <img
-                    src={url}
-                    alt={language === 'bg' ? 'Изображение' : 'Image'}
-                    className="w-full h-28 object-cover"
-                  />
-                </button>
-              ))}
+
+            {/* Validation Error Message */}
+            {Object.keys(validationErrors).length > 0 && (
+              <div
+                data-validation-error
+                className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md"
+              >
+                <p className="text-sm text-red-800 font-medium">
+                  {language === 'bg' ? 'Моля попълнете липсващите полета' : 'Please fill in the missing fields'}
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 pt-4 border-t border-gray-200 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!showCompleteAnimation) {
+                    setShowModal(false);
+                    setProductTypeProperties([]);
+                    setShowMediaModal(false);
+                    setMediaTarget(null);
+                    setSelectedPropertyValues({});
+                    setVariants([]);
+                    setVariantDisplayValues({});
+                    setNewPropertyValues({});
+                    setValidationErrors({});
+                    setShowCompleteAnimation(false);
+                  }
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+              >
+                {language === 'bg' ? 'Отказ' : 'Cancel'}
+              </button>
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
+              >
+                {editingProduct
+                  ? (language === 'bg' ? 'Актуализиране' : 'Update')
+                  : (language === 'bg' ? 'Създаване' : 'Create')
+                }
+              </button>
+            </div>
+          </form>
+
+          {/* Complete Animation Overlay */}
+          {showCompleteAnimation && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <CompleteAnimation size={120} />
             </div>
           )}
-        </AdminModal>
+        </div>
+      </AdminModal>
 
-        {/* Apply Image to All Variants Modal */}
-        <AdminModal
-          isOpen={showApplyImageToAllModal}
-          onClose={() => {
-            setShowApplyImageToAllModal(false);
-            setApplyImageUrl(null);
-          }}
-          title={language === 'bg' ? 'Приложи изображение към всички варианти?' : 'Apply image to all variants?'}
-          subheader={language === 'bg'
-            ? 'Искате ли да зададете това изображение на всички генерирани варианти?'
-            : 'Do you want to assign this image to all generated variants?'}
-          maxWidth="max-w-md"
-          minWidth={320}
-          minHeight={200}
-        >
-          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setShowApplyImageToAllModal(false);
-                setApplyImageUrl(null);
-              }}
-              className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
-            >
-              {language === 'bg' ? 'Не' : 'No'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (applyImageUrl) {
-                  applyImageToAllVariants(applyImageUrl);
-                }
-                setShowApplyImageToAllModal(false);
-                setApplyImageUrl(null);
-              }}
-              className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
-            >
-              {language === 'bg' ? 'Да, към всички' : 'Yes, apply to all'}
-            </button>
+      {/* Media Selection Modal */}
+      <AdminModal
+        isOpen={showMediaModal}
+        onClose={() => {
+          setShowMediaModal(false);
+          setMediaTarget(null);
+        }}
+        title={language === 'bg' ? 'Избери изображение от медията' : 'Select Image from Media'}
+        subheader={language === 'bg' ? 'Изберете изображение от вашата медийна библиотека' : 'Select an image from your media library'}
+        maxWidth="max-w-4xl"
+        minWidth={320}
+        minHeight={400}
+      >
+        {loadingMedia ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-xs sm:text-sm text-gray-500">
+              {language === 'bg' ? 'Зареждане...' : 'Loading...'}
+            </p>
           </div>
-        </AdminModal>
+        ) : mediaFiles.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-sm">{language === 'bg' ? 'Няма налични изображения' : 'No images available'}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+            {mediaFiles.map((file, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => selectImageFromMedia(file.url)}
+                className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-500 active:border-blue-600 transition-colors group touch-manipulation"
+              >
+                <img
+                  src={file.url}
+                  alt={file.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-50 transition-opacity flex items-center justify-center">
+                  <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100">
+                    {language === 'bg' ? 'Избери' : 'Select'}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </AdminModal>
 
-        {/* Delete Confirmation Modal */}
-        <AdminModal
-          isOpen={showDeleteModal}
-          onClose={() => {
-            if (!showDeleteCompleteAnimation) {
-              setShowDeleteModal(false);
-              setProductToDelete(null);
-              setShowDeleteCompleteAnimation(false);
-            }
-          }}
-          title={language === 'bg' ? 'Потвърди изтриване' : 'Confirm Delete'}
-          subheader={language === 'bg' 
-            ? 'Сигурни ли сте, че искате да изтриете този продукт? Това действие не може да бъде отменено.'
-            : 'Are you sure you want to delete this product? This action cannot be undone.'}
-          maxWidth="max-w-md"
-          minWidth={400}
-          minHeight={200}
-        >
-          <div className="relative">
-            <div className={`space-y-4 transition-all duration-300 ${showDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
+      <AdminModal
+        isOpen={showVariantImageModal}
+        onClose={() => {
+          setShowVariantImageModal(false);
+          setVariantImageTargetIndex(null);
+        }}
+        title={language === 'bg' ? 'Избери изображение за варианта' : 'Select variant image'}
+        subheader={language === 'bg'
+          ? 'Изберете изображение само от качените за продукта'
+          : 'Choose from images uploaded for the product'}
+        maxWidth="max-w-4xl"
+        minWidth={320}
+        minHeight={360}
+      >
+        {productImages.length === 0 ? (
+          <div className="text-center py-8 text-sm text-gray-500">
+            {language === 'bg' ? 'Няма качени изображения за този продукт.' : 'No product images uploaded yet.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {productImages.map((url, index) => (
+              <button
+                key={`${url}-${index}`}
+                type="button"
+                onClick={() => handleSelectVariantImage(url)}
+                className="group relative rounded border border-gray-200 overflow-hidden hover:border-blue-500 transition-colors"
+                title={language === 'bg' ? 'Избери изображение' : 'Select image'}
+              >
+                <img
+                  src={url}
+                  alt={language === 'bg' ? 'Изображение' : 'Image'}
+                  className="w-full h-28 object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </AdminModal>
+
+      {/* Apply Image to All Variants Modal */}
+      <AdminModal
+        isOpen={showApplyImageToAllModal}
+        onClose={() => {
+          setShowApplyImageToAllModal(false);
+          setApplyImageUrl(null);
+        }}
+        title={language === 'bg' ? 'Приложи изображение към всички варианти?' : 'Apply image to all variants?'}
+        subheader={language === 'bg'
+          ? 'Искате ли да зададете това изображение на всички генерирани варианти?'
+          : 'Do you want to assign this image to all generated variants?'}
+        maxWidth="max-w-md"
+        minWidth={320}
+        minHeight={200}
+      >
+        <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setShowApplyImageToAllModal(false);
+              setApplyImageUrl(null);
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+          >
+            {language === 'bg' ? 'Не' : 'No'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (applyImageUrl) {
+                applyImageToAllVariants(applyImageUrl);
+              }
+              setShowApplyImageToAllModal(false);
+              setApplyImageUrl(null);
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-primary text-primary-foreground rounded hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation"
+          >
+            {language === 'bg' ? 'Да, към всички' : 'Yes, apply to all'}
+          </button>
+        </div>
+      </AdminModal>
+
+      {/* Delete Confirmation Modal */}
+      <AdminModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          if (!showDeleteCompleteAnimation) {
+            setShowDeleteModal(false);
+            setProductToDelete(null);
+            setShowDeleteCompleteAnimation(false);
+          }
+        }}
+        title={language === 'bg' ? 'Потвърди изтриване' : 'Confirm Delete'}
+        subheader={language === 'bg'
+          ? 'Сигурни ли сте, че искате да изтриете този продукт? Това действие не може да бъде отменено.'
+          : 'Are you sure you want to delete this product? This action cannot be undone.'}
+        maxWidth="max-w-md"
+        minWidth={400}
+        minHeight={200}
+      >
+        <div className="relative">
+          <div className={`space-y-4 transition-all duration-300 ${showDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
             {productToDelete && (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm font-medium text-gray-900 mb-1">
@@ -2679,124 +2657,122 @@ export default function ProductsPage() {
                 {deleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий' : 'Delete')}
               </button>
             </div>
-            </div>
-            
-            {/* Complete Animation Overlay */}
-            {showDeleteCompleteAnimation && (
-              <div className="absolute inset-0 flex items-center justify-center z-50">
-                <CompleteAnimation size={120} />
-              </div>
-            )}
           </div>
-        </AdminModal>
 
-        <AdminModal
-          isOpen={bulkVisibilityModal !== null}
-          onClose={() => {
-            if (!showBulkVisibilityCompleteAnimation) {
-              setBulkVisibilityModal(null);
-              setShowBulkVisibilityCompleteAnimation(false);
-            }
-          }}
-          title={
-            bulkVisibilityModal === 'hide'
-              ? language === 'bg'
-                ? 'Скрий избраните от магазина'
-                : 'Hide selected from shop'
-              : language === 'bg'
-                ? 'Покажи избраните в магазина'
-                : 'Show selected in shop'
+          {/* Complete Animation Overlay */}
+          {showDeleteCompleteAnimation && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <CompleteAnimation size={120} />
+            </div>
+          )}
+        </div>
+      </AdminModal>
+
+      <AdminModal
+        isOpen={bulkVisibilityModal !== null}
+        onClose={() => {
+          if (!showBulkVisibilityCompleteAnimation) {
+            setBulkVisibilityModal(null);
+            setShowBulkVisibilityCompleteAnimation(false);
           }
-          subheader={
-            bulkVisibilityModal === 'hide'
-              ? language === 'bg'
-                ? 'Избраните артикули няма да се виждат от клиентите. Можете да ги покажете отново по всяко време.'
-                : 'Selected products will be hidden from customers. You can show them again anytime.'
-              : language === 'bg'
-                ? 'Избраните артикули ще станат видими в онлайн магазина.'
-                : 'Selected products will become visible in the online shop.'
-          }
-          maxWidth="max-w-md"
-          minWidth={400}
-          minHeight={200}
-        >
-          <div className="relative">
-            <div
-              className={`space-y-4 transition-all duration-300 ${
-                showBulkVisibilityCompleteAnimation ? 'blur-sm pointer-events-none' : ''
+        }}
+        title={
+          bulkVisibilityModal === 'hide'
+            ? language === 'bg'
+              ? 'Скрий избраните от магазина'
+              : 'Hide selected from shop'
+            : language === 'bg'
+              ? 'Покажи избраните в магазина'
+              : 'Show selected in shop'
+        }
+        subheader={
+          bulkVisibilityModal === 'hide'
+            ? language === 'bg'
+              ? 'Избраните артикули няма да се виждат от клиентите. Можете да ги покажете отново по всяко време.'
+              : 'Selected products will be hidden from customers. You can show them again anytime.'
+            : language === 'bg'
+              ? 'Избраните артикули ще станат видими в онлайн магазина.'
+              : 'Selected products will become visible in the online shop.'
+        }
+        maxWidth="max-w-md"
+        minWidth={400}
+        minHeight={200}
+      >
+        <div className="relative">
+          <div
+            className={`space-y-4 transition-all duration-300 ${showBulkVisibilityCompleteAnimation ? 'blur-sm pointer-events-none' : ''
               }`}
-            >
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
-                </p>
-                <p className="text-sm text-gray-700">{selectedProductIds.length}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!showBulkVisibilityCompleteAnimation) {
-                      setBulkVisibilityModal(null);
-                      setShowBulkVisibilityCompleteAnimation(false);
-                    }
-                  }}
-                  disabled={bulkUpdatingVisibility || showBulkVisibilityCompleteAnimation}
-                  className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation disabled:opacity-50"
-                >
-                  {t.cancel}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkVisibilityConfirm}
-                  disabled={bulkUpdatingVisibility || showBulkVisibilityCompleteAnimation}
-                  className={`w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-white rounded transition-opacity touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed ${
-                    bulkVisibilityModal === 'hide'
-                      ? 'bg-amber-600 hover:bg-amber-700'
-                      : 'bg-emerald-600 hover:bg-emerald-700'
-                  }`}
-                >
-                  {bulkUpdatingVisibility
-                    ? language === 'bg'
-                      ? 'Запазване...'
-                      : 'Saving...'
-                    : bulkVisibilityModal === 'hide'
-                      ? language === 'bg'
-                        ? 'Скрий избраните'
-                        : 'Hide selected'
-                      : language === 'bg'
-                        ? 'Покажи избраните'
-                        : 'Show selected'}
-                </button>
-              </div>
+          >
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm font-medium text-gray-900 mb-1">
+                {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
+              </p>
+              <p className="text-sm text-gray-700">{selectedProductIds.length}</p>
             </div>
-
-            {showBulkVisibilityCompleteAnimation && (
-              <div className="absolute inset-0 flex items-center justify-center z-50">
-                <CompleteAnimation size={120} />
-              </div>
-            )}
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!showBulkVisibilityCompleteAnimation) {
+                    setBulkVisibilityModal(null);
+                    setShowBulkVisibilityCompleteAnimation(false);
+                  }
+                }}
+                disabled={bulkUpdatingVisibility || showBulkVisibilityCompleteAnimation}
+                className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation disabled:opacity-50"
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkVisibilityConfirm}
+                disabled={bulkUpdatingVisibility || showBulkVisibilityCompleteAnimation}
+                className={`w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-white rounded transition-opacity touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed ${bulkVisibilityModal === 'hide'
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+              >
+                {bulkUpdatingVisibility
+                  ? language === 'bg'
+                    ? 'Запазване...'
+                    : 'Saving...'
+                  : bulkVisibilityModal === 'hide'
+                    ? language === 'bg'
+                      ? 'Скрий избраните'
+                      : 'Hide selected'
+                    : language === 'bg'
+                      ? 'Покажи избраните'
+                      : 'Show selected'}
+              </button>
+            </div>
           </div>
-        </AdminModal>
 
-        <AdminModal
-          isOpen={showBulkDeleteModal}
-          onClose={() => {
-            if (!showBulkDeleteCompleteAnimation) {
-              setShowBulkDeleteModal(false);
-              setShowBulkDeleteCompleteAnimation(false);
-            }
-          }}
-          title={language === 'bg' ? 'Потвърди масово изтриване' : 'Confirm Bulk Delete'}
-          subheader={language === 'bg'
-            ? 'Избраните артикули ще бъдат изтрити. Това действие не може да бъде отменено.'
-            : 'Selected products will be deleted. This action cannot be undone.'}
-          maxWidth="max-w-md"
-          minWidth={400}
-          minHeight={200}
-        >
-          <div className="relative">
-            <div className={`space-y-4 transition-all duration-300 ${showBulkDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
+          {showBulkVisibilityCompleteAnimation && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <CompleteAnimation size={120} />
+            </div>
+          )}
+        </div>
+      </AdminModal>
+
+      <AdminModal
+        isOpen={showBulkDeleteModal}
+        onClose={() => {
+          if (!showBulkDeleteCompleteAnimation) {
+            setShowBulkDeleteModal(false);
+            setShowBulkDeleteCompleteAnimation(false);
+          }
+        }}
+        title={language === 'bg' ? 'Потвърди масово изтриване' : 'Confirm Bulk Delete'}
+        subheader={language === 'bg'
+          ? 'Избраните артикули ще бъдат изтрити. Това действие не може да бъде отменено.'
+          : 'Selected products will be deleted. This action cannot be undone.'}
+        maxWidth="max-w-md"
+        minWidth={400}
+        minHeight={200}
+      >
+        <div className="relative">
+          <div className={`space-y-4 transition-all duration-300 ${showBulkDeleteCompleteAnimation ? 'blur-sm pointer-events-none' : ''}`}>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm font-medium text-gray-900 mb-1">
                 {language === 'bg' ? 'Избрани артикули:' : 'Selected items:'}
@@ -2828,16 +2804,16 @@ export default function ProductsPage() {
                 {bulkDeleting ? (language === 'bg' ? 'Изтриване...' : 'Deleting...') : (language === 'bg' ? 'Изтрий избраните' : 'Delete selected')}
               </button>
             </div>
-            </div>
-            
-            {/* Complete Animation Overlay */}
-            {showBulkDeleteCompleteAnimation && (
-              <div className="absolute inset-0 flex items-center justify-center z-50">
-                <CompleteAnimation size={120} />
-              </div>
-            )}
           </div>
-        </AdminModal>
+
+          {/* Complete Animation Overlay */}
+          {showBulkDeleteCompleteAnimation && (
+            <div className="absolute inset-0 flex items-center justify-center z-50">
+              <CompleteAnimation size={120} />
+            </div>
+          )}
+        </div>
+      </AdminModal>
     </>
   );
 }

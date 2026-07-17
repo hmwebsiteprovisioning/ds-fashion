@@ -336,8 +336,8 @@ export default function DashboardPage() {
     if (!user) return
     
     try {
-      // Fetch user's orders
-      const ordersResponse = await fetch(`/api/user/orders?userId=${user.id}`)
+      const userId = user.id || (user as any).userid
+      const ordersResponse = await fetch(`/api/user/orders?userId=${userId}`)
       const ordersData = await ordersResponse.json()
       
       if (ordersResponse.ok) {
@@ -1207,7 +1207,7 @@ export default function DashboardPage() {
                 <Heart className={styles.sectionIcon} size={24} />
                 <h2>{t.myFavorites || (language === 'bg' ? 'Моите любими' : 'My Favorites')}</h2>
               </div>
-              <FavoritesList userId={user.id} language={language} />
+              <FavoritesList userId={user.id || (user as any).userid} language={language} />
             </section>
           </div>
         )}

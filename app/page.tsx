@@ -7,6 +7,7 @@ import HomeHero from '@/components/HomeHero';
 import CategoryTiles from '@/components/CategoryTiles';
 import TrustBar from '@/components/TrustBar';
 import ProductCard from '@/components/ProductCard';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 import { MOCK_TESTIMONIALS } from '@/lib/mock-data';
 import { fetchStorefrontProducts } from '@/lib/storefront-products';
 import type { StorefrontProduct } from '@/lib/storefront-products';
@@ -17,6 +18,7 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [featured, setFeatured] = useState<StorefrontProduct[]>([]);
+  const [isFeaturedLoading, setIsFeaturedLoading] = useState(true);
   const [indexCollections, setIndexCollections] = useState<any[]>([]);
   const [heroProducts, setHeroProducts] = useState<StorefrontProduct[]>([]);
   const [isHeroLoading, setIsHeroLoading] = useState(true);
@@ -33,7 +35,8 @@ export default function Home() {
 
     fetchStorefrontProducts({ isfeatured: true, limit: 6 })
       .then(setFeatured)
-      .catch(() => setFeatured([]));
+      .catch(() => setFeatured([]))
+      .finally(() => setIsFeaturedLoading(false));
 
     fetchStorefrontProducts({ isfeatured: true, limit: 20 })
       .then((products) => {
@@ -75,7 +78,13 @@ export default function Home() {
         <h2 className="font-serif-display text-2xl sm:text-3xl text-center text-ds-text mb-8">
           Подбрани за теб
         </h2>
-        {featured.length > 0 ? (
+        {isFeaturedLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : featured.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {featured.map((p) => (
               <ProductCard key={p.id} product={p} />

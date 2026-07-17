@@ -8,6 +8,27 @@ import { Plus, Trash2, Edit2, Upload, Image as ImageIcon } from 'lucide-react';
 import AdminModal from '../components/AdminModal';
 import { adminAuthHeaders } from '@/lib/admin-auth-headers';
 
+const BG_MAP: Record<string, string> = {
+  'а': 'a',  'б': 'b',  'в': 'v',  'г': 'g',  'д': 'd',
+  'е': 'e',  'ж': 'j',  'з': 'z',  'и': 'i',  'й': 'y',
+  'к': 'k',  'л': 'l',  'м': 'm',  'н': 'n',  'о': 'o',
+  'п': 'p',  'р': 'r',  'с': 's',  'т': 't',  'у': 'u',
+  'ф': 'f',  'х': 'h',  'ц': 'c',  'ч': 'ch', 'ш': 'sh',
+  'щ': 'sht','ъ': 'a',  'ь': 'y',  'ю': 'yu', 'я': 'q',
+};
+
+function slugifyBG(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .split('')
+    .map((ch) => BG_MAP[ch] ?? ch)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 type Collection = {
   collectionid: string;
   name: string;
@@ -28,7 +49,6 @@ export default function CollectionsPage() {
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [form, setForm] = useState({
     name: '',
-    slug: '',
     description: '',
     imageurl: '',
     sortorder: 0,
@@ -109,7 +129,6 @@ export default function CollectionsPage() {
     setEditingCollection(null);
     setForm({
       name: '',
-      slug: '',
       description: '',
       imageurl: '',
       sortorder: 0,
@@ -123,7 +142,6 @@ export default function CollectionsPage() {
     setEditingCollection(c);
     setForm({
       name: c.name,
-      slug: c.slug,
       description: c.description || '',
       imageurl: c.imageurl || '',
       sortorder: c.sortorder || 0,
@@ -151,7 +169,7 @@ export default function CollectionsPage() {
       const data = await res.json();
       if (data.success) {
         setShowModal(false);
-        setForm({ name: '', slug: '', description: '', imageurl: '', sortorder: 0, isactive: true, showonindex: false });
+        setForm({ name: '', description: '', imageurl: '', sortorder: 0, isactive: true, showonindex: false });
         setEditingCollection(null);
         load();
       } else {
@@ -252,15 +270,11 @@ export default function CollectionsPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Slug</label>
-            <input
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              placeholder="auto-generated if empty"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
+            {form.name && (
+              <p className="mt-1 text-xs text-gray-400">
+                /collections/{slugifyBG(form.name)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">{language === 'bg' ? 'Изображение' : 'Image'}</label>
@@ -289,12 +303,6 @@ export default function CollectionsPage() {
                 {language === 'bg' ? 'Избери от медия' : 'Select from media'}
               </button>
             </div>
-            <input
-              value={form.imageurl}
-              onChange={(e) => setForm({ ...form, imageurl: e.target.value })}
-              placeholder="/images/collections/spring.jpg"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
             {form.imageurl && (
               <div className="mt-2 relative w-20 h-20 border rounded-md overflow-hidden bg-gray-50">
                 <img src={form.imageurl} alt="Preview" className="w-full h-full object-cover" />

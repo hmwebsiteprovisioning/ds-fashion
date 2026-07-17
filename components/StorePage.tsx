@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, X, ChevronUp, ChevronDown } from 'lucide-react';
 import ProductCard from './ProductCard';
+import ProductCardSkeleton from './ProductCardSkeleton';
 import {
   fetchStorefrontProducts,
   type StorefrontFilterParams,
@@ -338,7 +339,11 @@ function StorePageContent({ config }: StorePageProps) {
 
           <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="text-center py-16 text-ds-text-muted text-[14px]">Зареждане на продукти...</div>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 animate-pulse">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-16 text-ds-text-muted text-[14px]">Няма намерени продукти</div>
             ) : (

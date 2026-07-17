@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    console.log('🔍 [API GET /api/favorites] userId:', userId)
 
     if (!userId) {
       return NextResponse.json(
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { userId, productId } = body
+    console.log('🔍 [API POST /api/favorites] body:', { userId, productId })
 
     if (!userId || !productId) {
       return NextResponse.json(

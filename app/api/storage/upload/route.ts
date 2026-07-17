@@ -102,13 +102,57 @@ export async function POST(request: NextRequest) {
 
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let buffer = Buffer.from(arrayBuffer);
+    let finalFileName = fileName;
+    let finalContentType = file.type;
+
+    const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+
+    // Convert to AVIF if over 250KB (256,000 bytes) and not SVG
+    if (buffer.length > 250 * 1024 && !isSvg) {
+      try {
+        const sharp = (await import('sharp')).default;
+        
+        let quality = 80;
+        let avifBuffer = await sharp(buffer)
+          .avif({ quality, lossless: false })
+          .toBuffer();
+
+        // If still > 250KB, try reducing quality down to 50
+        while (avifBuffer.length > 250 * 1024 && quality > 50) {
+          quality -= 10;
+          avifBuffer = await sharp(buffer)
+            .avif({ quality, lossless: false })
+            .toBuffer();
+        }
+
+        // If still > 250KB, resize to a max width/height of 1600px to reduce dimensions
+        if (avifBuffer.length > 250 * 1024) {
+          avifBuffer = await sharp(buffer)
+            .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+            .avif({ quality: Math.max(quality, 60), lossless: false })
+            .toBuffer();
+        }
+
+        buffer = avifBuffer;
+        finalContentType = 'image/avif';
+        
+        // Replace extension in fileName with .avif
+        const nameParts = fileName.split('.');
+        nameParts.pop();
+        finalFileName = `${nameParts.join('.')}.avif`;
+        
+        console.log(`⚡ Image converted to AVIF. Size reduced from ${(arrayBuffer.byteLength / 1024).toFixed(1)}KB to ${(buffer.length / 1024).toFixed(1)}KB`);
+      } catch (sharpError) {
+        console.error('❌ Failed to convert image to AVIF, uploading original:', sharpError);
+      }
+    }
 
     // Upload to storage
     const { data, error } = await supabase.storage
       .from(DEFAULT_BUCKET)
-      .upload(fileName, buffer, {
-        contentType: file.type,
+      .upload(finalFileName, buffer, {
+        contentType: finalContentType,
         upsert: false
       });
 

@@ -857,13 +857,6 @@ export default function ProductTypesPage() {
                     {language === 'bg' ? 'Избери от медия' : 'Select from media'}
                   </button>
                 </div>
-                <input
-                  type="text"
-                  value={formData.imageurl}
-                  onChange={(e) => setFormData({ ...formData, imageurl: e.target.value })}
-                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="/images/categories/shoes.jpg"
-                />
                 {formData.imageurl && (
                   <div className="mt-2 relative w-20 h-20 border rounded-md overflow-hidden bg-gray-50">
                     <img src={formData.imageurl} alt="Preview" className="w-full h-full object-cover" />

@@ -8,6 +8,9 @@ import { DS } from '@/lib/design-tokens';
 
 import { formatPrice } from '@/lib/price-formatter';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import QuickLoginModal from './QuickLoginModal';
 
 type AnyProduct = StorefrontProduct | Record<string, unknown> | object;
 
@@ -17,14 +20,17 @@ interface ProductCardProps {
   isFavorited?: boolean;
 }
 
-export default function ProductCard({ product, onAddToCart, isFavorited: _isFavorited }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const { addItem, openCart } = useCart();
-  const [wished, setWished] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isPopping, setIsPopping] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   const p = product as StorefrontProduct & Record<string, unknown>;
   const productId = String(p.id ?? p.productid ?? '');
+  const wished = isFavorited(productId);
   const productName = String(p.name ?? `${p.brand ?? ''} ${p.model ?? ''}`.trim());
   const productPrice = Number(p.price ?? 0);
   const compareAtPrice = p.compareAtPrice != null ? Number(p.compareAtPrice) : null;
@@ -90,11 +96,15 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
         )}
 
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            setWished(!wished);
+            if (!isAuthenticated) {
+              setShowLoginModal(true);
+              return;
+            }
             setIsPopping(true);
+            await toggleFavorite(productId);
           }}
           onAnimationEnd={() => setIsPopping(false)}
           className={`absolute top-3 right-3 p-1.5 rounded-full border border-ds-border transition-colors ${
@@ -167,6 +177,14 @@ export default function ProductCard({ product, onAddToCart, isFavorited: _isFavo
           </button>
         </div>
       </div>
+      
+      {showLoginModal && (
+        <QuickLoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          productId={productId}
+        />
+      )}
     </div>
   );
 }

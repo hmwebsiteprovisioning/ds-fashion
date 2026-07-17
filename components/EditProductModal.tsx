@@ -9,18 +9,18 @@ import { useTheme } from '@/context/ThemeContext';
 import { translations } from '@/lib/translations';
 
 // Select All Checkbox Component with proper indeterminate state handling
-function SelectAllCheckbox({ 
-  property, 
-  areAllSelected, 
-  areSomeSelected, 
-  onToggle, 
-  language, 
-  theme 
-}: { 
-  property: Property; 
-  areAllSelected: boolean; 
-  areSomeSelected: boolean; 
-  onToggle: () => void; 
+function SelectAllCheckbox({
+  property,
+  areAllSelected,
+  areSomeSelected,
+  onToggle,
+  language,
+  theme
+}: {
+  property: Property;
+  areAllSelected: boolean;
+  areSomeSelected: boolean;
+  onToggle: () => void;
   language: string;
   theme: any;
 }) {
@@ -93,8 +93,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
   const [propertyValuesMap, setPropertyValuesMap] = useState<Record<string, PropertyValue[]>>({});
   const [selectedPropertyValues, setSelectedPropertyValues] = useState<Record<string, string[]>>({});
   const [loadingProperties, setLoadingProperties] = useState(false);
-  const [productTypes, setProductTypes] = useState<Array<{producttypeid: string, name: string}>>([]);
-  
+  const [productTypes, setProductTypes] = useState<Array<{ producttypeid: string, name: string }>>([]);
+
   // Related products state
   const [relatedProductIds, setRelatedProductIds] = useState<string[]>([]);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
@@ -131,18 +131,18 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
         const properties = (result.properties || [])
           .map((ptp: any) => ptp.properties)
           .filter((p: any) => p !== null && p !== undefined);
-        
+
         console.log('🔍 DEBUG EditProductModal: Raw API response:', result);
         console.log('🔍 DEBUG EditProductModal: Extracted properties:', properties);
-        
+
         setProperties(properties);
-        
+
         // Extract property values from the nested structure
         const propertyValuesMap: Record<string, PropertyValue[]> = {};
         for (const property of properties) {
           if (property.datatype === 'select' && property.values) {
             propertyValuesMap[property.propertyid] = property.values;
-            console.log(`🔍 DEBUG EditProductModal: Property "${property.name}" (${property.propertyid}) has values:`, 
+            console.log(`🔍 DEBUG EditProductModal: Property "${property.name}" (${property.propertyid}) has values:`,
               property.values.map((pv: PropertyValue) => ({
                 id: pv.propertyvalueid,
                 value: pv.value,
@@ -152,7 +152,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           }
         }
         setPropertyValuesMap(propertyValuesMap);
-        
+
         // Initialize selected values from existing product property values
         const initialSelected: Record<string, string[]> = {};
         properties.forEach((prop: Property) => {
@@ -161,22 +161,22 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
         console.log('🔍 DEBUG EditProductModal: Product propertyValues:', product?.propertyValues);
         console.log('🔍 DEBUG EditProductModal: Product variants:', product?.variants || product?.Variants);
-        
+
         // Extract property values from ALL variants (not just the first one)
         const variants = product?.variants || product?.Variants || [];
         const propertyValueMap: Record<string, Set<string>> = {}; // propertyid -> Set of value strings
-        
+
         variants.forEach((variant: any) => {
           // Handle different possible field names for property values
-          const variantPropertyValues = 
-            variant.product_variant_property_values || 
-            variant.ProductVariantPropertyvalues || 
-            variant.ProductVariantPropertyValues || 
-            variant.propertyvalues || 
+          const variantPropertyValues =
+            variant.product_variant_property_values ||
+            variant.ProductVariantPropertyvalues ||
+            variant.ProductVariantPropertyValues ||
+            variant.propertyvalues ||
             [];
-          
+
           console.log(`🔍 DEBUG EditProductModal: Processing variant ${variant.productvariantid || variant.ProductVariantID}, has ${variantPropertyValues.length} property values`);
-          
+
           variantPropertyValues.forEach((pvv: any) => {
             // Get property info - could be nested or direct
             const property = pvv.properties || pvv.Property || pvv.property;
@@ -184,12 +184,12 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               console.log('🔍 DEBUG EditProductModal: No property found in pvv:', pvv);
               return;
             }
-            
+
             // Handle different possible field names for property ID
             const propertyId = property.propertyid || property.PropertyID || property.property_id;
             // Handle different possible field names for value
             const value = pvv.value || pvv.Value;
-            
+
             if (propertyId && value) {
               if (!propertyValueMap[propertyId]) {
                 propertyValueMap[propertyId] = new Set();
@@ -201,16 +201,16 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             }
           });
         });
-        
+
         console.log('🔍 DEBUG EditProductModal: Extracted property values from variants:', propertyValueMap);
-        
+
         // If editing existing product, populate selected values from variants
         if (Object.keys(propertyValueMap).length > 0) {
           Object.entries(propertyValueMap).forEach(([propertyId, valueSet]) => {
             const prop = properties.find((p: Property) => p.propertyid === propertyId);
             if (prop) {
               console.log(`🔍 DEBUG EditProductModal: Processing property "${prop.name}" (${prop.propertyid})`);
-              
+
               // For select properties, find the propertyvalueids that match the value strings
               if (prop.datatype === 'select' && propertyValuesMap[prop.propertyid]) {
                 const matchingIds: string[] = [];
@@ -245,7 +245,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             const prop = properties.find((p: Property) => p.name.toLowerCase() === propName.toLowerCase());
             if (prop) {
               console.log(`🔍 DEBUG EditProductModal: Found property "${prop.name}" (${prop.propertyid})`);
-              
+
               // For select properties, find the propertyvalueid that matches the value string
               if (prop.datatype === 'select' && propertyValuesMap[prop.propertyid]) {
                 const matchingValue = propertyValuesMap[prop.propertyid].find(
@@ -330,10 +330,10 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
   // Toggle select all for a property
   const toggleSelectAll = (property: Property) => {
     if (property.datatype !== 'select' || !property.values) return;
-    
+
     const activeValues = property.values.filter(v => v.isactive);
     const allSelected = areAllValuesSelected(property);
-    
+
     setSelectedPropertyValues(prev => {
       if (allSelected) {
         // Deselect all
@@ -374,7 +374,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
       const result = await response.json();
       if (response.ok && result.products) {
         // Filter out the current product
-        const filtered = result.products.filter((p: Product) => 
+        const filtered = result.products.filter((p: Product) =>
           p.id !== product?.id && p.productid !== product?.productid
         );
         setAvailableProducts(filtered);
@@ -387,13 +387,13 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
   // Load existing related products
   const loadRelatedProducts = async () => {
     if (!product || isNewProduct) return;
-    
+
     try {
       setLoadingRelatedProducts(true);
       const productId = product.id || product.productid;
       const response = await fetch(`/api/products/${productId}/related`);
       const result = await response.json();
-      
+
       if (response.ok && result.products) {
         const ids = result.products.map((p: Product) => p.productid || p.id);
         setRelatedProductIds(ids);
@@ -413,7 +413,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ relatedProductIds })
       });
-      
+
       if (!response.ok) {
         console.error('Error saving related products');
       }
@@ -427,8 +427,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
     if (formData.isfeatured) {
       if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
-        alert(language === 'bg' 
-          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.' 
+        alert(language === 'bg'
+          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.'
           : 'Featured products require both a portrait and a landscape image for the Hero section.');
         return;
       }
@@ -469,7 +469,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
       const productId = String(product.id || product.productid);
       saveRelatedProducts(productId);
     }
-    
+
     onSave(productToSave);
   };
 
@@ -482,13 +482,13 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
     // Create temporary preview URL
     const tempPreviewUrl = URL.createObjectURL(file);
     const tempId = `temp-${Date.now()}-${Math.random()}`;
-    
+
     // Add temporary preview to images immediately
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, tempPreviewUrl]
     }));
-    
+
     // Add to uploading list
     setUploadingImages(prev => [...prev, tempId]);
 
@@ -516,8 +516,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             images: prev.images.filter(img => img !== tempPreviewUrl)
           }));
           URL.revokeObjectURL(tempPreviewUrl);
-          alert(language === 'bg' 
-            ? 'Грешка: URL не е върнат от сървъра' 
+          alert(language === 'bg'
+            ? 'Грешка: URL не е върнат от сървъра'
             : 'Error: No URL returned from server');
           return;
         }
@@ -527,23 +527,23 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           const newImages = prev.images
             .filter(img => img !== tempPreviewUrl)
             .concat(result.url);
-          
+
           console.log('📸 Updated images array:', {
             oldCount: prev.images.length,
             newCount: newImages.length,
             newUrl: result.url,
             allUrls: newImages
           });
-          
+
           return {
             ...prev,
             images: newImages
           };
         });
-        
+
         // Revoke temporary URL
         URL.revokeObjectURL(tempPreviewUrl);
-        
+
         console.log('✅ Image uploaded successfully:', {
           url: result.url,
           path: result.path,
@@ -551,7 +551,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           bucket: result.bucket,
           fullUrl: result.url
         });
-        
+
         // Test if image is accessible
         const img = new Image();
         img.onload = () => {
@@ -569,10 +569,10 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           images: prev.images.filter(img => img !== tempPreviewUrl)
         }));
         URL.revokeObjectURL(tempPreviewUrl);
-        
+
         console.error('❌ Upload failed:', result);
-        alert(language === 'bg' 
-          ? `Грешка при качване: ${result.error || 'Неуспешно качване'}` 
+        alert(language === 'bg'
+          ? `Грешка при качване: ${result.error || 'Неуспешно качване'}`
           : `Upload error: ${result.error || 'Upload failed'}`);
       }
     } catch (error) {
@@ -582,10 +582,10 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
         images: prev.images.filter(img => img !== tempPreviewUrl)
       }));
       URL.revokeObjectURL(tempPreviewUrl);
-      
+
       console.error('❌ Upload error:', error);
-      alert(language === 'bg' 
-        ? 'Грешка при качване на снимка' 
+      alert(language === 'bg'
+        ? 'Грешка при качване на снимка'
         : 'Error uploading image');
     } finally {
       setUploadingImages(prev => prev.filter(id => id !== tempId));
@@ -636,7 +636,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
       style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
       onClick={(e) => {
@@ -653,23 +653,23 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div 
-              className="sticky top-0 border-b px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 lg:py-4 flex justify-between items-center transition-colors duration-300 z-10"
+        <div
+          className="sticky top-0 border-b px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 lg:py-4 flex justify-between items-center transition-colors duration-300 z-10"
           style={{
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border
           }}
         >
-          <h2 
+          <h2
             className="text-base sm:text-lg md:text-xl font-semibold transition-colors duration-300 pr-2"
             style={{ color: theme.colors.text }}
           >
-            {isNewProduct 
+            {isNewProduct
               ? (language === 'bg' ? 'Добави нов продукт' : 'Add New Product')
               : t.editProduct}
           </h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-1.5 sm:p-2 rounded transition-colors duration-300 flex-shrink-0 touch-manipulation"
             style={{ color: theme.colors.textSecondary }}
             onMouseEnter={(e) => {
@@ -692,16 +692,16 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
         <form onSubmit={handleSubmit} className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
           <div className="space-y-3 sm:space-y-4">
-            <h3 
+            <h3
               className="font-medium text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
               {t.basicInfo}
             </h3>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4">
               <div>
-                <label 
+                <label
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
@@ -752,7 +752,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               </div>
 
               <div>
-                <label 
+                <label
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
@@ -773,7 +773,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             </div>
 
             <div>
-              <label 
+              <label
                 className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
@@ -793,7 +793,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             </div>
 
             <div>
-              <label 
+              <label
                 className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
@@ -818,7 +818,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
             {formData.category === 'clothes' && (
               <div>
-                <label 
+                <label
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
@@ -841,16 +841,16 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           </div>
 
           <div className="space-y-3 sm:space-y-4">
-            <h3 
+            <h3
               className="font-medium text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
               {t.attributes}
             </h3>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 lg:gap-4">
               <div>
-                <label 
+                <label
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
@@ -870,7 +870,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               </div>
 
               <div>
-                <label 
+                <label
                   className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                   style={{ color: theme.colors.text }}
                 >
@@ -891,7 +891,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             </div>
 
             <div>
-              <label 
+              <label
                 className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
@@ -912,14 +912,14 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           </div>
 
           <div>
-            <h3 
+            <h3
               className="font-medium mb-2.5 sm:mb-3 lg:mb-4 text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
               {t.pricing}
             </h3>
             <div>
-              <label 
+              <label
                 className="block text-xs sm:text-sm font-medium mb-1.5 transition-colors duration-300"
                 style={{ color: theme.colors.text }}
               >
@@ -984,7 +984,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                             language={language}
                             theme={theme}
                           />
-                          
+
                           {/* Value Buttons Grid */}
                           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                             {property.values
@@ -997,11 +997,10 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                                     key={value.propertyvalueid}
                                     type="button"
                                     onClick={() => togglePropertyValue(property.propertyid, value.propertyvalueid)}
-                                    className={`px-3 py-2 text-sm border rounded-lg transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation ${
-                                      isSelected
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                                    }`}
+                                    className={`px-3 py-2 text-sm border rounded-lg transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation ${isSelected
+                                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                                      }`}
                                     style={{
                                       backgroundColor: isSelected ? 'transparent' : theme.colors.cardBg,
                                       color: theme.colors.text
@@ -1115,33 +1114,32 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             >
               {language === 'bg' ? 'Снимки' : 'Images'}
             </h3>
-            
+
             {/* Drag & Drop Area */}
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-lg p-3 sm:p-4 lg:p-6 transition-all duration-300 ${
-                dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
-              }`}
+              className={`border-2 border-dashed rounded-lg p-3 sm:p-4 lg:p-6 transition-all duration-300 ${dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+                }`}
               style={{
                 borderColor: dragActive ? theme.colors.primary : theme.colors.border,
                 backgroundColor: dragActive ? 'transparent' : theme.colors.cardBg
               }}
             >
               <div className="flex flex-col items-center justify-center text-center">
-                <ImageIcon 
+                <ImageIcon
                   size={32}
                   className="sm:w-10 sm:h-10 mb-2"
                   style={{ color: theme.colors.textSecondary }}
                 />
-                <p 
+                <p
                   className="text-xs sm:text-sm mb-2.5 sm:mb-3 transition-colors duration-300 px-2"
                   style={{ color: theme.colors.text }}
                 >
-                  {language === 'bg' 
-                    ? 'Плъзнете снимки тук или кликнете за избор' 
+                  {language === 'bg'
+                    ? 'Плъзнете снимки тук или кликнете за избор'
                     : 'Drag images here or click to select'}
                 </p>
                 <button
@@ -1176,12 +1174,12 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   onChange={handleFileInput}
                   className="hidden"
                 />
-                <p 
+                <p
                   className="text-xs mt-2 transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? 'JPG, PNG, GIF до 10MB' 
+                  {language === 'bg'
+                    ? 'JPG, PNG, GIF до 10MB'
                     : 'JPG, PNG, GIF up to 10MB'}
                 </p>
               </div>
@@ -1190,17 +1188,17 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             {/* Image Preview Grid */}
             {formData.images.length > 0 && (
               <div className="space-y-2">
-                <p 
+                <p
                   className="text-xs transition-colors duration-300"
                   style={{ color: theme.colors.textSecondary }}
                 >
-                  {language === 'bg' 
-                    ? `Качени снимки: ${formData.images.length}` 
+                  {language === 'bg'
+                    ? `Качени снимки: ${formData.images.length}`
                     : `Uploaded images: ${formData.images.length}`}
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
                   {formData.images.map((image, index) => {
-                    const isUploading = uploadingImages.some(id => 
+                    const isUploading = uploadingImages.some(id =>
                       formData.images.indexOf(image) === formData.images.length - 1
                     );
                     return (
@@ -1265,7 +1263,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
           </div>
 
           <div>
-            <h3 
+            <h3
               className="font-medium mb-3 sm:mb-4 text-sm sm:text-base transition-colors duration-300"
               style={{ color: theme.colors.text }}
             >
@@ -1318,7 +1316,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               </span>
             </label>
             <p className="text-xs transition-colors duration-300 mt-1 ml-8"
-               style={{ color: theme.colors.textSecondary }}>
+              style={{ color: theme.colors.textSecondary }}>
               {language === 'bg'
                 ? 'Максимум 5 избрани продукта ще се покажат в Hero секцията на началната страница'
                 : 'Maximum 5 featured products will be displayed in the Hero section of the home page'
@@ -1329,7 +1327,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               <div className="ml-8 mt-3 space-y-4 border-l-2 border-primary/20 pl-4 py-1">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Вертикално изображение (Portrait - Hero) *' : 'Portrait Image (Hero) *'}
+                    {language === 'bg' ? 'Вертикално изображение (Телефон) *' : 'Portrait Image (Phone) *'}
                   </label>
                   <input
                     type="text"
@@ -1349,7 +1347,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Хоризонтално изображение (Landscape - Hero) *' : 'Landscape Image (Hero) *'}
+                    {language === 'bg' ? 'Хоризонтално изображение (Компютър) *' : 'Landscape Image (Hero) *'}
                   </label>
                   <input
                     type="text"
@@ -1379,8 +1377,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               >
                 {t.relatedProducts} ({t.youMightLike})
               </h3>
-              
-              <p 
+
+              <p
                 className="text-xs transition-colors duration-300"
                 style={{ color: theme.colors.textSecondary }}
               >
@@ -1398,16 +1396,16 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                 <div className="space-y-2">
                   {availableProducts.length > 0 ? (
                     <div className="max-h-60 overflow-y-auto border rounded-lg p-3"
-                         style={{ borderColor: theme.colors.border }}>
+                      style={{ borderColor: theme.colors.border }}>
                       {availableProducts.map((availableProduct) => {
                         const productId = availableProduct.productid || availableProduct.id;
                         const isSelected = relatedProductIds.includes(String(productId));
-                        
+
                         return (
                           <label
                             key={productId}
                             className="flex items-center gap-3 p-2 rounded hover:bg-opacity-50 cursor-pointer transition-colors"
-                            style={{ 
+                            style={{
                               backgroundColor: isSelected ? theme.colors.surface : 'transparent'
                             }}
                           >
@@ -1433,13 +1431,13 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                                 />
                               )}
                               <div className="flex-1">
-                                <p 
+                                <p
                                   className="text-sm font-medium"
                                   style={{ color: theme.colors.text }}
                                 >
                                   {availableProduct.brand} {availableProduct.model}
                                 </p>
-                                <p 
+                                <p
                                   className="text-xs"
                                   style={{ color: theme.colors.textSecondary }}
                                 >
@@ -1452,16 +1450,16 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                       })}
                     </div>
                   ) : (
-                    <p 
+                    <p
                       className="text-sm py-4 text-center"
                       style={{ color: theme.colors.textSecondary }}
                     >
                       {language === 'bg' ? 'Няма налични артикули' : 'No available items'}
                     </p>
                   )}
-                  
+
                   {relatedProductIds.length > 0 && (
-                    <p 
+                    <p
                       className="text-xs"
                       style={{ color: theme.colors.textSecondary }}
                     >
@@ -1473,7 +1471,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
             </div>
           )}
 
-          <div 
+          <div
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4 border-t transition-colors duration-300 sticky bottom-0 bg-inherit"
             style={{ borderColor: theme.colors.border }}
           >
@@ -1484,8 +1482,8 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                 backgroundColor: typeof theme.colors.buttonPrimary === 'string' && !theme.colors.buttonPrimary.includes('gradient')
                   ? theme.colors.buttonPrimary
                   : undefined,
-                backgroundImage: typeof theme.colors.buttonPrimary === 'string' && theme.colors.buttonPrimary.includes('gradient') 
-                  ? theme.colors.buttonPrimary 
+                backgroundImage: typeof theme.colors.buttonPrimary === 'string' && theme.colors.buttonPrimary.includes('gradient')
+                  ? theme.colors.buttonPrimary
                   : undefined
               } as React.CSSProperties}
               onMouseEnter={(e) => {
@@ -1516,7 +1514,7 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
               type="button"
               onClick={onClose}
               className="px-4 sm:px-5 lg:px-6 py-2.5 sm:py-2 lg:py-2.5 rounded-lg text-sm sm:text-base transition-colors duration-300 touch-manipulation"
-              style={{ 
+              style={{
                 color: theme.colors.text,
                 backgroundColor: 'transparent'
               }}

@@ -2,13 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { isVerifiedAdminRequest } from '@/lib/api/is-verified-admin-request';
 
+const BG_MAP: Record<string, string> = {
+  'а': 'a',  'б': 'b',  'в': 'v',  'г': 'g',  'д': 'd',
+  'е': 'e',  'ж': 'j',  'з': 'z',  'и': 'i',  'й': 'y',
+  'к': 'k',  'л': 'l',  'м': 'm',  'н': 'n',  'о': 'o',
+  'п': 'p',  'р': 'r',  'с': 's',  'т': 't',  'у': 'u',
+  'ф': 'f',  'х': 'h',  'ц': 'c',  'ч': 'ch', 'ш': 'sh',
+  'щ': 'sht','ъ': 'a',  'ь': 'y',  'ю': 'yu', 'я': 'q',
+};
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .split('')
+    .map((ch) => BG_MAP[ch] ?? ch)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 export async function GET(request: NextRequest) {
@@ -43,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, slug, description, imageurl, sortorder, isactive, showonindex } = body;
+    const { name, description, imageurl, sortorder, isactive, showonindex } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -60,7 +72,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const finalSlug = (slug?.trim() || slugify(name)).toLowerCase();
+    const finalSlug = slugify(name);
 
     const { data, error } = await supabaseAdmin
       .from('collections')

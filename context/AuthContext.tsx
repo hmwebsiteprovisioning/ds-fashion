@@ -39,6 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  const setCurrentUser = (userData: User | null) => {
+    if (userData) {
+      const normalized = { ...userData }
+      const uid = normalized.id || (normalized as any).userid
+      if (uid) {
+        normalized.id = uid;
+        (normalized as any).userid = uid
+      }
+      setUser(normalized)
+    } else {
+      setUser(null)
+    }
+  }
+
   // Load user from localStorage on mount
   useEffect(() => {
     const loadUser = () => {
@@ -46,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = localStorage.getItem('user')
         if (userData) {
           const parsedUser = JSON.parse(userData)
-          setUser(parsedUser)
+          setCurrentUser(parsedUser)
           setIsAuthenticated(true)
         }
       } catch {
@@ -64,14 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (e.newValue) {
           try {
             const parsedUser = JSON.parse(e.newValue)
-            setUser(parsedUser)
+            setCurrentUser(parsedUser)
             setIsAuthenticated(true)
           } catch {
             // Invalid JSON, clear storage
             localStorage.removeItem('user')
           }
         } else {
-          setUser(null)
+          setCurrentUser(null)
           setIsAuthenticated(false)
         }
       }
@@ -82,14 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = (userData: User) => {
-    setUser(userData)
+    setCurrentUser(userData)
     setIsAuthenticated(true)
     localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('user_id', userData.id)
+    localStorage.setItem('user_id', userData.id || (userData as any).userid)
   }
 
   const logout = () => {
-    setUser(null)
+    setCurrentUser(null)
     setIsAuthenticated(false)
     localStorage.removeItem('user')
     localStorage.removeItem('user_id')
@@ -98,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = (updates: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...updates }
-      setUser(updatedUser)
+      setCurrentUser(updatedUser)
       localStorage.setItem('user', JSON.stringify(updatedUser))
     }
   }
@@ -108,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
+        setCurrentUser(parsedUser)
         setIsAuthenticated(true)
       } catch {
         logout()
