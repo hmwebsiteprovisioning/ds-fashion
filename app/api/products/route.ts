@@ -252,8 +252,19 @@ export async function GET(request: NextRequest) {
           .eq('productid', product.productid)
           .order('sortorder', { ascending: true });
 
+        // Attach variant-specific images to variants
+        const variantsWithImages = (variants || []).map((variant: any) => {
+          const varImages = (images || []).filter((img: any) => img.productvariantid === variant.productvariantid);
+          const imageUrls = varImages.map((img: any) => img.imageurl).filter(Boolean);
+          return {
+            ...variant,
+            images: imageUrls.length > 0 ? imageUrls : undefined,
+            imageurl: imageUrls[0] || undefined,
+          };
+        });
+
         // For backwards compatibility, create a "legacy" product from the first variant
-        const firstVariant = variants?.[0];
+        const firstVariant = variantsWithImages?.[0];
         
         // Extract property values from variant for easy access
         const variantProperties = firstVariant?.product_variant_property_values?.reduce((acc: Record<string, string>, pv: any) => {
@@ -289,7 +300,9 @@ export async function GET(request: NextRequest) {
         const legacyProduct = {
           // New schema fields
           ...product,
-          variants: variants || [],
+          variants: variantsWithImages || [],
+          Variants: variantsWithImages || [],
+          Images: images || [],
           productTypeID: product.producttypeid,
           isfeatured: product.isfeatured || false,
           isnew: product.isnew || false,
@@ -308,7 +321,7 @@ export async function GET(request: NextRequest) {
           compareAtPrice: firstVariant?.compare_at_price || null,
           quantity: firstVariant?.quantity || 0,
           visible: firstVariant?.isvisible ?? true,
-          images: productImageUrls.length > 0 ? productImageUrls : ['/image.png'],
+          images: productImageUrls.length > 0 ? productImageUrls : (images?.map((img: any) => img.imageurl).filter(Boolean) || ['/image.png']),
           description: product.description || '',
           subtitle: product.subtitle || '',
           propertyValues: variantProperties

@@ -18,6 +18,9 @@ export type StorefrontProduct = {
   createdat?: string;
   hero_portrait_imageurl?: string | null;
   hero_landscape_imageurl?: string | null;
+  rawVariants?: any[];
+  allOptions?: Record<string, { originalName: string; values: string[] }>;
+  colorImages?: Record<string, string[]>;
 };
 
 const COLOR_KEYS = ['color', 'colour', 'цвят', 'Color', 'Colour', 'Цвят'];
@@ -35,29 +38,96 @@ function getPropertyValue(props: Record<string, string>, keys: string[]): string
 
 function variantProperties(variant: any): Record<string, string> {
   const acc: Record<string, string> = {};
-  (variant?.product_variant_property_values || []).forEach((pv: any) => {
-    if (pv.properties?.name && pv.value) {
-      acc[pv.properties.name] = pv.value;
+  const propertyValues =
+    variant?.ProductVariantPropertyvalues ||
+    variant?.ProductVariantPropertyValues ||
+    variant?.product_variant_property_values ||
+    variant?.productVariantPropertyvalues ||
+    [];
+  propertyValues.forEach((pv: any) => {
+    const propName =
+      pv.Property?.name ||
+      pv.Property?.Name ||
+      pv.properties?.name ||
+      pv.properties?.Name ||
+      pv.propertyid ||
+      '';
+    const propValue = pv.value || pv.Value || '';
+    if (propName && propValue) {
+      acc[propName] = propValue;
     }
   });
   return acc;
 }
 
 export function toStorefrontProduct(apiProduct: any): StorefrontProduct {
-  const variants = apiProduct.variants || [];
+  const variants = apiProduct.variants || apiProduct.Variants || [];
   const colorSet = new Map<string, ColorSwatch>();
   const sizeSet = new Set<string>();
+  const optionsMap: Record<string, { originalName: string; values: Set<string> }> = {};
+  const colorImagesMap: Record<string, string[]> = {};
   let minPrice = Infinity;
   let maxCompareAt = 0;
   let isOnSale = false;
 
+  const rawImageObjects: any[] = Array.isArray(apiProduct.Images)
+    ? apiProduct.Images
+    : Array.isArray(apiProduct.images)
+    ? apiProduct.images
+    : [];
+
+  const variantImagesFromDb: Record<string, string[]> = {};
+  rawImageObjects.forEach((img: any) => {
+    if (typeof img === 'object' && img !== null) {
+      const varId = img.productvariantid || img.productVariantId || img.ProductVariantID;
+      const url = img.imageurl || img.imageUrl;
+      if (varId && url) {
+        if (!variantImagesFromDb[varId]) variantImagesFromDb[varId] = [];
+        if (!variantImagesFromDb[varId].includes(url)) {
+          variantImagesFromDb[varId].push(url);
+        }
+      }
+    }
+  });
+
   variants.forEach((variant: any) => {
     const props = variantProperties(variant);
+
+    Object.entries(props).forEach(([name, value]) => {
+      const key = name.toLowerCase();
+      if (!optionsMap[key]) {
+        optionsMap[key] = { originalName: name, values: new Set() };
+      }
+      optionsMap[key].values.add(value);
+    });
+
     const colorVal = getPropertyValue(props, COLOR_KEYS);
     const sizeVal = getPropertyValue(props, SIZE_KEYS);
     if (colorVal) {
       const swatch = toColorSwatch(colorVal);
       colorSet.set(swatch.name.toLowerCase(), swatch);
+
+      const varId = variant.productvariantid || variant.ProductVariantID;
+      const directImgs: string[] = Array.isArray(variant.images) && variant.images.length > 0
+        ? variant.images
+        : variant.imageurl
+        ? [variant.imageurl]
+        : (varId && variantImagesFromDb[varId])
+        ? variantImagesFromDb[varId]
+        : [];
+
+      if (directImgs.length > 0) {
+        const colorKey = colorVal.trim().toLowerCase();
+        if (!colorImagesMap[colorKey]) {
+          colorImagesMap[colorKey] = [...directImgs];
+        } else {
+          directImgs.forEach((img) => {
+            if (!colorImagesMap[colorKey].includes(img)) {
+              colorImagesMap[colorKey].push(img);
+            }
+          });
+        }
+      }
     }
     if (sizeVal) sizeSet.add(sizeVal);
 
@@ -73,8 +143,18 @@ export function toStorefrontProduct(apiProduct: any): StorefrontProduct {
   if (minPrice === Infinity) minPrice = Number(apiProduct.price) || 0;
 
   const images: string[] = Array.isArray(apiProduct.images) && apiProduct.images.length > 0
-    ? apiProduct.images
+    ? apiProduct.images.map((img: any) => typeof img === 'string' ? img : img.imageurl).filter(Boolean)
+    : (apiProduct.Images && apiProduct.Images.length > 0)
+    ? apiProduct.Images.map((img: any) => typeof img === 'string' ? img : img.imageurl).filter(Boolean)
     : ['/hero-home.png'];
+
+  const allOptions: Record<string, { originalName: string; values: string[] }> = {};
+  Object.entries(optionsMap).forEach(([key, item]) => {
+    allOptions[key] = {
+      originalName: item.originalName,
+      values: Array.from(item.values),
+    };
+  });
 
   return {
     id: apiProduct.id || apiProduct.productid,
@@ -94,6 +174,9 @@ export function toStorefrontProduct(apiProduct: any): StorefrontProduct {
     createdat: apiProduct.createdat,
     hero_portrait_imageurl: apiProduct.hero_portrait_imageurl,
     hero_landscape_imageurl: apiProduct.hero_landscape_imageurl,
+    rawVariants: variants,
+    allOptions,
+    colorImages: colorImagesMap,
   };
 }
 

@@ -27,6 +27,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isPopping, setIsPopping] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const p = product as StorefrontProduct & Record<string, unknown>;
   const productId = String(p.id ?? p.productid ?? '');
@@ -41,12 +42,25 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const colors = Array.isArray(p.colors) ? p.colors as Array<{ name: string; hex: string }> : [];
   const sizes: string[] = Array.isArray(p.sizes) ? p.sizes as string[] : [];
   const isNew = !!(p.isNew ?? p.isnew);
+  const colorImagesMap = (p.colorImages || {}) as Record<string, string[]>;
+
+  // Selected color image resolution
+  const activeColorKey = selectedColor ? selectedColor.trim().toLowerCase() : '';
+  const colorVariantImgs = activeColorKey && colorImagesMap[activeColorKey] && colorImagesMap[activeColorKey].length > 0
+    ? colorImagesMap[activeColorKey]
+    : null;
+
+  const mainCardImage = colorVariantImgs ? colorVariantImgs[0] : rawImages[0];
+  const secondaryCardImage = colorVariantImgs && colorVariantImgs[1]
+    ? colorVariantImgs[1]
+    : rawImages[1] || null;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     const sizeToUse = selectedSize || (sizes.length > 0 ? sizes[0] : undefined);
+    const colorToUse = selectedColor || (colors.length > 0 ? colors[0].name : String(p.color ?? ''));
     
     addItem({
       id: productId,
@@ -54,10 +68,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       brand: String(p.brand ?? ''),
       model: String(p.model ?? ''),
       type: p.type ? String(p.type) : undefined,
-      color: String(p.color ?? (colors[0]?.name || '')),
+      color: colorToUse,
       size: sizeToUse,
       price: productPrice,
-      imageUrl: rawImages[0] || '/hero-home.png',
+      imageUrl: mainCardImage || rawImages[0] || '/hero-home.png',
       category: (p.category as 'clothes' | 'shoes' | 'accessories') || 'clothes',
     });
 
@@ -72,13 +86,13 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     <div className="group relative bg-ds-card border border-ds-border shadow-ds-card flex flex-col active:scale-[0.98] md:active:scale-100 transition-all duration-300 rounded-2xl overflow-hidden">
       <Link href={`/products/${productId}`} className="relative block aspect-[3/4] overflow-hidden bg-ds-image">
         <img
-          src={rawImages[0]}
+          src={mainCardImage}
           alt={productName}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        {rawImages[1] && (
+        {secondaryCardImage && (
           <img
-            src={rawImages[1]}
+            src={secondaryCardImage}
             alt={productName}
             className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
           />
@@ -135,16 +149,32 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {colors.length > 0 && (
           <div className="flex items-center gap-1.5 mt-2">
-            {colors.slice(0, 4).map((color) => (
-              <span
-                key={color.hex + color.name}
-                className="w-4 h-4 rounded-full border border-ds-border cursor-pointer hover:scale-110 transition-transform"
-                style={{ backgroundColor: color.hex }}
-                title={color.name}
-              />
-            ))}
-            {colors.length > 4 && (
-              <span className="text-[10px] text-ds-text-muted">+{colors.length - 4}</span>
+            {colors.slice(0, 5).map((color) => {
+              const isSelected = selectedColor?.toLowerCase() === color.name.toLowerCase();
+              return (
+                <button
+                  key={color.hex + color.name}
+                  type="button"
+                  title={color.name}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedColor(color.name);
+                  }}
+                  onMouseEnter={() => {
+                    setSelectedColor(color.name);
+                  }}
+                  className={`w-4 h-4 rounded-full border transition-all cursor-pointer relative ${
+                    isSelected
+                      ? 'border-ds-gold ring-2 ring-ds-gold/60 scale-125 z-10'
+                      : 'border-ds-border/70 hover:scale-110 hover:border-ds-gold/70'
+                  }`}
+                  style={{ backgroundColor: color.hex }}
+                />
+              );
+            })}
+            {colors.length > 5 && (
+              <span className="text-[10px] text-ds-text-muted">+{colors.length - 5}</span>
             )}
           </div>
         )}
