@@ -8,6 +8,7 @@ import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
 import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 import { useCart } from '@/context/CartContext';
+import { getItemCharacteristics } from '@/lib/cart-helpers';
 import { fetchStorefrontProducts } from '@/lib/storefront-products';
 import { formatPrice } from '@/lib/price-formatter';
 import type { StorefrontProduct } from '@/lib/storefront-products';
@@ -90,11 +91,13 @@ export default function CartPage() {
                             {formatPrice(item.price * item.quantity, 'text-[14px] font-bold text-ds-text')}
                           </div>
                         </div>
-                        {item.size && (
-                          <p className="text-[12px] text-ds-text-muted mt-1">
-                            Размер: {item.size}
-                          </p>
-                        )}
+                        <div className="text-[12px] text-ds-text-muted mt-1 space-y-0.5">
+                          {getItemCharacteristics(item, 'bg').map((char, charIdx) => (
+                            <p key={charIdx}>
+                              <span className="font-semibold text-ds-text-secondary">{char.label}:</span> {char.value}
+                            </p>
+                          ))}
+                        </div>
                         <div className="flex items-center justify-between mt-4">
                           <div className="inline-flex items-center border border-ds-border">
                             <button onClick={() => updateQty(item.id, -1, item.size)} className="px-3 py-2 hover:bg-ds-main">

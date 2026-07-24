@@ -382,6 +382,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       imageUrl: activeImages[0] || product.images[0],
       category: 'clothes',
       size: selectedSize || undefined,
+      options: selectedOptions,
+      propertyValues: selectedOptions,
       quantity: qty,
     });
     

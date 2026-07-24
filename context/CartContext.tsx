@@ -14,8 +14,8 @@ interface CartContextType {
 
   // Actions
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
-  removeItem: (id: string | number, size?: string) => void;
-  updateQuantity: (id: string | number, quantity: number, size?: string) => void;
+  removeItem: (id: string | number, size?: string, color?: string) => void;
+  updateQuantity: (id: string | number, quantity: number, size?: string, color?: string) => void;
   clearCart: () => void;
   toggleCart: () => void;
   openCart: () => void;

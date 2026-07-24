@@ -12,6 +12,7 @@ export interface CartItem {
   imageUrl: string;
   category: 'clothes' | 'shoes' | 'accessories';
   propertyValues?: Record<string, string>;
+  options?: Record<string, string>;
 }
 
 export interface CartState {
@@ -20,8 +21,8 @@ export interface CartState {
 
   // Actions
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
-  removeItem: (id: string | number, size?: string) => void;
-  updateQuantity: (id: string | number, quantity: number, size?: string) => void;
+  removeItem: (id: string | number, size?: string, color?: string) => void;
+  updateQuantity: (id: string | number, quantity: number, size?: string, color?: string) => void;
   clearCart: () => void;
   toggleCart: () => void;
   openCart: () => void;

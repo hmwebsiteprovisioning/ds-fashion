@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ShoppingBag, Shield, Truck, RotateCcw, Headphones, Check, ChevronDown, ChevronUp, MapPin, Zap, Package, CreditCard, Banknote, Landmark } from 'lucide-react';
 import type { EcontOfficesData, EcontOffice } from '@/types/econt';
 import { useCart } from '@/context/CartContext';
+import { getItemCharacteristics } from '@/lib/cart-helpers';
 import { formatPrice, formatPriceRaw } from '@/lib/price-formatter';
 import { STORE_NAME } from '@/lib/branding';
 import { getLogoUrl } from '@/lib/branding';
@@ -662,7 +663,14 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-ds-text truncate">{item.name}</p>
-                      <p className="text-[11px] text-ds-text-muted">Размер: {item.size} · Бр: {item.quantity}</p>
+                      <div className="text-[11px] text-ds-text-muted mt-0.5 space-y-0.5">
+                        {getItemCharacteristics(item, 'bg').map((char, charIdx) => (
+                          <span key={charIdx} className="mr-2 inline-block">
+                            {char.label}: <span className="font-medium text-ds-text">{char.value}</span>
+                          </span>
+                        ))}
+                        <span className="inline-block font-medium">· Бр: {item.quantity}</span>
+                      </div>
                     </div>
                     <div className="text-[12px] font-bold text-ds-text shrink-0">
                       {formatPrice(item.price * item.quantity, 'text-[12px] font-bold text-ds-text')}

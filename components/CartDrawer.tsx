@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
+import { getItemCharacteristics } from '@/lib/cart-helpers';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
 
@@ -176,36 +177,14 @@ const CartDrawer: React.FC = () => {
                         className="font-medium truncate text-sm sm:text-base"
                         style={{ color: theme.colors.text }}
                       >
-                        {item.brand} {item.model}
+                        {item.name || `${item.brand ?? ''} ${item.model ?? ''}`.trim()}
                       </h3>
-                      <div className="text-xs sm:text-sm space-y-1 mt-1" style={{ color: theme.colors.textSecondary }}>
-                        {item.propertyValues && Object.keys(item.propertyValues).length > 0 ? (
-                          <div className="space-y-0.5">
-                            {Object.entries(item.propertyValues).map(([propertyName, propertyValue]) => {
-                              const formattedName = propertyName
-                                .replace(/_/g, ' ')
-                                .replace(/\b\w/g, l => l.toUpperCase());
-                              return (
-                                <div key={propertyName}>
-                                  <span className="font-medium">{formattedName}:</span> {propertyValue}
-                                </div>
-                              );
-                            })}
+                      <div className="text-xs sm:text-sm space-y-0.5 mt-1" style={{ color: theme.colors.textSecondary }}>
+                        {getItemCharacteristics(item, language).map((char, charIdx) => (
+                          <div key={charIdx}>
+                            <span className="font-medium">{char.label}:</span> {char.value}
                           </div>
-                        ) : (
-                          <>
-                            {item.color && (
-                              <div>
-                                <span className="font-medium">{t.color}:</span> {item.color}
-                              </div>
-                            )}
-                            {item.size && (
-                              <div>
-                                <span className="font-medium">{t.size}:</span> {item.size}
-                              </div>
-                            )}
-                          </>
-                        )}
+                        ))}
                       </div>
                       <p className="text-sm mt-2" style={{ color: theme.colors.textSecondary }}>
                         {formatPrice(item.price)} {t.each}

@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { CartItem, CartState } from '@/types/cart';
 
-const generateCartItemId = (id: string | number, size?: string): string => {
-  return `${id}${size ? `_${size}` : ''}`;
+const generateCartItemId = (item: { id: string | number; size?: string; color?: string }): string => {
+  return `${item.id}${item.color ? `_c:${item.color}` : ''}${item.size ? `_s:${item.size}` : ''}`;
 };
 
 const normalizePrice = (price: unknown): number => {
@@ -20,11 +20,11 @@ export const useCartStore = create<CartState>()(
 
       addItem: (newItem) => {
         const { items } = get();
-        const cartItemId = generateCartItemId(newItem.id, newItem.size);
+        const cartItemId = generateCartItemId(newItem);
 
-        // Check if item already exists (same product and size)
+        // Check if item already exists (same product, color and size)
         const existingItemIndex = items.findIndex(item =>
-          generateCartItemId(item.id, item.size) === cartItemId
+          generateCartItemId(item) === cartItemId
         );
 
         if (existingItemIndex !== -1) {
@@ -46,27 +46,35 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      removeItem: (id, size) => {
+      removeItem: (id: string | number, size?: string, color?: string) => {
         const { items } = get();
-        const filteredItems = items.filter(item =>
-          !(item.id === id && item.size === size)
-        );
+        const filteredItems = items.filter(item => {
+          if (item.id !== id) return true;
+          if (size !== undefined && item.size !== size) return true;
+          if (color !== undefined && item.color !== color) return true;
+          return false;
+        });
         set({ items: filteredItems });
       },
 
-      updateQuantity: (id, quantity, size) => {
+      updateQuantity: (id: string | number, quantity: number, size?: string, color?: string) => {
         const { items } = get();
         if (quantity <= 0) {
-          // Remove item if quantity is 0 or less
-          const filteredItems = items.filter(item =>
-            !(item.id === id && item.size === size)
-          );
+          const filteredItems = items.filter(item => {
+            if (item.id !== id) return true;
+            if (size !== undefined && item.size !== size) return true;
+            if (color !== undefined && item.color !== color) return true;
+            return false;
+          });
           set({ items: filteredItems });
           return;
         }
 
         const updatedItems = items.map(item => {
-          if (item.id === id && item.size === size) {
+          const matchesId = item.id === id;
+          const matchesSize = size === undefined || item.size === size;
+          const matchesColor = color === undefined || item.color === color;
+          if (matchesId && matchesSize && matchesColor) {
             return { ...item, quantity };
           }
           return item;
