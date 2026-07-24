@@ -269,10 +269,17 @@ export async function GET(request: NextRequest) {
         // Extract property values from variant for easy access
         const variantProperties = firstVariant?.product_variant_property_values?.reduce((acc: Record<string, string>, pv: any) => {
           if (pv.properties?.name) {
-            acc[pv.properties.name] = pv.value;
+            acc[pv.properties.name.trim()] = pv.value;
           }
           return acc;
-        }, {}) || {};
+        }, {} as Record<string, string>) || {};
+
+        const getPropVal = (keys: string[]): string => {
+          for (const [k, v] of Object.entries(variantProperties)) {
+            if (keys.some((key) => k.trim().toLowerCase() === key.trim().toLowerCase())) return String(v || '');
+          }
+          return '';
+        };
         
         // Try to extract brand and model from name (format: "Brand Model")
         const nameParts = product.name?.split(' ') || [];
@@ -315,8 +322,8 @@ export async function GET(request: NextRequest) {
           model: model,
           category: category,
           type: product.product_types?.name || '',
-          color: variantProperties.color || variantProperties.colour || '',
-          size: variantProperties.size || '',
+          color: getPropVal(['color', 'colour', 'цвят', 'Color', 'Colour', 'Цвят']),
+          size: getPropVal(['size', 'размер', 'Size', 'Размер']),
           price: firstVariant?.price || 0,
           compareAtPrice: firstVariant?.compare_at_price || null,
           quantity: firstVariant?.quantity || 0,

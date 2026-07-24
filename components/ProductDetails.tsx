@@ -669,9 +669,10 @@ export default function ProductDetails({ product, onVariantChange }: ProductDeta
                     <button
                       key={value}
                       type="button"
-                      onClick={() => handleOptionChange(propertyNameKey, value)}
+                      disabled={isOut}
+                      onClick={() => !isOut && handleOptionChange(propertyNameKey, value)}
                       className={`relative px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
-                        isOut ? 'opacity-70' : 'hover:scale-105'
+                        isOut ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'
                       }`}
                       style={{
                         borderColor: isSelected

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Heart, Minus, Plus, ShoppingBag, Truck, ChevronDown, ChevronUp, Share2, Star, Sliders } from 'lucide-react';
+import { Heart, Minus, Plus, ShoppingBag, Truck, ChevronDown, ChevronUp, Share2, Star, Sliders, ChevronLeft, ChevronRight } from 'lucide-react';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
 import { toStorefrontProduct, type StorefrontProduct } from '@/lib/storefront-products';
@@ -120,12 +120,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [product, setProduct] = useState<StorefrontProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [mainImg, setMainImg] = useState(0);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Variant & characteristics state
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [displayImages, setDisplayImages] = useState<string[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<any | null>(null);
   const [rawVariants, setRawVariants] = useState<any[]>([]);
   const [rawProductData, setRawProductData] = useState<any | null>(null);
@@ -138,6 +139,93 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isRefundExpanded, setIsRefundExpanded] = useState(false);
   const [shareToast, setShareToast] = useState<string | null>(null);
+
+  const triggerUserInteraction = useCallback(() => {
+    setIsPaused(true);
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+    }
+    pauseTimerRef.current = setTimeout(() => {
+      setIsPaused(false);
+    }, 20000);
+  }, []);
+
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    triggerUserInteraction();
+    touchStartXRef.current = e.targetTouches[0].clientX;
+    touchEndXRef.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndXRef.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
+    
+    const deltaX = touchStartXRef.current - touchEndXRef.current;
+    const minSwipeDistance = 40;
+
+    if (deltaX > minSwipeDistance) {
+      // Swiped left -> Next image
+      if (allImages.length > 1) {
+        setMainImg((prev) => (prev + 1) % allImages.length);
+      }
+    } else if (deltaX < -minSwipeDistance) {
+      // Swiped right -> Previous image
+      if (allImages.length > 1) {
+        setMainImg((prev) => (prev - 1 + allImages.length) % allImages.length);
+      }
+    }
+
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+    };
+  }, []);
+
+  const allImages = useMemo(() => {
+    if (!product) return ['/hero-home.png'];
+    const list: string[] = [];
+    const addImg = (url?: string | null) => {
+      if (url && typeof url === 'string' && url.trim() && !list.includes(url.trim())) {
+        list.push(url.trim());
+      }
+    };
+
+    (product.images || []).forEach(addImg);
+
+    if (product.colorImages) {
+      Object.values(product.colorImages).forEach((imgs) => {
+        if (Array.isArray(imgs)) imgs.forEach(addImg);
+      });
+    }
+
+    (rawVariants || []).forEach((v: any) => {
+      if (Array.isArray(v.images)) v.images.forEach(addImg);
+      else if (v.imageurl) addImg(v.imageurl);
+    });
+
+    return list.length > 0 ? list : ['/hero-home.png'];
+  }, [product, rawVariants]);
+
+  // 4.5-second auto-scroll interval
+  useEffect(() => {
+    if (isPaused || allImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setMainImg((prev) => (prev + 1) % allImages.length);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [isPaused, allImages.length]);
 
   const handleSetIsAdmin = (v: boolean) => {
     setIsAdmin(v);
@@ -181,7 +269,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               const name = pv.Property?.name || pv.Property?.Name || pv.properties?.name || pv.properties?.Name || pv.propertyid;
               const val = pv.value || pv.Value;
               if (name && val) {
-                initialOpts[name.toLowerCase()] = val;
+                initialOpts[String(name).trim().toLowerCase()] = String(val).trim();
               }
             });
           }
@@ -202,17 +290,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           const colorKey = (initialColor || '').trim().toLowerCase();
           const colorImgs = sf.colorImages?.[colorKey];
-
-          const initialImgs = (primaryVar?.images && primaryVar.images.length > 0)
-            ? primaryVar.images
+          const initialTargetImg = (primaryVar?.images && primaryVar.images.length > 0)
+            ? primaryVar.images[0]
             : (primaryVar?.imageurl)
-            ? [primaryVar.imageurl]
+            ? primaryVar.imageurl
             : (colorImgs && colorImgs.length > 0)
-            ? colorImgs
-            : (sf.images.length > 0 ? sf.images : ['/hero-home.png']);
+            ? colorImgs[0]
+            : (sf.images.length > 0 ? sf.images[0] : null);
 
-          setDisplayImages(initialImgs);
-          setMainImg(0);
+          if (initialTargetImg) {
+            const initialIdx = allImages.indexOf(initialTargetImg);
+            if (initialIdx !== -1) setMainImg(initialIdx);
+            else setMainImg(0);
+          } else {
+            setMainImg(0);
+          }
         } else {
           setProduct(null);
         }
@@ -221,29 +313,83 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       .finally(() => setLoading(false));
   }, [id]);
 
-  useEffect(() => {
-    if (product) {
-      document.title = `${product.name} - ${settings?.storename || STORE_NAME}`;
-    } else if (loading) {
-      document.title = `${t.loading} - ${settings?.storename || STORE_NAME}`;
-    } else {
-      document.title = t.productNotFound;
-    }
-  }, [product, loading, t.productNotFound, t.loading, settings?.storename]);
+  const isSizeAvailableForColor = (sizeVal: string, colorVal: string | null): boolean => {
+    if (!rawVariants || rawVariants.length === 0) return true;
+
+    const targetSize = sizeVal.trim().toLowerCase();
+    const targetColor = colorVal ? colorVal.trim().toLowerCase() : null;
+
+    const matching = rawVariants.filter((v: any) => {
+      if (v.isvisible === false) return false;
+
+      const pvs = (v.ProductVariantPropertyvalues ||
+                  v.ProductVariantPropertyValues ||
+                  v.product_variant_property_values ||
+                  v.productVariantPropertyvalues ||
+                  []) as any[];
+
+      let matchesSize = false;
+      let matchesColor = targetColor ? false : true;
+
+      pvs.forEach((pv: any) => {
+        const propName = String(
+          pv.Property?.name ||
+          pv.Property?.Name ||
+          pv.properties?.name ||
+          pv.properties?.Name ||
+          pv.propertyid ||
+          ''
+        ).trim().toLowerCase();
+        const val = String(pv.value || pv.Value || '').trim().toLowerCase();
+
+        if (['size', 'размер'].includes(propName) && val === targetSize) {
+          matchesSize = true;
+        }
+        if (targetColor && ['color', 'colour', 'цвят'].includes(propName) && val === targetColor) {
+          matchesColor = true;
+        }
+      });
+
+      return matchesSize && matchesColor;
+    });
+
+    if (matching.length === 0) return false;
+
+    return matching.some((v: any) => {
+      const tracksQty = v.trackquantity !== false && v.trackquantity !== null;
+      if (!tracksQty) return true;
+      return (Number(v.quantity) || 0) > 0;
+    });
+  };
 
   const handleOptionSelect = (optionKey: string, value: string) => {
-    const keyLower = optionKey.toLowerCase();
+    const keyLower = optionKey.trim().toLowerCase();
     const updatedOptions = { ...selectedOptions, [keyLower]: value };
-    setSelectedOptions(updatedOptions);
 
     let activeColorName = selectedColor;
     if (['color', 'colour', 'цвят'].includes(keyLower)) {
       activeColorName = value;
       setSelectedColor(value);
+
+      // Check if current selectedSize is available in the new color
+      if (selectedSize && !isSizeAvailableForColor(selectedSize, value)) {
+        const firstAvailable = product?.sizes.find((s) => isSizeAvailableForColor(s, value));
+        if (firstAvailable) {
+          setSelectedSize(firstAvailable);
+          updatedOptions['size'] = firstAvailable;
+          updatedOptions['размер'] = firstAvailable;
+        } else {
+          setSelectedSize(null);
+          delete updatedOptions['size'];
+          delete updatedOptions['размер'];
+        }
+      }
     }
     if (['size', 'размер'].includes(keyLower)) {
       setSelectedSize(value);
     }
+
+    setSelectedOptions(updatedOptions);
 
     if (rawVariants.length > 0) {
       const match = rawVariants.find((v) => {
@@ -256,40 +402,39 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         pvs.forEach((pv: any) => {
           const name = pv.Property?.name || pv.Property?.Name || pv.properties?.name || pv.properties?.Name || pv.propertyid;
           const val = pv.value || pv.Value;
-          if (name && val) vOpts[name.toLowerCase()] = val;
+          if (name && val) vOpts[String(name).trim().toLowerCase()] = String(val).trim();
         });
 
         return Object.entries(updatedOptions).every(([k, val]) => {
-          if (!vOpts[k]) return true;
-          return vOpts[k].toLowerCase() === val.toLowerCase();
+          const key = k.trim().toLowerCase();
+          if (!vOpts[key]) return true;
+          return vOpts[key].toLowerCase() === val.toLowerCase();
         });
       });
 
       const activeColorKey = activeColorName ? activeColorName.trim().toLowerCase() : '';
       const fallbackColorImgs = activeColorKey && product?.colorImages?.[activeColorKey] ? product.colorImages[activeColorKey] : null;
 
+      let targetUrl: string | null = null;
       if (match) {
         setSelectedVariant(match);
+        if (match.images && match.images.length > 0) targetUrl = match.images[0];
+        else if (match.imageurl) targetUrl = match.imageurl;
+      }
+      if (!targetUrl && fallbackColorImgs && fallbackColorImgs.length > 0) {
+        targetUrl = fallbackColorImgs[0];
+      }
 
-        const varImgs = (match.images && match.images.length > 0)
-          ? match.images
-          : match.imageurl
-          ? [match.imageurl]
-          : (fallbackColorImgs && fallbackColorImgs.length > 0)
-          ? fallbackColorImgs
-          : null;
-
-        if (varImgs && varImgs.length > 0) {
-          setDisplayImages(varImgs);
-          setMainImg(0);
-        } else if (product?.images && product.images.length > 0) {
-          setDisplayImages(product.images);
+      if (targetUrl) {
+        const idx = allImages.indexOf(targetUrl);
+        if (idx !== -1) {
+          setMainImg(idx);
         }
-      } else if (fallbackColorImgs && fallbackColorImgs.length > 0) {
-        setDisplayImages(fallbackColorImgs);
-        setMainImg(0);
       }
     }
+
+    // Trigger 20-second auto-scroll pause on characteristic selection
+    triggerUserInteraction();
   };
 
   if (loading) {
@@ -322,7 +467,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const modelName = nameParts.slice(1).join(' ') || product.name;
 
   const currentPrice = selectedVariant?.price != null ? Number(selectedVariant.price) : product.price;
-  const activeImages = displayImages.length > 0 ? displayImages : product.images;
+  const activeImages = allImages;
 
   const triggerFlyToCart = (startEl: HTMLElement) => {
     const destEl = document.getElementById('header-cart-icon');
@@ -482,72 +627,112 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-12">
             
             {/* Left Column - Product Images */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 flex flex-col gap-4">
               
-              {/* Mobile Swipeable Image Carousel (peeking next image) */}
+              {/* Main Image Container */}
               <div 
-                className="flex md:hidden gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 w-full"
-                style={{ WebkitOverflowScrolling: 'touch' }}
+                className="relative aspect-[4/5] sm:aspect-square bg-white rounded-3xl border border-ds-border/30 overflow-hidden flex items-center justify-center p-4 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md group select-none touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
-                {activeImages.map((img, i) => (
-                  <div 
-                    key={i} 
-                    className={`${
-                      activeImages.length > 1 ? 'w-[82vw] sm:w-[86vw]' : 'w-full'
-                    } aspect-[4/5] bg-white rounded-3xl border border-ds-border/30 overflow-hidden flex items-center justify-center p-4 shrink-0 snap-center shadow-sm`}
-                  >
-                    <img 
-                      src={img} 
-                      alt="" 
-                      className="max-h-full max-w-full object-contain rounded-2xl" 
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop gallery: Vertical thumbnails + Main active image */}
-              <div className="hidden md:flex flex-row gap-4 flex-1">
-                {activeImages.length > 1 && (
-                  <div className="flex flex-col gap-3 w-[76px] shrink-0">
-                    {activeImages.map((img, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setMainImg(i)}
-                        className={`w-[72px] h-[72px] rounded-2xl overflow-hidden border-2 transition-all duration-200 shrink-0 ${
-                          mainImg === i 
-                            ? 'border-ds-text scale-95 shadow-md ring-2 ring-ds-text/10' 
-                            : 'border-ds-border/40 hover:border-ds-text/30'
-                        }`}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="relative flex-1 aspect-square bg-white rounded-3xl border border-ds-border/30 overflow-hidden flex items-center justify-center p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-                  <img 
-                    src={activeImages[mainImg] || activeImages[0]} 
-                    alt={product.name} 
-                    className="max-h-full max-w-full object-contain rounded-2xl transition-transform duration-500 hover:scale-105" 
-                  />
-                  
-                  {/* Badges */}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                    {product.isNew && (
-                      <span className="bg-ds-gold text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
-                        {t.new}
-                      </span>
-                    )}
-                    {product.isOnSale && (
-                      <span className="bg-ds-error text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
-                        {t.sale}
-                      </span>
-                    )}
-                  </div>
+                <img 
+                  src={allImages[mainImg] || allImages[0]} 
+                  alt={product.name} 
+                  className="max-h-full max-w-full object-contain rounded-2xl transition-transform duration-500 hover:scale-105" 
+                />
+                
+                {/* Badges */}
+                <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                  {product.isNew && (
+                    <span className="bg-ds-gold text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
+                      {t.new}
+                    </span>
+                  )}
+                  {product.isOnSale && (
+                    <span className="bg-ds-error text-white text-[10px] font-bold tracking-wider px-3 py-1 rounded-full shadow-sm uppercase">
+                      {t.sale}
+                    </span>
+                  )}
                 </div>
+
+                {/* Minimalist PC / Desktop Navigation Arrows (Hidden on Mobile) */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMainImg((prev) => (prev - 1 + allImages.length) % allImages.length);
+                        triggerUserInteraction();
+                      }}
+                      className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-white/80 hover:bg-white text-ds-text shadow-md transition-all hover:scale-110 opacity-75 hover:opacity-100 border border-ds-border/30 z-20 cursor-pointer"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMainImg((prev) => (prev + 1) % allImages.length);
+                        triggerUserInteraction();
+                      }}
+                      className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-white/80 hover:bg-white text-ds-text shadow-md transition-all hover:scale-110 opacity-75 hover:opacity-100 border border-ds-border/30 z-20 cursor-pointer"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
               </div>
+
+              {/* Pagination Dots (Mobile & PC) */}
+              {allImages.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 py-1">
+                  {allImages.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setMainImg(i);
+                        triggerUserInteraction();
+                      }}
+                      aria-label={`Go to image ${i + 1}`}
+                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        mainImg === i
+                          ? 'w-6 bg-ds-gold shadow-sm'
+                          : 'w-2 bg-ds-border hover:bg-ds-text-secondary/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Thumbnail Strip */}
+              {allImages.length > 1 && (
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                  {allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setMainImg(i);
+                        triggerUserInteraction();
+                      }}
+                      className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 transition-all duration-200 shrink-0 snap-start cursor-pointer ${
+                        mainImg === i
+                          ? 'border-ds-gold scale-95 shadow-md ring-2 ring-ds-gold/20'
+                          : 'border-ds-border/40 hover:border-ds-text/30 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
 
             </div>
 
@@ -618,17 +803,22 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((s) => {
-                      const isSelected = selectedSize?.toLowerCase() === s.toLowerCase();
+                      const isAvailable = isSizeAvailableForColor(s, selectedColor);
+                      const isSelected = selectedSize?.toLowerCase() === s.toLowerCase() && isAvailable;
                       return (
                         <button
                           key={s}
                           type="button"
-                          onClick={() => handleOptionSelect('size', s)}
+                          disabled={!isAvailable}
+                          onClick={() => isAvailable && handleOptionSelect('size', s)}
                           className={`text-xs px-4 py-2 border-2 rounded-full font-bold transition-all duration-200 ${
-                            isSelected
-                              ? 'border-ds-text bg-ds-text text-white shadow-sm scale-95 ring-2 ring-ds-text/20' 
-                              : 'border-ds-border/60 hover:border-ds-text/40 text-ds-text-secondary hover:text-ds-text'
+                            !isAvailable
+                              ? 'border-ds-border/40 bg-ds-card/40 text-ds-text-muted/40 line-through opacity-40 cursor-not-allowed'
+                              : isSelected
+                              ? 'border-ds-text bg-ds-text text-white shadow-sm scale-95 ring-2 ring-ds-text/20 cursor-pointer' 
+                              : 'border-ds-border/60 hover:border-ds-text/40 text-ds-text-secondary hover:text-ds-text cursor-pointer'
                           }`}
+                          title={!isAvailable ? `${s} (не е наличен за този цвят)` : s}
                         >
                           {s}
                         </button>

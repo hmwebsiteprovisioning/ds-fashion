@@ -94,12 +94,23 @@ export async function GET(request: NextRequest) {
 
     const firstImageByVariant: Record<string, string> = {};
     const firstImageByProduct: Record<string, string> = {};
+    const firstImageByColor: Record<string, string> = {};
 
+    // 1. Populate direct imageurl from product_variants table if present
+    variants.forEach((v: any) => {
+      const vid = v.productvariantid;
+      if (vid && v.imageurl && !firstImageByVariant[vid]) {
+        firstImageByVariant[vid] = v.imageurl;
+      }
+    });
+
+    // 2. Query product_images for variant-specific images
     if (variantIds.length > 0) {
       const { data: variantImages } = await supabaseAdmin
         .from('product_images')
-        .select('productvariantid, imageurl')
-        .in('productvariantid', variantIds);
+        .select('productvariantid, imageurl, sortorder')
+        .in('productvariantid', variantIds)
+        .order('sortorder', { ascending: true });
       (variantImages || []).forEach((row: { productvariantid?: string; imageurl?: string }) => {
         const vid = row.productvariantid;
         if (vid && row.imageurl && !firstImageByVariant[vid]) {
@@ -108,12 +119,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // 3. Query product-level images for general fallback
     if (productIds.length > 0) {
       const { data: prodImages } = await supabaseAdmin
         .from('product_images')
-        .select('productid, imageurl')
+        .select('productid, imageurl, sortorder')
         .in('productid', productIds)
-        .is('productvariantid', null);
+        .is('productvariantid', null)
+        .order('sortorder', { ascending: true });
       (prodImages || []).forEach((row: { productid?: string; imageurl?: string }) => {
         const pid = row.productid;
         if (pid && row.imageurl && !firstImageByProduct[pid]) {
@@ -122,12 +135,41 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // 4. Map variant images to product + color key for variants lacking direct image rows
+    variants.forEach((v: any) => {
+      const vid = v.productvariantid;
+      const pid = v.productid;
+      const varImg = vid ? firstImageByVariant[vid] : null;
+      if (varImg && pid) {
+        const chars = propsByVariant[vid] || [];
+        const colorChar = chars.find((c) =>
+          ['color', 'colour', 'цвят'].includes(c.property_name.trim().toLowerCase())
+        );
+        const colorVal = colorChar ? colorChar.value.trim().toLowerCase() : '';
+        if (colorVal) {
+          const key = `${pid}_${colorVal}`;
+          if (!firstImageByColor[key]) {
+            firstImageByColor[key] = varImg;
+          }
+        }
+      }
+    });
+
     const stockVariants: StockVariant[] = variants.map((variant: any) => {
       const product = Array.isArray(variant.products) ? variant.products[0] : variant.products;
       const vid = variant.productvariantid;
       const pid = variant.productid;
+      const chars = propsByVariant[vid] || [];
+      const colorChar = chars.find((c) =>
+        ['color', 'colour', 'цвят'].includes(c.property_name.trim().toLowerCase())
+      );
+      const colorVal = colorChar ? colorChar.value.trim().toLowerCase() : '';
+
       const primary =
-        (vid && firstImageByVariant[vid]) || (pid && firstImageByProduct[pid]) || null;
+        (vid && firstImageByVariant[vid]) ||
+        (pid && colorVal && firstImageByColor[`${pid}_${colorVal}`]) ||
+        (pid && firstImageByProduct[pid]) ||
+        null;
 
       return {
         productvariantid: variant.productvariantid,
@@ -138,7 +180,7 @@ export async function GET(request: NextRequest) {
         quantity: variant.quantity || 0,
         trackquantity: variant.trackquantity !== false,
         primary_image: primary,
-        characteristics: propsByVariant[variant.productvariantid] || [],
+        characteristics: chars,
       };
     });
 

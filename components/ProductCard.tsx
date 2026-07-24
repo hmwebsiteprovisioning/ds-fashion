@@ -55,11 +55,73 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     ? colorVariantImgs[1]
     : rawImages[1] || null;
 
+  const rawVariants = (p.rawVariants || p.variants || p.Variants || []) as any[];
+
+  const isSizeAvailable = (size: string, colorName: string | null): boolean => {
+    if (!Array.isArray(rawVariants) || rawVariants.length === 0) return true;
+
+    const targetSize = size.trim().toLowerCase();
+    const targetColor = colorName ? colorName.trim().toLowerCase() : null;
+
+    const matching = rawVariants.filter((v: any) => {
+      if (v.isvisible === false) return false;
+
+      const pvs = (v.ProductVariantPropertyvalues ||
+                  v.ProductVariantPropertyValues ||
+                  v.product_variant_property_values ||
+                  v.productVariantPropertyvalues ||
+                  []) as any[];
+
+      let matchesSize = false;
+      let matchesColor = targetColor ? false : true;
+
+      pvs.forEach((pv: any) => {
+        const propName = String(
+          pv.Property?.name ||
+          pv.Property?.Name ||
+          pv.properties?.name ||
+          pv.properties?.Name ||
+          pv.propertyid ||
+          ''
+        ).trim().toLowerCase();
+        const val = String(pv.value || pv.Value || '').trim().toLowerCase();
+
+        if (['size', 'размер'].includes(propName) && val === targetSize) {
+          matchesSize = true;
+        }
+        if (targetColor && ['color', 'colour', 'цвят'].includes(propName) && val === targetColor) {
+          matchesColor = true;
+        }
+      });
+
+      return matchesSize && matchesColor;
+    });
+
+    if (matching.length === 0) return false;
+
+    return matching.some((v: any) => {
+      const tracksQty = v.trackquantity !== false && v.trackquantity !== null;
+      if (!tracksQty) return true;
+      return (Number(v.quantity) || 0) > 0;
+    });
+  };
+
+  const handleColorChange = (colorName: string) => {
+    setSelectedColor(colorName);
+    if (selectedSize && !isSizeAvailable(selectedSize, colorName)) {
+      const firstAvail = sizes.find((s) => isSizeAvailable(s, colorName));
+      setSelectedSize(firstAvail || null);
+    }
+  };
+
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const sizeToUse = selectedSize || (sizes.length > 0 ? sizes[0] : undefined);
+    const availableSizes = sizes.filter((s) => isSizeAvailable(s, selectedColor));
+    const sizeToUse = (selectedSize && isSizeAvailable(selectedSize, selectedColor))
+      ? selectedSize
+      : (availableSizes.length > 0 ? availableSizes[0] : (sizes.length > 0 ? sizes[0] : undefined));
     const colorToUse = selectedColor || (colors.length > 0 ? colors[0].name : String(p.color ?? ''));
     
     addItem({
@@ -159,10 +221,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedColor(color.name);
+                    handleColorChange(color.name);
                   }}
                   onMouseEnter={() => {
-                    setSelectedColor(color.name);
+                    handleColorChange(color.name);
                   }}
                   className={`w-4 h-4 rounded-full border transition-all cursor-pointer relative ${
                     isSelected
@@ -181,19 +243,33 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {sizes.length > 0 && sizes[0] !== 'ONE SIZE' && (
           <div className="flex flex-wrap gap-1 mt-2.5">
-            {sizes.map((size) => (
-              <button
-                key={size}
-                onClick={(e) => { e.preventDefault(); setSelectedSize(size); }}
-                className={`text-[10px] sm:text-[11px] px-2 py-0.5 border font-medium transition-colors ${
-                  selectedSize === size
-                    ? 'border-ds-gold bg-ds-gold text-white'
-                    : 'border-ds-border bg-ds-main text-ds-text-secondary hover:border-ds-gold'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+            {sizes.map((size) => {
+              const isAvailable = isSizeAvailable(size, selectedColor);
+              const isSelected = selectedSize === size && isAvailable;
+
+              return (
+                <button
+                  key={size}
+                  disabled={!isAvailable}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (isAvailable) {
+                      setSelectedSize(size);
+                    }
+                  }}
+                  className={`text-[10px] sm:text-[11px] px-2 py-0.5 border font-medium transition-all ${
+                    !isAvailable
+                      ? 'border-ds-border/40 bg-ds-card/40 text-ds-text-muted/40 line-through opacity-40 cursor-not-allowed'
+                      : isSelected
+                      ? 'border-ds-gold bg-ds-gold text-white cursor-pointer'
+                      : 'border-ds-border bg-ds-main text-ds-text-secondary hover:border-ds-gold cursor-pointer'
+                  }`}
+                  title={!isAvailable ? `${size} (не е наличен за този цвят)` : size}
+                >
+                  {size}
+                </button>
+              );
+            })}
           </div>
         )}
 

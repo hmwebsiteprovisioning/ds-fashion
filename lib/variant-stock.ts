@@ -22,7 +22,7 @@ export function getVariantPropertyValues(variant: any): Array<{ nameKey: string;
         '';
       const value = pv.value || pv.Value || '';
       if (!name || !value) return null;
-      return { nameKey: String(name).toLowerCase(), value: String(value) };
+      return { nameKey: String(name).trim().toLowerCase(), value: String(value).trim() };
     })
     .filter(Boolean) as Array<{ nameKey: string; value: string }>;
 }
@@ -36,8 +36,8 @@ export function getVariantOptionsMap(variant: any): Record<string, string> {
 }
 
 export function isSizePropertyKey(propertyKey: string, displayName?: string): boolean {
-  const key = propertyKey.toLowerCase();
-  const label = (displayName || propertyKey).toLowerCase();
+  const key = propertyKey.trim().toLowerCase();
+  const label = (displayName || propertyKey).trim().toLowerCase();
   if (key === 'size' || key === 'razmer' || key === 'размер') return true;
   if (label.includes('size') || label.includes('размер')) return true;
   if (key.includes('size') || key.includes('razmer')) return true;

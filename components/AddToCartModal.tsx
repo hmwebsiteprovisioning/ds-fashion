@@ -54,12 +54,12 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
           
           propertyValues.forEach((pv: any) => {
             // Try multiple naming conventions for property name
-            const propertyName = (pv.Property?.name || 
+            const propertyName = String(pv.Property?.name || 
                                  pv.Property?.Name || 
                                  pv.properties?.name ||
                                  pv.properties?.Name ||
                                  pv.propertyid || 
-                                 '').toLowerCase();
+                                 '').trim().toLowerCase();
             // Try multiple naming conventions for property value
             const propertyValue = pv.value || pv.Value || '';
             
@@ -86,12 +86,12 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                                        primaryVariant.productVariantPropertyvalues ||
                                        [];
           primaryPropertyValues.forEach((pv: any) => {
-            const propertyName = (pv.Property?.name || 
+            const propertyName = String(pv.Property?.name || 
                                  pv.Property?.Name || 
                                  pv.properties?.name ||
                                  pv.properties?.Name ||
                                  pv.propertyid || 
-                                 '').toLowerCase();
+                                 '').trim().toLowerCase();
             const propertyValue = pv.value || pv.Value || '';
             
             if (propertyName && propertyValue) {
@@ -396,34 +396,37 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ isOpen, onClose, produc
                           const isLow = optionStatus === 'low_stock';
 
                           return (
-                    <button
-                            key={value}
-                            type="button"
-                            onClick={() => handleOptionChange(propertyName, value as string)}
-                            className="py-2.5 px-2 border rounded-xl text-xs font-medium transition flex flex-col items-center"
-                            style={{
-                              borderColor:
-                                selectedOptions[propertyName] === value
-                                  ? theme.colors.primary
-                                  : isOut
-                                    ? '#fecaca'
-                                    : isLow
-                                      ? '#fcd34d'
-                                      : theme.colors.border,
-                              backgroundColor:
-                                selectedOptions[propertyName] === value
-                                  ? theme.colors.secondary
-                                  : 'transparent',
-                              color:
-                                selectedOptions[propertyName] === value
-                                  ? theme.colors.text
-                                  : isOut
-                                    ? '#dc2626'
-                                    : isLow
-                                      ? '#b45309'
-                                      : theme.colors.text,
-                            }}
-                          >
+                            <button
+                             key={value}
+                             type="button"
+                             disabled={isOut}
+                             onClick={() => !isOut && handleOptionChange(propertyName, value as string)}
+                             className={`py-2.5 px-2 border rounded-xl text-xs font-medium transition flex flex-col items-center ${
+                               isOut ? 'opacity-50 cursor-not-allowed line-through' : 'cursor-pointer hover:scale-102'
+                             }`}
+                             style={{
+                               borderColor:
+                                 selectedOptions[propertyName] === value
+                                   ? theme.colors.primary
+                                   : isOut
+                                     ? '#fecaca'
+                                     : isLow
+                                       ? '#fcd34d'
+                                       : theme.colors.border,
+                               backgroundColor:
+                                 selectedOptions[propertyName] === value
+                                   ? theme.colors.secondary
+                                   : 'transparent',
+                               color:
+                                 selectedOptions[propertyName] === value
+                                   ? theme.colors.text
+                                   : isOut
+                                     ? '#dc2626'
+                                     : isLow
+                                       ? '#b45309'
+                                       : theme.colors.text,
+                             }}
+                           >
                             <span>{value}</span>
                             {optionStatus !== 'untracked' && (
                               <span className="text-[10px] mt-0.5 font-normal">

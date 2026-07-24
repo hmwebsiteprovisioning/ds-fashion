@@ -27,11 +27,9 @@ const COLOR_KEYS = ['color', 'colour', 'цвят', 'Color', 'Colour', 'Цвят'
 const SIZE_KEYS = ['size', 'размер', 'Size', 'Размер'];
 
 function getPropertyValue(props: Record<string, string>, keys: string[]): string {
-  for (const key of keys) {
-    if (props[key]) return props[key];
-  }
+  const normalizedKeys = keys.map((k) => k.trim().toLowerCase());
   for (const [k, v] of Object.entries(props)) {
-    if (keys.some((key) => k.toLowerCase() === key.toLowerCase())) return v;
+    if (normalizedKeys.includes(k.trim().toLowerCase())) return v;
   }
   return '';
 }
@@ -54,7 +52,7 @@ function variantProperties(variant: any): Record<string, string> {
       '';
     const propValue = pv.value || pv.Value || '';
     if (propName && propValue) {
-      acc[propName] = propValue;
+      acc[propName.trim()] = propValue;
     }
   });
   return acc;
@@ -94,9 +92,10 @@ export function toStorefrontProduct(apiProduct: any): StorefrontProduct {
     const props = variantProperties(variant);
 
     Object.entries(props).forEach(([name, value]) => {
-      const key = name.toLowerCase();
+      const trimmedName = name.trim();
+      const key = trimmedName.toLowerCase();
       if (!optionsMap[key]) {
-        optionsMap[key] = { originalName: name, values: new Set() };
+        optionsMap[key] = { originalName: trimmedName, values: new Set() };
       }
       optionsMap[key].values.add(value);
     });
