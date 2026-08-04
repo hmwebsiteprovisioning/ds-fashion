@@ -38,3 +38,11 @@ next-env.d.ts
 
 
 certificates
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

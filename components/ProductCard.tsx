@@ -43,19 +43,58 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const sizes: string[] = Array.isArray(p.sizes) ? p.sizes as string[] : [];
   const isNew = !!(p.isNew ?? p.isnew);
   const colorImagesMap = (p.colorImages || {}) as Record<string, string[]>;
+  const rawVariants = (p.rawVariants || p.variants || p.Variants || []) as any[];
 
   // Selected color image resolution
   const activeColorKey = selectedColor ? selectedColor.trim().toLowerCase() : '';
-  const colorVariantImgs = activeColorKey && colorImagesMap[activeColorKey] && colorImagesMap[activeColorKey].length > 0
-    ? colorImagesMap[activeColorKey]
-    : null;
+
+  // Primary: use pre-built colorImages map
+  const colorVariantImgs: string[] | null = (() => {
+    if (!activeColorKey) return null;
+    // Check colorImagesMap first
+    if (colorImagesMap[activeColorKey] && colorImagesMap[activeColorKey].length > 0) {
+      return colorImagesMap[activeColorKey];
+    }
+    // Fallback: search rawVariants directly for a variant whose colour matches
+    if (rawVariants.length > 0) {
+      const COLOR_PROP_NAMES = ['color', 'colour', 'цвят'];
+      for (const v of rawVariants) {
+        if (v.isvisible === false) continue;
+        const pvs = (
+          v.ProductVariantPropertyvalues ||
+          v.ProductVariantPropertyValues ||
+          v.product_variant_property_values ||
+          v.productVariantPropertyvalues ||
+          []
+        ) as any[];
+        const colorMatch = pvs.some((pv: any) => {
+          const propName = String(
+            pv.Property?.name || pv.Property?.Name ||
+            pv.properties?.name || pv.properties?.Name ||
+            pv.propertyid || ''
+          ).trim().toLowerCase();
+          const val = String(pv.value || pv.Value || '').trim().toLowerCase();
+          return COLOR_PROP_NAMES.includes(propName) && val === activeColorKey;
+        });
+        if (colorMatch) {
+          const imgs: string[] = Array.isArray(v.images) && v.images.length > 0
+            ? v.images
+            : v.imageurl
+            ? [v.imageurl]
+            : [];
+          if (imgs.length > 0) return imgs;
+        }
+      }
+    }
+    return null;
+  })();
 
   const mainCardImage = colorVariantImgs ? colorVariantImgs[0] : rawImages[0];
-  const secondaryCardImage = colorVariantImgs && colorVariantImgs[1]
-    ? colorVariantImgs[1]
-    : rawImages[1] || null;
-
-  const rawVariants = (p.rawVariants || p.variants || p.Variants || []) as any[];
+  // When a colour is selected: only use that colour's second variant image as the hover swap.
+  // Never fall back to rawImages[1] — that would appear on top and visually "undo" the colour change.
+  const secondaryCardImage = colorVariantImgs
+    ? (colorVariantImgs[1] || null)
+    : (rawImages[1] || null);
 
   const isSizeAvailable = (size: string, colorName: string | null): boolean => {
     if (!Array.isArray(rawVariants) || rawVariants.length === 0) return true;
