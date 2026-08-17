@@ -31,9 +31,11 @@ function translateError(error: string): string {
     'insufficient stock': 'Недостатъчно количество в наличност. Някои артикули в количката ви вече не са налични.',
     'failed to place order': 'Неуспешно изпращане на поръчката. Моля, опитайте отново.',
     'stripe payment initialization failed': 'Неуспешно инициализиране на плащането със Stripe. Моля, опитайте отново.',
+    'mypos payment initialization failed': 'Неуспешно инициализиране на плащането с myPOS. Моля, опитайте отново.',
     'failed to process order': 'Неуспешно обработване на поръчката. Моля, опитайте отново.',
     'internal server error': 'Вътрешна грешка на сървъра. Моля, опитайте отново по-късно.',
     'stripe payments are not configured': 'Плащанията със Stripe не са конфигурирани на този сървър.',
+    'mypos payments are not configured': 'Плащанията с карта (myPOS) не са конфигурирани на този сървър.',
     'missing required order details': 'Липсват задължителни данни за поръчката.',
     'failed to validate stock': 'Неуспешно валидиране на наличността на артикулите.',
     'network error': 'Грешка в мрежата. Моля, проверете връзката си и опитайте отново.',
@@ -328,7 +330,7 @@ export default function CheckoutPage() {
           setErrorMsg(translateError(data.error || 'failed to place order'));
         }
       } else if (payment === 'card') {
-        // Card Online via Stripe Checkout
+        // Card Online via myPOS Hosted Checkout
         const cardOrderData = {
           ...orderData,
           paymentMethod: 'card_online'
@@ -341,11 +343,30 @@ export default function CheckoutPage() {
         });
 
         const data = await response.json();
-        if (data.success && data.data?.url) {
+        if (data.success && data.data?.formUrl && data.data?.formData) {
           clearCart(); // Clear cart before redirecting
+          
+          // Create and auto-submit hidden form to myPOS checkout endpoint
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = data.data.formUrl;
+          form.style.display = 'none';
+
+          Object.entries(data.data.formData).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = String(value);
+            form.appendChild(input);
+          });
+
+          document.body.appendChild(form);
+          form.submit();
+        } else if (data.success && data.data?.url) {
+          clearCart();
           window.location.href = data.data.url;
         } else {
-          setErrorMsg(translateError(data.error || 'stripe payment initialization failed'));
+          setErrorMsg(translateError(data.error || 'mypos payment initialization failed'));
         }
       } else {
         setErrorMsg('Избраният метод на плащане не е поддържан в момента.');

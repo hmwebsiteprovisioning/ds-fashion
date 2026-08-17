@@ -191,7 +191,7 @@ export default function CartPage() {
                   {/* Trust row */}
                   <div className="space-y-3 pt-6 border-t border-[#f0ebe3]">
                     {[
-                      { Icon: Truck, text: `Безплатна доставка над ${freeThreshold} лв.` },
+                      { Icon: Truck, text: `Безплатна доставка над ${freeThreshold} EUR.` },
                       { Icon: Shield, text: 'Сигурно плащане 100% защита' },
                       { Icon: RotateCcw, text: 'Лесно връщане до 14 дни' },
                     ].map(({ Icon, text }) => (

@@ -47,13 +47,13 @@ const ReturnIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function TrustBar() {
   const { settings } = useStoreSettings();
-  const freeThreshold = settings?.free_delivery_threshold ?? 100;
+  const freeThreshold = settings?.free_delivery_threshold ?? 50;
   
   const ITEMS = [
-    { icon: TruckIcon, title: 'БЕЗПЛАТНА ДОСТАВКА', sub: `над ${freeThreshold} лв.` },
+    { icon: TruckIcon, title: 'БЕЗПЛАТНА ДОСТАВКА', sub: `над ${freeThreshold} EUR.` },
     { icon: ShieldIcon, title: 'СИГУРНО ПЛАЩАНЕ', sub: '100% защита' },
     { icon: ReturnIcon, title: 'ЛЕСНО ВРЪЩАНЕ', sub: 'до 14 дни' },
-    { icon: SupportIcon, title: 'ПОДДРЪЖКА НА КЛИЕНТИ', sub: settings?.telephonenumber || '0899 123 456' },
+    { icon: SupportIcon, title: 'ПОДДРЪЖКА НА КЛИЕНТИ', sub: settings?.telephonenumber || '0878918189' },
   ];
 
   return (

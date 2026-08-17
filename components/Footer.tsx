@@ -143,12 +143,15 @@ export default function Footer() {
                   {settings.telephonenumber}
                 </a>
               ) : (
-                <span className="text-[12px] text-ds-text-secondary flex items-center gap-2">
+                <a
+                  href="tel:0878918189"
+                  className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-2"
+                >
                   <Phone size={13} className="text-ds-text shrink-0" />
-                  0899 123 456
-                </span>
+                  0878918189
+                </a>
               )}
-              {settings?.email && (
+              {settings?.email ? (
                 <a
                   href={`mailto:${settings.email}`}
                   className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-2"
@@ -156,10 +159,18 @@ export default function Footer() {
                   <Mail size={13} className="text-ds-text shrink-0" />
                   {settings.email}
                 </a>
+              ) : (
+                <a
+                  href="mailto:osdjan01@abv.bg"
+                  className="text-[12px] text-ds-text-secondary hover:text-ds-gold transition-colors flex items-center gap-2"
+                >
+                  <Mail size={13} className="text-ds-text shrink-0" />
+                  osdjan01@abv.bg
+                </a>
               )}
               <span className="text-[12px] text-ds-text-secondary flex items-center gap-2">
                 <MapPin size={13} className="text-ds-text shrink-0" />
-                София, България
+                Ловеч, България
               </span>
             </div>
           </AccordionSection>

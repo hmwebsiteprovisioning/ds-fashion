@@ -29,15 +29,15 @@ export default function Banner() {
   const [fade, setFade] = useState(true);
 
   const defaultItems = language === 'bg' ? [
-    'Безплатна доставка над 100 лв.',
+    'Безплатна доставка над 50 EUR.',
     'Сигурно плащане 100% защита',
     'Лесно връщане до 14 дни',
-    'Поддръжка на клиенти 0899 123 456789'
+    'Поддръжка на клиенти 0878918189'
   ] : [
-    'Free delivery over 100 BGN',
+    'Free delivery over 50 EUR.',
     'Secure payment 100% protection',
     'Easy return up to 14 days',
-    'Customer support 0899 123 456789'
+    'Customer support 0878918189'
   ];
 
   const rawText = settings?.bannertext;

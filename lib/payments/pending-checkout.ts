@@ -6,7 +6,7 @@ export type PendingCheckoutStatus = 'pending' | 'completed' | 'expired';
 
 export interface PendingCheckoutRecord {
   id: string;
-  stripeSessionId: string | null;
+  sessionId: string | null;
   payload: OrderData;
   status: PendingCheckoutStatus;
   orderId: string | null;
@@ -24,7 +24,7 @@ export async function createPendingCheckout(
   const id = randomUUID();
   const record: PendingCheckoutRecord = {
     id,
-    stripeSessionId: null,
+    sessionId: id,
     payload,
     status: 'pending',
     orderId: null,
@@ -34,6 +34,7 @@ export async function createPendingCheckout(
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('pending_checkouts').insert({
       id,
+      stripe_session_id: id,
       payload,
       status: 'pending',
     });
@@ -49,19 +50,19 @@ export async function createPendingCheckout(
   return record;
 }
 
-export async function attachStripeSessionToPendingCheckout(
+export async function attachSessionToPendingCheckout(
   pendingCheckoutId: string,
-  stripeSessionId: string
+  sessionId: string
 ): Promise<void> {
   if (isSupabaseConfigured) {
     const supabase = getSupabaseAdmin();
     const { error } = await supabase
       .from('pending_checkouts')
-      .update({ stripe_session_id: stripeSessionId })
+      .update({ stripe_session_id: sessionId })
       .eq('id', pendingCheckoutId);
 
     if (error) {
-      console.error('Failed to attach Stripe session to pending checkout:', error.message);
+      console.error('Failed to attach session to pending checkout:', error.message);
       throw new Error(`Database error: ${error.message}`);
     }
     return;
@@ -69,10 +70,13 @@ export async function attachStripeSessionToPendingCheckout(
 
   const record = memoryPending.get(pendingCheckoutId);
   if (record) {
-    record.stripeSessionId = stripeSessionId;
+    record.sessionId = sessionId;
     memoryPending.set(pendingCheckoutId, record);
   }
 }
+
+// Backwards compatibility alias
+export const attachStripeSessionToPendingCheckout = attachSessionToPendingCheckout;
 
 export async function getPendingCheckoutById(
   id: string
@@ -89,7 +93,7 @@ export async function getPendingCheckoutById(
 
     return {
       id: data.id,
-      stripeSessionId: data.stripe_session_id,
+      sessionId: data.stripe_session_id,
       payload: data.payload as unknown as OrderData,
       status: data.status as PendingCheckoutStatus,
       orderId: data.order_id,
@@ -99,22 +103,22 @@ export async function getPendingCheckoutById(
   return memoryPending.get(id) ?? null;
 }
 
-export async function getPendingCheckoutByStripeSession(
-  stripeSessionId: string
+export async function getPendingCheckoutBySessionId(
+  sessionId: string
 ): Promise<PendingCheckoutRecord | null> {
   if (isSupabaseConfigured) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('pending_checkouts')
       .select('id, stripe_session_id, payload, status, order_id')
-      .eq('stripe_session_id', stripeSessionId)
+      .or(`stripe_session_id.eq.${sessionId},id.eq.${sessionId}`)
       .maybeSingle();
 
     if (error || !data) return null;
 
     return {
       id: data.id,
-      stripeSessionId: data.stripe_session_id,
+      sessionId: data.stripe_session_id,
       payload: data.payload as unknown as OrderData,
       status: data.status as PendingCheckoutStatus,
       orderId: data.order_id,
@@ -122,12 +126,15 @@ export async function getPendingCheckoutByStripeSession(
   }
 
   for (const record of memoryPending.values()) {
-    if (record.stripeSessionId === stripeSessionId) {
+    if (record.sessionId === sessionId || record.id === sessionId) {
       return record;
     }
   }
   return null;
 }
+
+// Backwards compatibility alias
+export const getPendingCheckoutByStripeSession = getPendingCheckoutBySessionId;
 
 export async function markPendingCheckoutCompleted(
   pendingCheckoutId: string,
@@ -150,22 +157,22 @@ export async function markPendingCheckoutCompleted(
   }
 }
 
-export async function getOrderByStripeSessionId(
-  stripeSessionId: string
+export async function getOrderBySessionId(
+  sessionId: string
 ): Promise<{ orderId: string; orderNumber: string } | null> {
   if (!isSupabaseConfigured) return null;
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('orders')
-    .select('orderid, orderid') // Wait! In public.orders table schema, the primary key column name is "orderid"!
-    // Let's verify: Yes, in schema.txt: orderid text NOT NULL, and primary key (orderid).
-    // So the column names are: "orderid" (order ID) and we also return it as orderNumber.
-    // Wait, let's select "orderid"!
-    .eq('stripe_checkout_session_id', stripeSessionId)
+    .select('orderid')
+    .eq('stripe_checkout_session_id', sessionId)
     .maybeSingle();
 
   if (error || !data) return null;
 
   return { orderId: data.orderid, orderNumber: data.orderid };
 }
+
+// Backwards compatibility alias
+export const getOrderByStripeSessionId = getOrderBySessionId;

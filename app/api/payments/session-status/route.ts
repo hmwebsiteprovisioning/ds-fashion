@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fulfillStripeCheckout } from '@/lib/payments/fulfill-stripe-checkout';
-import { getOrderByStripeSessionId } from '@/lib/payments/pending-checkout';
-import { getStripeClient } from '@/lib/payments/stripe-client';
-import { isStripeConfigured } from '@/lib/payments/stripe-config';
+import { getOrderBySessionId, getPendingCheckoutById } from '@/lib/payments/pending-checkout';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,13 +9,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: 'session_id is required' }, { status: 400 });
   }
 
-  if (!isStripeConfigured()) {
-    return NextResponse.json({ success: false, error: 'Stripe payments are not configured' }, { status: 503 });
-  }
-
   try {
-    // 1. Return immediately if order already generated in database (optimization)
-    const existing = await getOrderByStripeSessionId(sessionId);
+    // 1. Check if order was already generated in database
+    const existing = await getOrderBySessionId(sessionId);
     if (existing) {
       return NextResponse.json({
         success: true,
@@ -31,41 +24,35 @@ export async function GET(request: Request) {
       });
     }
 
-    const stripe = getStripeClient();
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    // 2. Fulfill order on user landing page checks (redundancy fallback for webhooks)
-    if (session.payment_status === 'paid') {
-      const fulfilled = await fulfillStripeCheckout(
-        sessionId,
-        session.metadata?.pendingCheckoutId
-      );
-
-      if (fulfilled) {
+    // 2. Check pending checkout state
+    const pending = await getPendingCheckoutById(sessionId);
+    if (pending) {
+      if (pending.status === 'completed' && pending.orderId) {
         return NextResponse.json({
           success: true,
           data: {
             status: 'complete',
-            orderNumber: fulfilled.orderNumber,
-            orderId: fulfilled.orderId,
+            orderNumber: pending.orderId,
+            orderId: pending.orderId,
             paid: true,
           },
         });
       }
-    }
 
-    if (session.status === 'expired') {
       return NextResponse.json({
         success: true,
-        data: { status: 'expired', paid: false },
+        data: {
+          status: 'pending',
+          paid: false,
+        },
       });
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        status: session.payment_status === 'unpaid' ? 'pending' : session.status,
-        paid: session.payment_status === 'paid',
+        status: 'pending',
+        paid: false,
       },
     });
   } catch (err) {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { formatPrice } from '@/lib/price-formatter';
 import type { StorefrontProduct } from '@/lib/storefront-products';
 
 interface HomeHeroProps {
@@ -254,9 +255,11 @@ export default function HomeHero({ products = [], isLoading = false }: HomeHeroP
                 {activeProduct.name}
               </h3>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-white font-semibold text-[15px]">{activeProduct.price.toFixed(2)} лв.</span>
+                {formatPrice(activeProduct.price, 'text-white font-semibold text-[15px]', 'text-white/70 text-xs')}
                 {activeProduct.compareAtPrice && (
-                  <span className="text-white/50 line-through text-xs">{activeProduct.compareAtPrice.toFixed(2)} лв.</span>
+                  <span className="opacity-60">
+                    {formatPrice(activeProduct.compareAtPrice, 'line-through text-white/50 text-xs', 'line-through text-white/40 text-[10px]')}
+                  </span>
                 )}
               </div>
               <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
