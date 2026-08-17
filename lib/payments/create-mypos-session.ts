@@ -34,7 +34,7 @@ export async function createMyposCheckoutSession(
   let itemIndex = 1;
 
   for (const item of input.items) {
-    const itemName = item.name || (locale === 'bg' ? `Артикул ${itemIndex}` : `Item ${itemIndex}`);
+    const itemName = (item as any).name || (locale === 'bg' ? `Артикул ${itemIndex}` : `Item ${itemIndex}`);
     const itemPrice = Number(item.price || 0);
     const itemQty = Number(item.quantity || 1);
     const itemTotal = (itemPrice * itemQty).toFixed(2);
@@ -87,10 +87,10 @@ export async function createMyposCheckoutSession(
     Customer_Email: input.customer.email?.trim() || '',
     Customer_First_Name: input.customer.firstName?.trim() || '',
     Customer_Last_Name: input.customer.lastName?.trim() || '',
-    Customer_Phone: input.customer.phone?.trim() || '',
+    Customer_Phone: input.customer.telephone?.trim() || (input.customer as any).phone?.trim() || '',
     Customer_Country: 'BGR',
     Customer_City: input.customer.city?.trim() || '',
-    Customer_Address: input.delivery.street?.trim() || input.delivery.city?.trim() || '',
+    Customer_Address: input.delivery.street?.trim() || input.customer.city?.trim() || '',
     CartItems: totalCartItems,
     ...articles,
   };
