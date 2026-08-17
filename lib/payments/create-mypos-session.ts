@@ -44,7 +44,7 @@ export async function createMyposCheckoutSession(
 
   const totalAmount = Number(input.totals.total).toFixed(2);
 
-  // 3. Build cart items for IPC Purchase
+  // 3. Build cart items for IPC Purchase exactly matching the official SDK
   const articles: Record<string, string | number> = {};
   let itemIndex = 1;
 
@@ -58,6 +58,7 @@ export async function createMyposCheckoutSession(
     articles[`Quantity_${itemIndex}`] = itemQty;
     articles[`Price_${itemIndex}`] = itemPrice.toFixed(2);
     articles[`Amount_${itemIndex}`] = itemTotal;
+    articles[`Currency_${itemIndex}`] = config.currency;
     itemIndex++;
   }
 
@@ -67,6 +68,7 @@ export async function createMyposCheckoutSession(
     articles[`Quantity_${itemIndex}`] = 1;
     articles[`Price_${itemIndex}`] = Number(input.totals.delivery).toFixed(2);
     articles[`Amount_${itemIndex}`] = Number(input.totals.delivery).toFixed(2);
+    articles[`Currency_${itemIndex}`] = config.currency;
     itemIndex++;
   }
 
@@ -78,8 +80,7 @@ export async function createMyposCheckoutSession(
     itemsSum += Number(articles[`Amount_${i}`]) || 0;
   }
 
-  // 4. Construct IPCPurchase payload (Order of fields is maintained for standard compliance)
-  // If items sum does not equal totalAmount (e.g. Due to discounts), collapse to single line item so sum(articles) === Amount
+  // If items sum does not equal totalAmount (e.g. due to discount coupon), collapse to clean single line item
   const finalCartParams: Record<string, string | number> = {};
   if (Math.abs(itemsSum - Number(totalAmount)) > 0.01) {
     finalCartParams.CartItems = 1;
@@ -87,12 +88,14 @@ export async function createMyposCheckoutSession(
     finalCartParams.Quantity_1 = 1;
     finalCartParams.Price_1 = totalAmount;
     finalCartParams.Amount_1 = totalAmount;
+    finalCartParams.Currency_1 = config.currency;
   } else {
     finalCartParams.CartItems = totalCartItems;
     Object.assign(finalCartParams, articles);
   }
 
-  const rawParams: Record<string, string | number | undefined> = {
+  // 4. Construct IPCPurchase payload following official myPOS PHP SDK sequence
+  const params: Record<string, string | number> = {
     IPCmethod: 'IPCPurchase',
     IPCVersion: '1.4',
     IPCLanguage: locale === 'bg' ? 'BG' : 'EN',
@@ -105,51 +108,40 @@ export async function createMyposCheckoutSession(
     URL_OK: urlOk,
     URL_Cancel: urlCancel,
     URL_Notify: urlNotify,
-    Card_Token_Request: 0,
-    Payment_Parameters_Required: 1,
+
+    // Customer fields (lowercase per official SDK)
+    customeremail: input.customer.email?.trim() || '',
+    customerphone: input.customer.telephone?.trim() || (input.customer as any).phone?.trim() || '',
+    customerfirstnames: input.customer.firstName?.trim() || '',
+    customerfamilyname: input.customer.lastName?.trim() || '',
+    customercountry: 'BGR',
+    customercity: input.customer.city?.trim() || '',
+    customerzipcode: '',
+    customeraddress: input.delivery.street?.trim() || input.customer.city?.trim() || '',
+
+    // Cart Items
     ...finalCartParams,
+
+    // Payment configuration parameters (exact casing per official SDK)
+    CardTokenRequest: 0,
+    PaymentParametersRequired: 2,
+    PaymentMethod: 1,
   };
 
-  // Only include optional customer parameters if they are non-empty
-  const customerEmail = input.customer.email?.trim();
-  if (customerEmail) rawParams.Customer_Email = customerEmail;
-
-  const firstName = input.customer.firstName?.trim();
-  if (firstName) rawParams.Customer_First_Name = firstName;
-
-  const lastName = input.customer.lastName?.trim();
-  if (lastName) rawParams.Customer_Last_Name = lastName;
-
-  const phone = input.customer.telephone?.trim() || (input.customer as any).phone?.trim();
-  if (phone) rawParams.Customer_Phone = phone;
-
-  const city = input.customer.city?.trim();
-  if (city) {
-    rawParams.Customer_City = city;
-    rawParams.Customer_Country = 'BGR';
-  }
-
-  const address = input.delivery.street?.trim() || city;
-  if (address) rawParams.Customer_Address = address;
-
-  // Filter out any undefined keys
-  const params: Record<string, string | number> = {};
-  for (const [k, v] of Object.entries(rawParams)) {
-    if (v !== undefined && v !== null && String(v).trim() !== '') {
-      params[k] = v;
-    }
-  }
-
-  console.log('🚀 [myPOS] Creating checkout session:', {
-    SID: config.storeId,
-    WalletNumber: config.clientNumber,
-    KeyIndex: config.keyIndex,
-    Currency: config.currency,
-    Amount: totalAmount,
-    Environment: config.environment,
-    URL_Notify: urlNotify,
-    URL_OK: urlOk,
-    OrderID: pending.id,
+  console.log('🚀 [myPOS] Generated official checkout session payload:', {
+    IPCmethod: params.IPCmethod,
+    SID: params.SID,
+    WalletNumber: params.WalletNumber,
+    KeyIndex: params.KeyIndex,
+    Currency: params.Currency,
+    Amount: params.Amount,
+    OrderID: params.OrderID,
+    URL_Notify: params.URL_Notify,
+    URL_OK: params.URL_OK,
+    CartItems: params.CartItems,
+    CardTokenRequest: params.CardTokenRequest,
+    PaymentParametersRequired: params.PaymentParametersRequired,
+    PaymentMethod: params.PaymentMethod,
   });
 
   // 5. Sign the payload using RSA Private Key

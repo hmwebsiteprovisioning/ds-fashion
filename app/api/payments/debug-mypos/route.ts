@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import nodeCrypto from 'crypto';
 import { getMyposConfig } from '@/lib/payments/mypos-config';
 import { signMyposData, verifyMyposSignature, getMyposCheckoutUrl } from '@/lib/payments/mypos-client';
 
@@ -51,15 +52,16 @@ export async function GET(request: Request) {
     signError = err instanceof Error ? err.message : String(err);
   }
 
-  // Test certificate verification if provided
-  let verifySuccess: boolean | null = null;
-  let verifyError: string | null = null;
+  // Test certificate parsing
+  let certValid = false;
+  let certError: string | null = null;
 
-  if (config.publicCertificate && testSignature) {
+  if (config.publicCertificate) {
     try {
-      verifySuccess = verifyMyposSignature(testPayload, testSignature, config.publicCertificate);
+      const cryptoKey = nodeCrypto.createPublicKey(config.publicCertificate);
+      certValid = !!cryptoKey;
     } catch (err) {
-      verifyError = err instanceof Error ? err.message : String(err);
+      certError = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -77,8 +79,8 @@ export async function GET(request: Request) {
       privateKeyLength: config.privateKey.length,
       publicCertConfigured: !!config.publicCertificate,
       publicCertLength: config.publicCertificate?.length || 0,
-      rsaSigningTest: signSuccess ? 'PASSED' : `FAILED: ${signError}`,
-      rsaVerifyTest: verifySuccess !== null ? (verifySuccess ? 'PASSED' : 'FAILED (Signature did not match public cert)') : 'NOT TESTED (Cert not provided)',
+      merchantKeySigning: signSuccess ? 'PASSED (Valid RSA Key)' : `FAILED: ${signError}`,
+      myposCertificateValidation: config.publicCertificate ? (certValid ? 'PASSED (Valid Certificate)' : `FAILED: ${certError}`) : 'NOT PROVIDED',
       detectedBaseUrl: detectedUrl,
       expectedNotifyWebhook: `${detectedUrl}/api/webhooks/mypos`,
       expectedSuccessReturn: `${detectedUrl}/checkout/success?session_id=...`,
