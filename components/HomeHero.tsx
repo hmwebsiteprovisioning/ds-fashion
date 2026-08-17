@@ -124,26 +124,60 @@ export default function HomeHero({ products = [], isLoading = false }: HomeHeroP
 
   return (
     <section className="relative overflow-hidden w-full h-[85dvh] min-h-[580px] bg-black text-white">
-      {/* Background Images - Portrait for Mobile, Landscape for Desktop */}
+      {/* Background Images - Portrait for Mobile, Landscape/Fitted-Portrait for Desktop */}
       <div className="absolute inset-0 w-full h-full">
         {/* Mobile View Background */}
         <div className="block md:hidden w-full h-full relative">
           <img
             src={activeProduct.hero_portrait_imageurl || activeProduct.images[0]}
             alt={activeProduct.name}
-            className="w-full h-full object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
-        </div>
-        {/* Desktop View Background */}
-        <div className="hidden md:block w-full h-full relative">
-          <img
-            src={activeProduct.hero_landscape_imageurl || activeProduct.images[0]}
-            alt={activeProduct.name}
             className="w-full h-full object-cover opacity-85"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/75" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40" />
+        </div>
+        {/* Desktop View Background */}
+        <div className="hidden md:block w-full h-full relative bg-[#0d0b09]">
+          {activeProduct.hero_landscape_imageurl?.trim() ? (
+            <>
+              <img
+                src={activeProduct.hero_landscape_imageurl.trim()}
+                alt={activeProduct.name}
+                className="w-full h-full object-cover opacity-85"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/75" />
+              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
+            </>
+          ) : (
+            <>
+              {/* Subtle ambient blurred backdrop matching model colors */}
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={activeProduct.hero_portrait_imageurl || activeProduct.images[0]}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-full h-full object-cover blur-3xl opacity-30 scale-125 pointer-events-none"
+                />
+              </div>
+
+              {/* Centered fitted portrait model image */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <img
+                  src={activeProduct.hero_portrait_imageurl || activeProduct.images[0]}
+                  alt={activeProduct.name}
+                  className="h-full w-auto max-w-full object-contain mx-auto transition-transform duration-700 ease-out"
+                />
+              </div>
+
+              {/* Lateral gradients on the sides to look completely flush */}
+              <div className="absolute inset-y-0 left-0 w-2/5 max-w-2xl bg-gradient-to-r from-black via-black/85 via-45% to-transparent pointer-events-none" />
+              <div className="absolute inset-y-0 right-0 w-2/5 max-w-2xl bg-gradient-to-l from-black via-black/85 via-45% to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-black/70 pointer-events-none" />
+
+              {/* Bottom & Top Gradients for seamless header/footer integration */}
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/75 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/70 to-transparent pointer-events-none" />
+            </>
+          )}
         </div>
       </div>
 

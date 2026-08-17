@@ -399,9 +399,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (isfeatured) {
-      if (!hero_portrait_imageurl?.trim() || !hero_landscape_imageurl?.trim()) {
+      if (!hero_portrait_imageurl?.trim()) {
         return NextResponse.json(
-          { error: 'Featured products require both portrait and landscape images.' },
+          { error: 'Featured products require at least a portrait image.' },
           { status: 400 }
         );
       }

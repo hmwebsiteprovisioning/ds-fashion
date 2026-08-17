@@ -473,10 +473,10 @@ export default function ProductsPage() {
     e.preventDefault();
 
     if (formData.isfeatured) {
-      if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
+      if (!formData.hero_portrait_imageurl?.trim()) {
         alert(language === 'bg'
-          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.'
-          : 'Featured products require both a portrait and a landscape image for the Hero section.');
+          ? 'Избраните продукти изискват вертикална (portrait) снимка за Hero секцията.'
+          : 'Featured products require a portrait image for the Hero section.');
         return;
       }
     }
@@ -1619,7 +1619,7 @@ export default function ProductsPage() {
                       <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
                         {language === 'bg' ? 'Вертикално изображение (Телефон)' : 'Portrait Image (Hero)'} <span className="text-red-500">*</span>
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openMediaModalForHero('portrait')}
@@ -1627,19 +1627,37 @@ export default function ProductsPage() {
                         >
                           {language === 'bg' ? 'Избери от медия' : 'Select from media'}
                         </button>
+                        {formData.hero_portrait_imageurl && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, hero_portrait_imageurl: '' }))}
+                            className="inline-flex items-center gap-1 px-2.5 py-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-md transition-colors"
+                          >
+                            <X size={14} />
+                            {language === 'bg' ? 'Премахни' : 'Remove'}
+                          </button>
+                        )}
                       </div>
                       {formData.hero_portrait_imageurl && (
-                        <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
+                        <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50 group">
                           <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, hero_portrait_imageurl: '' }))}
+                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition-colors shadow-sm"
+                            title={language === 'bg' ? 'Премахни изображението' : 'Remove image'}
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       )}
                     </div>
 
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5">
-                        {language === 'bg' ? 'Хоризонтално изображение (Компютър)' : 'Landscape Image (Hero)'} <span className="text-red-500">*</span>
+                        {language === 'bg' ? 'Хоризонтално изображение (Компютър - по избор)' : 'Landscape Image (Hero - optional)'}
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openMediaModalForHero('landscape')}
@@ -1647,10 +1665,28 @@ export default function ProductsPage() {
                         >
                           {language === 'bg' ? 'Избери от медия' : 'Select from media'}
                         </button>
+                        {formData.hero_landscape_imageurl && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, hero_landscape_imageurl: '' }))}
+                            className="inline-flex items-center gap-1 px-2.5 py-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-md transition-colors"
+                          >
+                            <X size={14} />
+                            {language === 'bg' ? 'Премахни' : 'Remove'}
+                          </button>
+                        )}
                       </div>
                       {formData.hero_landscape_imageurl && (
-                        <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
+                        <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50 group">
                           <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, hero_landscape_imageurl: '' }))}
+                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition-colors shadow-sm"
+                            title={language === 'bg' ? 'Премахни изображението' : 'Remove image'}
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       )}
                     </div>

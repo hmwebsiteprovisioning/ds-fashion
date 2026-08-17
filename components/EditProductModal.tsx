@@ -426,10 +426,10 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
     e.preventDefault();
 
     if (formData.isfeatured) {
-      if (!formData.hero_portrait_imageurl?.trim() || !formData.hero_landscape_imageurl?.trim()) {
+      if (!formData.hero_portrait_imageurl?.trim()) {
         alert(language === 'bg'
-          ? 'Избраните продукти изискват както вертикална (portrait), така и хоризонтална (landscape) снимка за Hero секцията.'
-          : 'Featured products require both a portrait and a landscape image for the Hero section.');
+          ? 'Избраните продукти изискват вертикална (portrait) снимка за Hero секцията.'
+          : 'Featured products require a portrait image for the Hero section.');
         return;
       }
     }
@@ -1329,38 +1329,77 @@ export default function EditProductModal({ product, onClose, onSave }: EditProdu
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
                     {language === 'bg' ? 'Вертикално изображение (Телефон) *' : 'Portrait Image (Phone) *'}
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="https://example.com/portrait.jpg"
-                    value={formData.hero_portrait_imageurl || ''}
-                    onChange={(e) => setFormData({ ...formData, hero_portrait_imageurl: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
-                    style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="https://example.com/portrait.jpg"
+                      value={formData.hero_portrait_imageurl || ''}
+                      onChange={(e) => setFormData({ ...formData, hero_portrait_imageurl: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 pr-9 text-sm outline-none focus:border-primary"
+                      style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
+                    />
+                    {formData.hero_portrait_imageurl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hero_portrait_imageurl: '' })}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                        title={language === 'bg' ? 'Изчисти' : 'Clear'}
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
+                  </div>
                   {formData.hero_portrait_imageurl && (
-                    <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50">
+                    <div className="mt-2 relative w-20 aspect-[3/4] border rounded-md overflow-hidden bg-gray-50 group">
                       <img src={formData.hero_portrait_imageurl} alt="Portrait Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hero_portrait_imageurl: '' })}
+                        className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition-colors shadow-sm"
+                        title={language === 'bg' ? 'Премахни изображението' : 'Remove image'}
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: theme.colors.text }}>
-                    {language === 'bg' ? 'Хоризонтално изображение (Компютър) *' : 'Landscape Image (Hero) *'}
+                    {language === 'bg' ? 'Хоризонтално изображение (Компютър - по избор)' : 'Landscape Image (Hero - optional)'}
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="https://example.com/landscape.jpg"
-                    value={formData.hero_landscape_imageurl || ''}
-                    onChange={(e) => setFormData({ ...formData, hero_landscape_imageurl: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
-                    style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="https://example.com/landscape.jpg"
+                      value={formData.hero_landscape_imageurl || ''}
+                      onChange={(e) => setFormData({ ...formData, hero_landscape_imageurl: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 pr-9 text-sm outline-none focus:border-primary"
+                      style={{ backgroundColor: theme.colors.cardBg, color: theme.colors.text }}
+                    />
+                    {formData.hero_landscape_imageurl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hero_landscape_imageurl: '' })}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                        title={language === 'bg' ? 'Изчисти' : 'Clear'}
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
+                  </div>
                   {formData.hero_landscape_imageurl && (
-                    <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50">
+                    <div className="mt-2 relative w-32 aspect-[16/9] border rounded-md overflow-hidden bg-gray-50 group">
                       <img src={formData.hero_landscape_imageurl} alt="Landscape Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, hero_landscape_imageurl: '' })}
+                        className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-black text-white rounded-full transition-colors shadow-sm"
+                        title={language === 'bg' ? 'Премахни изображението' : 'Remove image'}
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   )}
                 </div>

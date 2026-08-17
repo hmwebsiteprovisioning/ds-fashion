@@ -41,7 +41,7 @@ export default function Home() {
     fetchStorefrontProducts({ isfeatured: true, limit: 20 })
       .then((products) => {
         const filtered = products
-          .filter((p) => p.hero_portrait_imageurl && p.hero_landscape_imageurl)
+          .filter((p) => Boolean(p.hero_portrait_imageurl || p.hero_landscape_imageurl || (p.images && p.images.length > 0)))
           .slice(0, 5);
         setHeroProducts(filtered);
       })
