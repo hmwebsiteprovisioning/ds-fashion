@@ -12,6 +12,11 @@ import type { NextRequest } from 'next/server';
  * to be a future deprecation notice or Turbopack-specific message.
  */
 export function proxy(request: NextRequest) {
+  // Convert any POST return redirects from payment gateways (myPOS) to GET (303 See Other)
+  if (request.method === 'POST' && request.nextUrl.pathname.startsWith('/checkout') && !request.nextUrl.pathname.startsWith('/api')) {
+    return NextResponse.redirect(request.nextUrl, 303);
+  }
+
   const response = NextResponse.next();
 
   // Get IP address

@@ -39,7 +39,7 @@ export async function createMyposCheckoutSession(
   siteUrl = siteUrl.replace(/\/+$/, '');
 
   const urlOk = `${siteUrl}/checkout/success?session_id=${pending.id}`;
-  const urlCancel = `${siteUrl}/checkout?payment=cancelled`;
+  const urlCancel = `${siteUrl}/checkout/cancel?session_id=${pending.id}`;
   const urlNotify = `${siteUrl}/api/webhooks/mypos`;
 
   const totalAmount = Number(input.totals.total).toFixed(2);
