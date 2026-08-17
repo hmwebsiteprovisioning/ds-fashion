@@ -11,7 +11,8 @@ export interface MyposCheckoutSessionResult {
 
 export async function createMyposCheckoutSession(
   input: OrderData,
-  locale: 'bg' | 'en' = 'bg'
+  locale: 'bg' | 'en' = 'bg',
+  customBaseUrl?: string
 ): Promise<MyposCheckoutSessionResult> {
   const config = getMyposConfig();
   if (!config) {
@@ -24,10 +25,24 @@ export async function createMyposCheckoutSession(
   // 2. Create the pending checkout database record
   const pending = await createPendingCheckout(input);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  // Determine public base URL
+  let siteUrl = customBaseUrl || process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl && process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    siteUrl = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  } else if (!siteUrl && process.env.VERCEL_URL) {
+    siteUrl = `https://${process.env.VERCEL_URL}`;
+  }
+  if (!siteUrl) {
+    siteUrl = 'http://localhost:3000';
+  }
+  // Remove trailing slashes
+  siteUrl = siteUrl.replace(/\/+$/, '');
+
   const urlOk = `${siteUrl}/checkout/success?session_id=${pending.id}`;
   const urlCancel = `${siteUrl}/checkout?payment=cancelled`;
   const urlNotify = `${siteUrl}/api/webhooks/mypos`;
+
+  const totalAmount = Number(input.totals.total).toFixed(2);
 
   // 3. Build cart items for IPC Purchase
   const articles: Record<string, string | number> = {};
@@ -55,21 +70,29 @@ export async function createMyposCheckoutSession(
     itemIndex++;
   }
 
-  // Add discount as a line item if greater than 0
-  if (input.discount && input.discount.amount > 0) {
-    articles[`Article_${itemIndex}`] = locale === 'bg' 
-      ? `Отстъпка (${input.discount.code || ''})` 
-      : `Discount (${input.discount.code || ''})`;
-    articles[`Quantity_${itemIndex}`] = 1;
-    articles[`Price_${itemIndex}`] = (-Math.abs(Number(input.discount.amount))).toFixed(2);
-    articles[`Amount_${itemIndex}`] = (-Math.abs(Number(input.discount.amount))).toFixed(2);
-    itemIndex++;
-  }
-
   const totalCartItems = itemIndex - 1;
 
+  // Calculate sum of articles
+  let itemsSum = 0;
+  for (let i = 1; i <= totalCartItems; i++) {
+    itemsSum += Number(articles[`Amount_${i}`]) || 0;
+  }
+
   // 4. Construct IPCPurchase payload (Order of fields is maintained for standard compliance)
-  const params: Record<string, string | number> = {
+  // If items sum does not equal totalAmount (e.g. Due to discounts), collapse to single line item so sum(articles) === Amount
+  const finalCartParams: Record<string, string | number> = {};
+  if (Math.abs(itemsSum - Number(totalAmount)) > 0.01) {
+    finalCartParams.CartItems = 1;
+    finalCartParams.Article_1 = locale === 'bg' ? `Поръчка № ${pending.id.substring(0, 8)}` : `Order #${pending.id.substring(0, 8)}`;
+    finalCartParams.Quantity_1 = 1;
+    finalCartParams.Price_1 = totalAmount;
+    finalCartParams.Amount_1 = totalAmount;
+  } else {
+    finalCartParams.CartItems = totalCartItems;
+    Object.assign(finalCartParams, articles);
+  }
+
+  const rawParams: Record<string, string | number | undefined> = {
     IPCmethod: 'IPCPurchase',
     IPCVersion: '1.4',
     IPCLanguage: locale === 'bg' ? 'BG' : 'EN',
@@ -77,23 +100,57 @@ export async function createMyposCheckoutSession(
     WalletNumber: config.clientNumber,
     KeyIndex: config.keyIndex,
     Currency: config.currency,
-    Amount: Number(input.totals.total).toFixed(2),
+    Amount: totalAmount,
     OrderID: pending.id,
     URL_OK: urlOk,
     URL_Cancel: urlCancel,
     URL_Notify: urlNotify,
     Card_Token_Request: 0,
     Payment_Parameters_Required: 1,
-    Customer_Email: input.customer.email?.trim() || '',
-    Customer_First_Name: input.customer.firstName?.trim() || '',
-    Customer_Last_Name: input.customer.lastName?.trim() || '',
-    Customer_Phone: input.customer.telephone?.trim() || (input.customer as any).phone?.trim() || '',
-    Customer_Country: 'BGR',
-    Customer_City: input.customer.city?.trim() || '',
-    Customer_Address: input.delivery.street?.trim() || input.customer.city?.trim() || '',
-    CartItems: totalCartItems,
-    ...articles,
+    ...finalCartParams,
   };
+
+  // Only include optional customer parameters if they are non-empty
+  const customerEmail = input.customer.email?.trim();
+  if (customerEmail) rawParams.Customer_Email = customerEmail;
+
+  const firstName = input.customer.firstName?.trim();
+  if (firstName) rawParams.Customer_First_Name = firstName;
+
+  const lastName = input.customer.lastName?.trim();
+  if (lastName) rawParams.Customer_Last_Name = lastName;
+
+  const phone = input.customer.telephone?.trim() || (input.customer as any).phone?.trim();
+  if (phone) rawParams.Customer_Phone = phone;
+
+  const city = input.customer.city?.trim();
+  if (city) {
+    rawParams.Customer_City = city;
+    rawParams.Customer_Country = 'BGR';
+  }
+
+  const address = input.delivery.street?.trim() || city;
+  if (address) rawParams.Customer_Address = address;
+
+  // Filter out any undefined keys
+  const params: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(rawParams)) {
+    if (v !== undefined && v !== null && String(v).trim() !== '') {
+      params[k] = v;
+    }
+  }
+
+  console.log('🚀 [myPOS] Creating checkout session:', {
+    SID: config.storeId,
+    WalletNumber: config.clientNumber,
+    KeyIndex: config.keyIndex,
+    Currency: config.currency,
+    Amount: totalAmount,
+    Environment: config.environment,
+    URL_Notify: urlNotify,
+    URL_OK: urlOk,
+    OrderID: pending.id,
+  });
 
   // 5. Sign the payload using RSA Private Key
   const signature = signMyposData(params, config.privateKey);

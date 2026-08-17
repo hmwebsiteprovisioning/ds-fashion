@@ -24,7 +24,24 @@ export async function POST(request: Request) {
 
   try {
     const locale = orderData.customer.country === 'Bulgaria' || orderData.customer.country === 'България' ? 'bg' : 'bg';
-    const result = await createMyposCheckoutSession(orderData, locale);
+
+    // Detect public host / protocol dynamically from incoming request
+    const origin = request.headers.get('origin') || request.headers.get('referer');
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    let detectedUrl: string | undefined;
+    if (origin) {
+      try {
+        detectedUrl = new URL(origin).origin;
+      } catch {
+        detectedUrl = undefined;
+      }
+    }
+    if (!detectedUrl && host) {
+      detectedUrl = `${proto}://${host}`;
+    }
+
+    const result = await createMyposCheckoutSession(orderData, locale, detectedUrl);
     
     return NextResponse.json({
       success: true,
