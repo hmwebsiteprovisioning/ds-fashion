@@ -344,6 +344,12 @@ export default function CheckoutPage() {
 
         const data = await response.json();
         if (data.success && data.data?.formUrl && data.data?.formData) {
+          console.log('🚀 [myPOS Checkout Submission]:', {
+            formUrl: data.data.formUrl,
+            formData: data.data.formData,
+            sessionId: data.data.sessionId,
+          });
+
           clearCart(); // Clear cart before redirecting
           
           // Create and auto-submit hidden form to myPOS checkout endpoint
@@ -366,6 +372,7 @@ export default function CheckoutPage() {
           clearCart();
           window.location.href = data.data.url;
         } else {
+          console.error('❌ [myPOS Checkout Error]:', data);
           setErrorMsg(translateError(data.error || 'mypos payment initialization failed'));
         }
       } else {
