@@ -49,65 +49,45 @@ export async function validateStock(items: OrderData['items']): Promise<{ valid:
 
   for (const item of items) {
     try {
-      const isVariantId = item.id && typeof item.id === 'string' && item.id.length > 10;
-      
-      if (isVariantId) {
-        const variantId = item.id;
-        const { data: variant, error } = await supabase
+      const targetId = String(item.id || '');
+      if (!targetId) continue;
+
+      // 1. Try to find by productvariantid
+      let { data: variant } = await supabase
+        .from('product_variants')
+        .select('productvariantid, quantity, trackquantity, isvisible, productid')
+        .eq('productvariantid', targetId)
+        .maybeSingle();
+
+      // 2. If not found by productvariantid, check if targetId is productid
+      if (!variant) {
+        const { data: variants } = await supabase
           .from('product_variants')
-          .select('quantity, trackquantity, isvisible')
-          .eq('productvariantid', variantId)
-          .single();
+          .select('productvariantid, quantity, trackquantity, isvisible, productid')
+          .eq('productid', targetId)
+          .eq('isdeleted', false);
 
-        if (error || !variant) {
-          // If not found in product_variants, check if it is a valid product ID
-          const { data: product } = await supabase
-            .from('products')
-            .select('productid')
-            .eq('productid', variantId)
-            .single();
-
-          if (product) {
-            // It's a product ID (no variants). Skip stock check since products table doesn't track quantity.
-            console.log(`Skipping stock check for product ${item.id} (no variants in DB)`);
-            continue;
-          }
-
-          console.error('Error checking variant stock:', error);
-          insufficientStock.push({ 
-            id: item.id, 
-            variantId: variantId,
-            requested: item.quantity, 
-            available: 0,
-            reason: 'Вариантът не е намерен'
-          });
-          continue;
+        if (variants && variants.length > 0) {
+          variant = variants[0];
         }
+      }
 
-        if ((variant as any).trackquantity !== false && (variant as any).isvisible !== false) {
-          const availableQuantity = (variant as any).quantity || 0;
-          
+      if (variant) {
+        if (variant.trackquantity !== false && variant.isvisible !== false) {
+          const availableQuantity = Number(variant.quantity) || 0;
           if (availableQuantity < item.quantity) {
             insufficientStock.push({
               id: item.id,
-              variantId: variantId,
+              variantId: variant.productvariantid,
               requested: item.quantity,
               available: availableQuantity,
               reason: 'Недостатъчна наличност'
             });
           }
         }
-      } else {
-        console.log(`Skipping stock check for product ${item.id} (no variant ID)`);
       }
     } catch (error) {
       console.error('Stock validation error:', error);
-      insufficientStock.push({ 
-        id: item.id, 
-        requested: item.quantity, 
-        available: 0,
-        reason: 'Грешка при валидиране'
-      });
     }
   }
 
@@ -122,57 +102,52 @@ export async function reduceStock(items: OrderData['items']): Promise<void> {
   const supabase = supabaseAdmin;
   for (const item of items) {
     try {
-      const isVariantId = item.id && typeof item.id === 'string' && item.id.length > 10;
-      
-      if (isVariantId) {
-        const variantId = item.id;
-        const { data: variant, error: fetchError } = await supabase
+      const targetId = String(item.id || '');
+      if (!targetId) continue;
+
+      // 1. Try matching productvariantid directly
+      let { data: variant } = await supabase
+        .from('product_variants')
+        .select('quantity, trackquantity, productvariantid')
+        .eq('productvariantid', targetId)
+        .maybeSingle();
+
+      // 2. Fallback: check if targetId is productid in product_variants
+      if (!variant) {
+        const { data: variants } = await supabase
           .from('product_variants')
           .select('quantity, trackquantity, productvariantid')
-          .eq('productvariantid', variantId)
-          .single();
+          .eq('productid', targetId)
+          .eq('isdeleted', false);
 
-        if (fetchError || !variant) {
-          // If not found in product_variants, check if it is a valid product ID
-          const { data: product } = await supabase
-            .from('products')
-            .select('productid')
-            .eq('productid', variantId)
-            .single();
-
-          if (product) {
-            // It's a product ID (no variants). Skip stock reduction.
-            console.log(`Skipping stock reduction for product ${item.id} (no variants in DB)`);
-            continue;
-          }
-
-          console.error('Error fetching variant for stock reduction:', fetchError);
-          throw new Error(`Failed to fetch variant ${variantId} for stock reduction`);
+        if (variants && variants.length > 0) {
+          variant = variants[0];
         }
+      }
 
+      if (variant) {
         const trackQuantity = variant.trackquantity !== false && variant.trackquantity !== null;
-        
         if (trackQuantity) {
           const currentQuantity = Number(variant.quantity) || 0;
           const newQuantity = Math.max(0, currentQuantity - item.quantity);
 
           const { error: updateError } = await supabase
             .from('product_variants')
-            .update({ 
+            .update({
               quantity: newQuantity,
               updatedat: new Date().toISOString()
             })
-            .eq('productvariantid', variantId);
+            .eq('productvariantid', variant.productvariantid);
 
           if (updateError) {
-            console.error('Error reducing variant stock:', updateError);
-            throw new Error(`Failed to reduce stock for variant ${variantId}`);
+            console.error(`Error reducing stock for variant ${variant.productvariantid}:`, updateError);
+          } else {
+            console.log(`✅ Stock reduced for variant ${variant.productvariantid}: ${currentQuantity} -> ${newQuantity}`);
           }
         }
       }
     } catch (error) {
-      console.error('Stock reduction error:', error);
-      throw error;
+      console.error('Stock reduction error for item:', item, error);
     }
   }
 }
