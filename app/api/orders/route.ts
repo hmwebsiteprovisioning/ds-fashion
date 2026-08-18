@@ -9,7 +9,8 @@ import { validateStock, reduceStock, createOrder, resolveOrderItems, type OrderD
 
 export async function POST(request: NextRequest) {
   try {
-    const orderData: OrderData = await request.json();
+    const body: OrderData & { paymentMethod?: string } = await request.json();
+    const orderData: OrderData = body;
 
     // Resolve any product IDs to their corresponding variant IDs before processing
     orderData.items = await resolveOrderItems(orderData.items);
@@ -26,7 +27,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create order record
-    const orderId = await createOrder(orderData);
+    const orderId = await createOrder(orderData, {
+      paymentMethod: body.paymentMethod || 'cod',
+    });
 
     // Reduce stock quantities after order is successfully created
     await reduceStock(orderData.items);
@@ -150,14 +153,15 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // Fetch store settings to get language
+    // Fetch store settings to get language and notification email
     const { data: storeSettings } = await supabase
       .from('store_settings')
-      .select('language')
+      .select('language, email')
       .limit(1)
       .single();
 
     const language = (storeSettings?.language === 'bg' || storeSettings?.language === 'en') ? storeSettings.language : 'en';
+    const storeEmail = storeSettings?.email;
 
     // Prepare order details for emails
     const orderDetails = {
@@ -180,7 +184,7 @@ export async function POST(request: NextRequest) {
     // Send emails (run in parallel)
     const [customerEmailResult, adminEmailResult] = await Promise.allSettled([
       sendCustomerOrderEmail(orderDetails, language),
-      sendAdminOrderEmail(orderDetails, language)
+      sendAdminOrderEmail(orderDetails, language, storeEmail)
     ]);
 
     // Log email results

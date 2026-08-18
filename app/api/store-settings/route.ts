@@ -7,6 +7,11 @@ function withPublicContactEmail<T extends { email?: string | null } | null>(sett
     return settings;
   }
 
+  // If the database has an email set, keep it as the source of truth
+  if (settings.email && settings.email.trim() !== '') {
+    return settings;
+  }
+
   const publicEmail = getContactEmail();
   if (!publicEmail || publicEmail === 'contact@store.com') {
     return settings;

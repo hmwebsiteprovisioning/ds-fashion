@@ -185,11 +185,12 @@ export async function fulfillMyposCheckout(
 
     const { data: storeSettings } = await supabase
       .from('store_settings')
-      .select('language')
+      .select('language, email')
       .limit(1)
       .single();
 
     const language = (storeSettings?.language === 'bg' || storeSettings?.language === 'en') ? storeSettings.language : 'bg';
+    const storeEmail = storeSettings?.email;
 
     const orderDetails = {
       orderId,
@@ -203,7 +204,7 @@ export async function fulfillMyposCheckout(
     console.log(`✉️ [myPOS] Dispatched order fulfillment emails for order: ${orderId}${transactionRef ? ` (Ref: ${transactionRef})` : ''}`);
     await Promise.allSettled([
       sendCustomerOrderEmail(orderDetails, language),
-      sendAdminOrderEmail(orderDetails, language),
+      sendAdminOrderEmail(orderDetails, language, storeEmail),
     ]);
   } catch (emailErr) {
     console.error('❌ [myPOS] Failed to dispatch confirmation emails:', emailErr);

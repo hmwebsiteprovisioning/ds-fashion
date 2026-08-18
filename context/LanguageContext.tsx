@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import { Language } from '@/lib/translations';
 import { useStoreSettings } from './StoreSettingsContext';
 
@@ -12,33 +13,37 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const { settings } = useStoreSettings();
   
-  // Fixed initial value so server and client markup match; hydrate prefs after mount
-  const [language, setLanguageState] = useState<Language>('bg');
+  // Admin language can be en or bg (stored in localStorage / settings)
+  const [adminLanguage, setAdminLanguage] = useState<Language>('bg');
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage === 'en' || savedLanguage === 'bg') {
-      setLanguageState(savedLanguage);
+      setAdminLanguage(savedLanguage);
     }
   }, []);
 
-  // Sync with StoreSettings from DB (DB is source of truth)
+  // Sync with StoreSettings from DB
   useEffect(() => {
     if (settings?.language) {
-      setLanguageState(settings.language);
-      localStorage.setItem('language', settings.language);
+      setAdminLanguage(settings.language);
     }
   }, [settings?.language]);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
+    setAdminLanguage(lang);
     localStorage.setItem('language', lang);
   };
 
+  const isAdminRoute = pathname?.startsWith('/admin');
+  // Storefront is ALWAYS Bulgarian ('bg'), Admin panel uses adminLanguage
+  const currentLanguage: Language = isAdminRoute ? adminLanguage : 'bg';
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider value={{ language: currentLanguage, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );

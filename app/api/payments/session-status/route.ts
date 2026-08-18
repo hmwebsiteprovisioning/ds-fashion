@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrderBySessionId, getPendingCheckoutById } from '@/lib/payments/pending-checkout';
+import { fulfillMyposCheckout } from '@/lib/payments/fulfill-mypos-checkout';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -37,6 +38,24 @@ export async function GET(request: Request) {
             paid: true,
           },
         });
+      }
+
+      // Auto-fulfill as fallback (e.g. when webhook didn't arrive or testing)
+      try {
+        const fulfilled = await fulfillMyposCheckout(sessionId);
+        if (fulfilled) {
+          return NextResponse.json({
+            success: true,
+            data: {
+              status: 'complete',
+              orderNumber: fulfilled.orderNumber,
+              orderId: fulfilled.orderId,
+              paid: true,
+            },
+          });
+        }
+      } catch (fulfillErr) {
+        console.error('Fallback fulfillment error in session-status:', fulfillErr);
       }
 
       return NextResponse.json({

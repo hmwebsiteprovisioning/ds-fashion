@@ -28,10 +28,9 @@ export function isEmailConfigured(): boolean {
 export function getContactEmail(): string {
   return (
     process.env.CONTACT_EMAIL ||
+    process.env.ADMIN_EMAIL ||
     process.env.RESEND_FROM_EMAIL ||
-    process.env.EMAIL_USER ||
-    process.env.NEXT_PUBLIC_EMAIL ||
-    'contact@store.com'
+    'osdjan01@abv.bg'
   );
 }
 
@@ -39,8 +38,9 @@ export function getContactEmail(): string {
 export function getAdminNotificationEmails(): string[] {
   const raw =
     process.env.ADMIN_EMAIL ||
+    process.env.CONTACT_EMAIL ||
     process.env.RESEND_ADMIN_EMAIL ||
-    getContactEmail();
+    'osdjan01@abv.bg';
   return raw
     .split(',')
     .map((email) => email.trim())
@@ -48,13 +48,13 @@ export function getAdminNotificationEmails(): string[] {
 }
 
 function getFromAddress(): string {
-  const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'Store';
+  const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'DS-Fashion';
 
   if (isResendConfigured()) {
     return `${storeName} <${process.env.RESEND_FROM_EMAIL}>`;
   }
 
-  const email = process.env.EMAIL_USER || process.env.NEXT_PUBLIC_EMAIL || 'noreply@store.com';
+  const email = process.env.EMAIL_USER || 'noreply@ds-fashion.eu';
   return `"${storeName}" <${email}>`;
 }
 

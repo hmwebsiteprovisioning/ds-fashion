@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ShoppingBag, Shield, Truck, RotateCcw, Headphones, Check, ChevronDown, ChevronUp, MapPin, Zap, Package, CreditCard, Banknote, Landmark } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, Shield, Truck, RotateCcw, Headphones, Check, ChevronDown, ChevronUp, MapPin, Zap, Package, CreditCard, Banknote, Landmark, AlertCircle } from 'lucide-react';
 import type { EcontOfficesData, EcontOffice } from '@/types/econt';
 import { useCart } from '@/context/CartContext';
 import { getItemCharacteristics } from '@/lib/cart-helpers';
@@ -80,6 +80,8 @@ export default function CheckoutPage() {
     econtOffice: '',
   });
 
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [econtData, setEcontData] = useState<EcontOfficesData | null>(null);
@@ -274,6 +276,13 @@ export default function CheckoutPage() {
 
     if (items.length === 0) {
       setErrorMsg(settings?.language === 'bg' ? 'Количката е празна.' : 'Your cart is empty.');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      setTermsError(true);
+      setErrorMsg(settings?.language === 'bg' ? 'Моля, съгласете се с Общите условия и Политиката за поверителност, за да завършите поръчката.' : 'Please agree with the Terms and Conditions and Privacy Policy to complete the order.');
+      setStep(3);
       return;
     }
 
@@ -607,15 +616,48 @@ export default function CheckoutPage() {
                     </label>
                   ))}
                 </div>
-                <label className="flex items-start gap-2.5 mt-6 cursor-pointer">
-                  <input type="checkbox" required className="w-4 h-4 accent-ds-gold mt-0.5" />
-                  <span className="text-[12px] text-ds-text-secondary">
-                    Съгласявам се с{' '}
-                    <Link href="/about" className="text-ds-gold underline">Общите условия</Link>
-                    {' '}и{' '}
-                    <Link href="/about" className="text-ds-gold underline">Политиката за поверителност</Link>.
-                  </span>
-                </label>
+                {/* Terms and Conditions Checkbox */}
+                <div
+                  className={`mt-6 p-4 rounded-md border transition-all duration-300 ${
+                    termsError
+                      ? 'border-red-500/80 bg-red-500/[0.08] dark:bg-red-950/20 shadow-[0_0_15px_rgba(239,68,68,0.12)] ring-1 ring-red-500/30'
+                      : 'border-ds-border bg-ds-card hover:border-ds-gold/50'
+                  }`}
+                >
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => {
+                        setAgreedToTerms(e.target.checked);
+                        if (e.target.checked) setTermsError(false);
+                      }}
+                      className={`w-4 h-4 mt-0.5 rounded cursor-pointer transition-all ${
+                        termsError
+                          ? 'accent-red-500 ring-2 ring-red-500/40 border-red-500'
+                          : 'accent-ds-gold'
+                      }`}
+                    />
+                    <span className={`text-[12px] leading-relaxed transition-colors ${termsError ? 'text-red-700 dark:text-red-300 font-medium' : 'text-ds-text-secondary'}`}>
+                      Съгласявам се с{' '}
+                      <Link href="/about" target="_blank" className={`underline font-medium transition-colors ${termsError ? 'text-red-600 dark:text-red-400 hover:text-red-700' : 'text-ds-gold hover:text-ds-gold-dark'}`}>
+                        Общите условия
+                      </Link>
+                      {' '}и{' '}
+                      <Link href="/about" target="_blank" className={`underline font-medium transition-colors ${termsError ? 'text-red-600 dark:text-red-400 hover:text-red-700' : 'text-ds-gold hover:text-ds-gold-dark'}`}>
+                        Политиката за поверителност
+                      </Link>
+                      <span className="text-red-500 ml-1 font-bold">*</span>
+                    </span>
+                  </label>
+
+                  {termsError && (
+                    <div className="mt-2.5 pt-2 border-t border-red-500/20 flex items-center gap-1.5 text-[11px] text-red-600 dark:text-red-400 font-medium animate-fadeIn">
+                      <AlertCircle size={13} className="shrink-0 text-red-500" />
+                      <span>Задължително е да се съгласите с Общите условия преди завършване на поръчката.</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

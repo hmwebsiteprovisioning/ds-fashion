@@ -19,7 +19,7 @@ export class EmailService {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'Store'
+    const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'DS-Fashion'
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -125,7 +125,7 @@ export class EmailService {
       return
     }
 
-    const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'Store'
+    const storeName = process.env.RESEND_FROM_NAME || process.env.NEXT_PUBLIC_STORE_NAME || 'DS-Fashion'
 
     const htmlContent = `
       <!DOCTYPE html>

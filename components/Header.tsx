@@ -247,7 +247,8 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
                 <Heart size={20} />
               </Link>
               <button
-                id="header-cart-icon"
+                id="header-cart-icon-mobile"
+                data-cart-icon="true"
                 onClick={(e) => { e.preventDefault(); openCart(); }}
                 className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${cartBouncing ? 'animate-cart-bounce' : ''}`}
                 onAnimationEnd={() => setCartBouncing(false)}
@@ -315,6 +316,7 @@ export default function Header({ isAdmin, setIsAdmin }: HeaderProps) {
               </Link>
               <button
                 id="header-cart-icon"
+                data-cart-icon="true"
                 onClick={(e) => { e.preventDefault(); openCart(); }}
                 className={`p-2 hover:text-ds-gold transition-colors text-ds-text relative ${cartBouncing ? 'animate-cart-bounce' : ''}`}
                 onAnimationEnd={() => setCartBouncing(false)}

@@ -202,7 +202,11 @@ export async function sendCustomerOrderEmail(orderDetails: OrderDetails, languag
   console.log('Customer order email sent successfully to', customerEmail);
 }
 
-export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: Language = 'en'): Promise<void> {
+export async function sendAdminOrderEmail(
+  orderDetails: OrderDetails,
+  language: Language = 'en',
+  customAdminEmail?: string | null
+): Promise<void> {
   if (!isEmailConfigured()) {
     console.warn('Skipping admin order email: email not configured');
     return;
@@ -327,13 +331,27 @@ export async function sendAdminOrderEmail(orderDetails: OrderDetails, language: 
     </html>
   `;
 
+  const recipients = new Set<string>();
+  if (customAdminEmail && customAdminEmail.includes('@')) {
+    recipients.add(customAdminEmail.trim());
+  }
+  getAdminNotificationEmails().forEach((e) => {
+    if (e && e.includes('@')) recipients.add(e.trim());
+  });
+
+  const recipientList = Array.from(recipients);
+  if (recipientList.length === 0) {
+    console.warn('Skipping admin order email: no valid admin recipients found');
+    return;
+  }
+
   await sendEmail({
-    to: getAdminNotificationEmails(),
+    to: recipientList,
     subject: `${t.emailNewOrderReceived} - #${orderDetails.orderId}`,
     html: adminEmailHtml,
   });
 
-  console.log('Admin order email sent successfully');
+  console.log('Admin order email sent successfully to', recipientList.join(', '));
 }
 
 export async function sendOrderStatusEmail(
