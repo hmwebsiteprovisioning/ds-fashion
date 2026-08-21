@@ -27,6 +27,9 @@ const pageTranslations = {
     quantity: 'Quantity',
     addToCart: 'ADD TO CART',
     buyNow: 'BUY NOW',
+    inStock: 'available',
+    outOfStock: 'Out of stock',
+    lastItems: 'Last items!',
     relatedProducts: 'More from DS-Fashion',
     shippingCalculated: 'Shipping calculated at checkout',
     addAddress: 'Add address',
@@ -57,6 +60,9 @@ const pageTranslations = {
     quantity: 'Количество',
     addToCart: 'ДОБАВИ В КОЛИЧКАТА',
     buyNow: 'КУПИ СЕГА',
+    inStock: 'налични',
+    outOfStock: 'Изчерпан',
+    lastItems: 'Последни бройки!',
     relatedProducts: 'Подобни продукти',
     shippingCalculated: 'Изчисляване на доставката при плащане',
     addAddress: 'Добави адрес',
@@ -131,6 +137,14 @@ export default function ProductPageClient({ id }: { id: string }) {
 
   const [qty, setQty] = useState(1);
   const [wished, setWished] = useState(false);
+
+  // Stock availability for the currently selected variant
+  const availableStock = useMemo(() => {
+    if (!selectedVariant) return null; // no variant selected yet
+    const tracksQty = selectedVariant.trackquantity !== false && selectedVariant.trackquantity !== null;
+    if (!tracksQty) return null; // untracked = unlimited
+    return Math.max(0, Number(selectedVariant.quantity) || 0);
+  }, [selectedVariant]);
 
   // Accordions and toasts
   const [description, setDescription] = useState<string>('');
@@ -418,6 +432,13 @@ export default function ProductPageClient({ id }: { id: string }) {
         setSelectedVariant(match);
         if (match.images && match.images.length > 0) targetUrl = match.images[0];
         else if (match.imageurl) targetUrl = match.imageurl;
+
+        // Reset qty to 1 when variant changes, and cap to available stock
+        const tracksQty = match.trackquantity !== false && match.trackquantity !== null;
+        if (tracksQty) {
+          const stock = Math.max(0, Number(match.quantity) || 0);
+          setQty((prev) => Math.min(prev, Math.max(1, stock)));
+        }
       }
       if (!targetUrl && fallbackColorImgs && fallbackColorImgs.length > 0) {
         targetUrl = fallbackColorImgs[0];
@@ -534,6 +555,7 @@ export default function ProductPageClient({ id }: { id: string }) {
   };
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (availableStock === 0) return;
     triggerFlyToCart(e.currentTarget);
 
     addItem({
@@ -549,6 +571,8 @@ export default function ProductPageClient({ id }: { id: string }) {
       options: selectedOptions,
       propertyValues: selectedOptions,
       quantity: qty,
+      variantId: selectedVariant?.productvariantid || undefined,
+      maxQuantity: availableStock ?? undefined,
     });
     
     setTimeout(() => {
@@ -885,13 +909,33 @@ export default function ProductPageClient({ id }: { id: string }) {
 
               {/* Quantity Counter Pill */}
               <div className="flex flex-col space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-ds-text">
-                  {t.quantity}
-                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-ds-text">
+                    {t.quantity}
+                  </span>
+                  {availableStock !== null && availableStock > 0 && (
+                    <span className={`text-[11px] font-semibold ${
+                      availableStock <= 3
+                        ? 'text-amber-600'
+                        : 'text-ds-text-secondary/70'
+                    }`}>
+                      {availableStock <= 3
+                        ? `${availableStock} ${t.inStock} — ${t.lastItems}`
+                        : `${availableStock} ${t.inStock}`
+                      }
+                    </span>
+                  )}
+                  {availableStock === 0 && (
+                    <span className="text-[11px] font-bold text-red-500 uppercase">
+                      {t.outOfStock}
+                    </span>
+                  )}
+                </div>
                 <div className="inline-flex items-center border border-ds-border/60 bg-ds-info/10 rounded-full w-fit">
                   <button 
                     onClick={() => setQty(Math.max(1, qty - 1))} 
-                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors"
+                    disabled={qty <= 1}
+                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Minus size={14} strokeWidth={2.5} />
                   </button>
@@ -900,7 +944,8 @@ export default function ProductPageClient({ id }: { id: string }) {
                   </span>
                   <button 
                     onClick={() => setQty(qty + 1)} 
-                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors"
+                    disabled={availableStock !== null && qty >= availableStock}
+                    className="p-2.5 text-ds-text-secondary/70 hover:text-ds-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Plus size={14} strokeWidth={2.5} />
                   </button>
@@ -911,10 +956,15 @@ export default function ProductPageClient({ id }: { id: string }) {
               <div className="pt-2">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full bg-ds-text hover:bg-ds-text/90 text-white text-xs font-bold tracking-wider py-4 rounded-full transition-all duration-200 active:scale-95 shadow-md uppercase text-center flex items-center justify-center gap-2"
+                  disabled={availableStock === 0}
+                  className={`w-full text-white text-xs font-bold tracking-wider py-4 rounded-full transition-all duration-200 shadow-md uppercase text-center flex items-center justify-center gap-2 ${
+                    availableStock === 0
+                      ? 'bg-ds-text/40 cursor-not-allowed'
+                      : 'bg-ds-text hover:bg-ds-text/90 active:scale-95'
+                  }`}
                 >
                   <ShoppingBag size={16} />
-                  {t.addToCart}
+                  {availableStock === 0 ? t.outOfStock : t.addToCart}
                 </button>
               </div>
 

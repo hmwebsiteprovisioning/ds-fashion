@@ -10,6 +10,8 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl: string;
+  variantId?: string;
+  maxQuantity?: number;
   category: 'clothes' | 'shoes' | 'accessories';
   propertyValues?: Record<string, string>;
   options?: Record<string, string>;

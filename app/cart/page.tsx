@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, Heart, Truck, Shield, RotateCcw } from 'lucide-react';
+import { Minus, Plus, Trash2, Heart, Truck, Shield, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import PublicPageLayout from '@/components/PublicPageLayout';
 import ProductCard from '@/components/ProductCard';
@@ -54,6 +54,58 @@ export default function CartPage() {
     }
   };
 
+  // Stock validation
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [stockLoading, setStockLoading] = useState(false);
+
+  useEffect(() => {
+    if (items.length === 0) { setStockMap({}); return; }
+
+    let cancelled = false;
+    setStockLoading(true);
+
+    const stockItems = items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      size: item.size,
+      color: item.color,
+    }));
+
+    fetch('/api/orders/validate-stock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: stockItems }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.success) return;
+        const map: Record<string, number> = {};
+        (data.results || []).forEach((r: { id: string | number; available: number }) => {
+          const item = items.find((i) => String(i.id) === String(r.id));
+          const key = `${r.id}_${item?.size || ''}_${item?.color || ''}`;
+          map[key] = r.available;
+        });
+        setStockMap(map);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setStockLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [items]);
+
+  const getStockForItem = useCallback((item: typeof items[0]): number | null => {
+    const key = `${item.id}_${item.size || ''}_${item.color || ''}`;
+    const val = stockMap[key];
+    if (val === undefined) return null;
+    if (val === -1) return null;
+    return val;
+  }, [stockMap]);
+
+  const hasAnyOverstock = items.some((item) => {
+    const stock = getStockForItem(item);
+    return stock !== null && item.quantity > stock;
+  });
+
   return (
     <PublicPageLayout isAdmin={isAdmin} setIsAdmin={handleSetIsAdmin}>
       <div className="bg-ds-main min-h-screen">
@@ -104,7 +156,11 @@ export default function CartPage() {
                               <Minus size={13} />
                             </button>
                             <span className="px-4 text-[13px] font-medium">{item.quantity}</span>
-                            <button onClick={() => updateQty(item.id, 1, item.size)} className="px-3 py-2 hover:bg-ds-main">
+                            <button
+                              onClick={() => updateQty(item.id, 1, item.size)}
+                              disabled={(() => { const s = getStockForItem(item); return s !== null && item.quantity >= s; })()}
+                              className="px-3 py-2 hover:bg-ds-main disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
                               <Plus size={13} />
                             </button>
                           </div>
@@ -112,6 +168,21 @@ export default function CartPage() {
                             <Trash2 size={16} />
                           </button>
                         </div>
+                        {/* Stock warning */}
+                        {(() => {
+                          const stock = getStockForItem(item);
+                          if (stock !== null && item.quantity > stock) {
+                            return (
+                              <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-200 rounded">
+                                <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                                <span className="text-[11px] font-semibold text-amber-700">
+                                  {`Само ${stock} ${stock === 1 ? 'наличен' : 'налични'}`}
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -183,9 +254,14 @@ export default function CartPage() {
 
                   <button
                     onClick={() => router.push('/checkout')}
-                    className="w-full bg-ds-gold hover:bg-ds-gold-dark text-white text-[13px] font-bold tracking-widest py-4 uppercase transition-colors mb-4"
+                    disabled={hasAnyOverstock}
+                    className={`w-full text-white text-[13px] font-bold tracking-widest py-4 uppercase transition-colors mb-4 ${
+                      hasAnyOverstock
+                        ? 'bg-ds-gold/50 cursor-not-allowed'
+                        : 'bg-ds-gold hover:bg-ds-gold-dark'
+                    }`}
                   >
-                    ПРОДЪЛЖИ КЪМ CHECKOUT
+                    {hasAnyOverstock ? 'КОРИГИРАЙ КОЛИЧЕСТВОТО' : 'ПРОДЪЛЖИ КЪМ CHECKOUT'}
                   </button>
 
                   {/* Trust row */}

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Plus, Minus, ShoppingCart, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Trash2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -11,6 +11,11 @@ import { useCart } from '@/context/CartContext';
 import { getItemCharacteristics } from '@/lib/cart-helpers';
 import { translations } from '@/lib/translations';
 import Link from 'next/link';
+
+interface StockInfo {
+  id: string | number;
+  available: number; // -1 means untracked
+}
 
 function unlockBodyScroll(savedScrollY: number) {
   document.body.style.position = '';
@@ -39,6 +44,58 @@ const CartDrawer: React.FC = () => {
   const scrollYRef = useRef(0);
   const [shouldRender, setShouldRender] = useState(isCartOpen);
   const [animateState, setAnimateState] = useState<'closed' | 'open'>('closed');
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [stockLoading, setStockLoading] = useState(false);
+
+  // Fetch stock availability when the cart opens or items change
+  useEffect(() => {
+    if (!isCartOpen || items.length === 0) return;
+
+    let cancelled = false;
+    setStockLoading(true);
+
+    const stockItems = items.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      size: item.size,
+      color: item.color,
+    }));
+
+    fetch('/api/orders/validate-stock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: stockItems }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.success) return;
+        const map: Record<string, number> = {};
+        (data.results || []).forEach((r: { id: string | number; available: number }) => {
+          // Build a key that matches the cart item (id + size + color)
+          const item = items.find((i) => String(i.id) === String(r.id));
+          const key = `${r.id}_${item?.size || ''}_${item?.color || ''}`;
+          map[key] = r.available;
+        });
+        setStockMap(map);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setStockLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [isCartOpen, items]);
+
+  const getStockForItem = (item: typeof items[0]): number | null => {
+    const key = `${item.id}_${item.size || ''}_${item.color || ''}`;
+    const val = stockMap[key];
+    if (val === undefined) return null;
+    if (val === -1) return null; // untracked
+    return val;
+  };
+
+  const hasAnyOverstock = items.some((item) => {
+    const stock = getStockForItem(item);
+    return stock !== null && item.quantity > stock;
+  });
 
   useEffect(() => {
     if (isCartOpen) {
@@ -218,12 +275,30 @@ const CartDrawer: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
-                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
+                        disabled={(() => { const s = getStockForItem(item); return s !== null && item.quantity >= s; })()}
+                        className="p-1.5 rounded-lg transition-opacity hover:opacity-70 disabled:opacity-30 disabled:cursor-not-allowed"
                         style={{ backgroundColor: theme.colors.surface, color: theme.colors.text }}
                       >
                         <Plus size={16} />
                       </button>
                     </div>
+                    {/* Stock warning */}
+                    {(() => {
+                      const stock = getStockForItem(item);
+                      if (stock !== null && item.quantity > stock) {
+                        return (
+                          <div className="flex items-center gap-1 mt-1">
+                            <AlertTriangle size={12} className="text-amber-600 shrink-0" />
+                            <span className="text-[11px] font-semibold text-amber-600">
+                              {language === 'bg'
+                                ? `Само ${stock} ${stock === 1 ? 'наличен' : 'налични'}` 
+                                : `Only ${stock} available`}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     <div className="text-right">
                       <p className="font-bold" style={{ color: theme.colors.text }}>
                         {formatPrice(item.quantity * item.price)}
@@ -269,13 +344,18 @@ const CartDrawer: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCheckout}
-                className="flex-1 px-4 py-3 rounded-sm font-medium transition-opacity hover:opacity-90"
+                disabled={hasAnyOverstock}
+                className={`flex-1 px-4 py-3 rounded-sm font-medium transition-opacity ${
+                  hasAnyOverstock ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+                }`}
                 style={{
                   backgroundColor: theme.colors.buttonPrimary,
                   color: '#ffffff',
                 }}
               >
-                {t.checkout}
+                {hasAnyOverstock
+                  ? (language === 'bg' ? 'Коригирай количеството' : 'Fix quantities')
+                  : t.checkout}
               </button>
             </div>
 
